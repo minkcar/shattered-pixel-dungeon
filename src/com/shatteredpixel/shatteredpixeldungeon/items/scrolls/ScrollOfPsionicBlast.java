@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,26 +20,24 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items.scrolls;
 
-import com.shatteredpixel.shatteredpixeldungeon.ResultDescriptions;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Paralysis;
-import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
-import com.shatteredpixel.shatteredpixeldungeon.utils.Utils;
-import com.watabou.noosa.audio.Sample;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Blindness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Paralysis;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
+import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Random;
 
 public class ScrollOfPsionicBlast extends Scroll {
 
 	{
-		name = "Scroll of Psionic Blast";
-		initials = "PB";
+		initials = 5;
 
 		bones = true;
 	}
@@ -64,25 +62,17 @@ public class ScrollOfPsionicBlast extends Scroll {
 		Dungeon.observe();
 		
 		setKnown();
-		
-		curUser.spendAndNext( TIME_TO_READ );
+
+		curUser.spendAndNext( TIME_TO_READ ); //no animation here, the flash interrupts it anyway.
 
 		if (!curUser.isAlive()) {
-			Dungeon.fail( Utils.format(ResultDescriptions.ITEM, name ));
-			GLog.n("The Psionic Blast tears your mind apart...");
+			Dungeon.fail( getClass() );
+			GLog.n( Messages.get(this, "ondeath") );
 		}
 	}
 	
 	@Override
-	public String desc() {
-		return
-			"This scroll contains destructive energy that can be psionically channeled to tear apart " +
-			"the minds of all visible creatures. The power unleashed by the scroll will also temporarily " +
-			"blind, stun, and seriously harm the reader.";
-	}
-	
-	@Override
 	public int price() {
-		return isKnown() ? 80 * quantity : super.price();
+		return isKnown() ? 50 * quantity : super.price();
 	}
 }

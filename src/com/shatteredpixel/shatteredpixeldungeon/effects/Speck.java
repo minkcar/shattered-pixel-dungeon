@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,14 +21,12 @@
 package com.shatteredpixel.shatteredpixeldungeon.effects;
 
 import android.annotation.SuppressLint;
-import android.util.FloatMath;
 import android.util.SparseArray;
-
+import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.watabou.noosa.Game;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.TextureFilm;
 import com.watabou.noosa.particles.Emitter;
-import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.watabou.utils.ColorMath;
 import com.watabou.utils.PointF;
 import com.watabou.utils.Random;
@@ -64,6 +62,7 @@ public class Speck extends Image {
 	public static final int STENCH      = 111;
 	public static final int FORGE		= 112;
 	public static final int CONFUSION	= 113;
+	public static final int RED_LIGHT   = 114;
 	
 	private static final int SIZE = 7;
 	
@@ -92,6 +91,7 @@ public class Speck extends Image {
 		this.type = type;
 		switch (type) {
 		case DISCOVER:
+		case RED_LIGHT:
 			frame( film.get( LIGHT ) );
 			break;
 		case EVOKE:
@@ -171,7 +171,9 @@ public class Speck extends Image {
 			acc.set( -speed.x, 0 );
 			lifespan = 0.5f;
 			break;
-			
+
+		case RED_LIGHT:
+			tint(0xFFCC0000);
 		case LIGHT:
 			angle = Random.Float( 360 );
 			angularSpeed = 90;
@@ -353,7 +355,8 @@ public class Speck extends Image {
 			case HEALING:
 				am = p < 0.5f ? 1 : 2 - p * 2;
 				break;
-				
+
+			case RED_LIGHT:
 			case LIGHT:
 				am = scale.set( p < 0.2f ? p * 5f : (1 - p) * 1.25f ).x;
 				break;
@@ -394,9 +397,9 @@ public class Speck extends Image {
 				break;
 				
 			case CHANGE:
-				am = (float)FloatMath.sqrt( (p < 0.5f ? p : 1 - p) * 2);
+				am = (float)Math.sqrt( (p < 0.5f ? p : 1 - p) * 2);
 				scale.y = (1 + p) * 0.5f;
-				scale.x = scale.y * FloatMath.cos( left * 15 );
+				scale.x = scale.y * (float)Math.cos( left * 15 );
 				break;
 				
 			case HEART:
@@ -430,7 +433,7 @@ public class Speck extends Image {
 				break;
 				
 			case COIN:
-				scale.x = FloatMath.cos( left * 5 );
+				scale.x = (float)Math.cos( left * 5 );
 				rm = gm = bm = (Math.abs( scale.x ) + 1) * 0.5f;
 				am = p < 0.9f ? 1 : (1 - p) * 10;
 				break;

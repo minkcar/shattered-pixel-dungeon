@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,6 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Ghost;
 import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GnollSprite;
 import com.watabou.utils.Random;
@@ -29,7 +28,6 @@ import com.watabou.utils.Random;
 public class Gnoll extends Mob {
 	
 	{
-		name = "gnoll scout";
 		spriteClass = GnollSprite.class;
 		
 		HP = HT = 12;
@@ -44,23 +42,16 @@ public class Gnoll extends Mob {
 	
 	@Override
 	public int damageRoll() {
-		return Random.NormalIntRange( 2, 5 );
+		return Random.NormalIntRange( 1, 6 );
 	}
 	
 	@Override
 	public int attackSkill( Char target ) {
-		return 11;
+		return 10;
 	}
 	
 	@Override
-	public int dr() {
-		return 2;
-	}
-
-	@Override
-	public String description() {
-		return
-			"Gnolls are hyena-like humanoids. They dwell in sewers and dungeons, venturing up to raid the surface from time to time. " +
-			"Gnoll scouts are regular members of their pack, they are not as strong as brutes and not as intelligent as shamans.";
+	public int drRoll() {
+		return Random.NormalIntRange(0, 2);
 	}
 }

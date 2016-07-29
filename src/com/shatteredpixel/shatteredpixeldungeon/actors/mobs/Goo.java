@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,51 +20,58 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import java.util.HashSet;
-
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
-import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.GooWarn;
-import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.ToxicGas;
-import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
-import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ElmoParticle;
-import com.watabou.noosa.Camera;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.GooWarn;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.ToxicGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LockedFloor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Ooze;
+import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
+import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ElmoParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.LloydsBeacon;
 import com.shatteredpixel.shatteredpixeldungeon.items.keys.SkeletonKey;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfPsionicBlast;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Death;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Grim;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
-import com.shatteredpixel.shatteredpixeldungeon.levels.SewerBossLevel;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GooSprite;
+import com.shatteredpixel.shatteredpixeldungeon.ui.BossHealthBar;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
+import com.watabou.noosa.Camera;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
+import java.util.HashSet;
+
 public class Goo extends Mob {
+
 	{
-		name = "Goo";
-		HP = HT = 80;
+		HP = HT = 100;
 		EXP = 10;
-		defenseSkill = 12;
+		defenseSkill = 8;
 		spriteClass = GooSprite.class;
 
 		loot = new LloydsBeacon().identify();
 		lootChance = 0.333f;
+
+		properties.add(Property.BOSS);
+		properties.add(Property.DEMONIC);
 	}
 
 	private int pumpedUp = 0;
 
 	@Override
 	public int damageRoll() {
+		int min = 1;
+		int max = (HP*2 <= HT) ? 15 : 10;
 		if (pumpedUp > 0) {
 			pumpedUp = 0;
 			for (int i = 0; i < Level.NEIGHBOURS9DIST2.length; i++) {
@@ -73,20 +80,28 @@ public class Goo extends Mob {
 					CellEmitter.get(j).burst(ElmoParticle.FACTORY, 10);
 			}
 			Sample.INSTANCE.play( Assets.SND_BURNING );
-			return Random.NormalIntRange( 5, 30 );
+			return Random.NormalIntRange( min*3, max*3 );
 		} else {
-			return Random.NormalIntRange( 2, 12 );
+			return Random.NormalIntRange( min, max );
 		}
 	}
 
 	@Override
 	public int attackSkill( Char target ) {
-		return (pumpedUp > 0) ? 30 : 15;
+		int attack = 10;
+		if (HP*2 <= HT) attack = 15;
+		if (pumpedUp > 0) attack *= 2;
+		return attack;
 	}
 
 	@Override
-	public int dr() {
-		return 2;
+	public int defenseSkill(Char enemy) {
+		return (int)(super.defenseSkill(enemy) * ((HP*2 <= HT)? 1.5 : 1));
+	}
+
+	@Override
+	public int drRoll() {
+		return Random.NormalIntRange(0, 2);
 	}
 
 	@Override
@@ -94,6 +109,10 @@ public class Goo extends Mob {
 
 		if (Level.water[pos] && HP < HT) {
 			sprite.emitter().burst( Speck.factory( Speck.HEALING ), 1 );
+			if (HP*2 == HT) {
+				BossHealthBar.bleed(false);
+				((GooSprite)sprite).spray(false);
+			}
 			HP++;
 		}
 
@@ -133,7 +152,7 @@ public class Goo extends Mob {
 			spend( attackDelay() );
 
 			return true;
-		} else if (pumpedUp >= 2 || Random.Int( 3 ) > 0) {
+		} else if (pumpedUp >= 2 || Random.Int( (HP*2 <= HT) ? 2 : 5 ) > 0) {
 
 			boolean visible = Dungeon.visible[pos];
 
@@ -159,13 +178,14 @@ public class Goo extends Mob {
 
 			for (int i=0; i < Level.NEIGHBOURS9.length; i++) {
 				int j = pos + Level.NEIGHBOURS9[i];
-				GameScene.add( Blob.seed( j , 2, GooWarn.class ));
-
+				if (Level.passable[j]) {
+					GameScene.add(Blob.seed(j, 2, GooWarn.class));
+				}
 			}
 
 			if (Dungeon.visible[pos]) {
-				sprite.showStatus( CharSprite.NEGATIVE, "!!!" );
-				GLog.n( "Goo is pumping itself up!" );
+				sprite.showStatus( CharSprite.NEGATIVE, Messages.get(this, "!!!") );
+				GLog.n( Messages.get(this, "pumpup") );
 			}
 
 			spend( attackDelay() );
@@ -192,7 +212,22 @@ public class Goo extends Mob {
 		Dungeon.level.seal();
 		super.move( step );
 	}
-	
+
+	@Override
+	public void damage(int dmg, Object src) {
+		boolean bleeding = (HP*2 <= HT);
+		super.damage(dmg, src);
+		if ((HP*2 <= HT) && !bleeding){
+			BossHealthBar.bleed(true);
+			GLog.w( Messages.get(this, "enraged_text") );
+			sprite.showStatus(CharSprite.NEGATIVE, Messages.get(this, "enraged"));
+			((GooSprite)sprite).spray(true);
+			yell(Messages.get(this, "gluuurp"));
+		}
+		LockedFloor lock = Dungeon.hero.buff(LockedFloor.class);
+		if (lock != null) lock.addTime(dmg*2);
+	}
+
 	@Override
 	public void die( Object cause ) {
 		
@@ -205,23 +240,14 @@ public class Goo extends Mob {
 		
 		Badges.validateBossSlain();
 		
-		yell( "glurp... glurp..." );
+		yell( Messages.get(this, "defeated") );
 	}
 	
 	@Override
 	public void notice() {
 		super.notice();
-		yell( "GLURP-GLURP!" );
-	}
-	
-	@Override
-	public String description() {
-		return
-			"Little is known about The Goo. It's quite possible that it is not even a creature, but rather a " +
-			"conglomerate of vile substances from the sewers that somehow gained basic intelligence. " +
-			"Regardless, dark magic is certainly what has allowed Goo to exist.\n\n" +
-			"Its gelatinous nature has let it absorb lots of dark energy, you feel a chill just from being near. " +
-			"If goo is able to attack with this energy you won't live for long.";
+		BossHealthBar.assignBoss(this);
+		yell( Messages.get(this, "notice") );
 	}
 
 	private final String PUMPEDUP = "pumpedup";
@@ -240,12 +266,15 @@ public class Goo extends Mob {
 		super.restoreFromBundle( bundle );
 
 		pumpedUp = bundle.getInt( PUMPEDUP );
+		if (state != SLEEPING) BossHealthBar.assignBoss(this);
+		if ((HP*2 <= HT)) BossHealthBar.bleed(true);
+
 	}
 	
-	private static final HashSet<Class<?>> RESISTANCES = new HashSet<Class<?>>();
+	private static final HashSet<Class<?>> RESISTANCES = new HashSet<>();
 	static {
 		RESISTANCES.add( ToxicGas.class );
-		RESISTANCES.add( Death.class );
+		RESISTANCES.add( Grim.class );
 		RESISTANCES.add( ScrollOfPsionicBlast.class );
 	}
 	

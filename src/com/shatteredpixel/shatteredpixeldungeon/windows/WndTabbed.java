@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,17 +20,17 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.windows;
 
-import java.util.ArrayList;
-
-import com.watabou.noosa.BitmapText;
-import com.watabou.noosa.Game;
-import com.watabou.noosa.NinePatch;
-import com.watabou.noosa.audio.Sample;
-import com.watabou.noosa.ui.Button;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Chrome;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
+import com.watabou.noosa.Game;
+import com.watabou.noosa.NinePatch;
+import com.watabou.noosa.RenderedText;
+import com.watabou.noosa.audio.Sample;
+import com.watabou.noosa.ui.Button;
+
+import java.util.ArrayList;
 
 public class WndTabbed extends Window {
 
@@ -192,21 +192,20 @@ public class WndTabbed extends Window {
 	
 	protected class LabeledTab extends Tab {
 		
-		private BitmapText btLabel;
+		private RenderedText btLabel;
 		
 		public LabeledTab( String label ) {
 			
 			super();
 			
 			btLabel.text( label );
-			btLabel.measure();
 		}
 		
 		@Override
 		protected void createChildren() {
 			super.createChildren();
 			
-			btLabel = PixelScene.createText( 9 );
+			btLabel = PixelScene.renderText( 9 );
 			add( btLabel );
 		}
 		
@@ -214,11 +213,12 @@ public class WndTabbed extends Window {
 		protected void layout() {
 			super.layout();
 			
-			btLabel.x = PixelScene.align( x + (width - btLabel.width()) / 2 );
-			btLabel.y = PixelScene.align( y + (height - btLabel.baseLine()) / 2 ) - 1;
+			btLabel.x = x + (width - btLabel.width()) / 2;
+			btLabel.y = y + (height - btLabel.baseLine()) / 2 - 1;
 			if (!selected) {
 				btLabel.y -= 2;
 			}
+			PixelScene.align(btLabel);
 		}
 		
 		@Override

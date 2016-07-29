@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,20 +20,16 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors;
 
-import java.util.Arrays;
-import java.util.HashSet;
-
 import android.util.SparseArray;
-
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
-import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.watabou.utils.Bundlable;
 import com.watabou.utils.Bundle;
+
+import java.util.HashSet;
 
 public abstract class Actor implements Bundlable {
 	
@@ -59,7 +55,7 @@ public abstract class Actor implements Bundlable {
 		}
 	}
 	
-	protected float cooldown() {
+	public float cooldown() {
 		return time - now;
 	}
 	
@@ -102,7 +98,7 @@ public abstract class Actor implements Bundlable {
 	private static HashSet<Char> chars = new HashSet<>();
 	private static Actor current;
 
-	private static SparseArray<Actor> ids = new SparseArray<Actor>();
+	private static SparseArray<Actor> ids = new SparseArray<>();
 
 	private static float now = 0;
 	
@@ -136,7 +132,7 @@ public abstract class Actor implements Bundlable {
 	
 	public static void init() {
 		
-		addDelayed( Dungeon.hero, -Float.MIN_VALUE );
+		add( Dungeon.hero );
 		
 		for (Mob mob : Dungeon.level.mobs) {
 			add( mob );

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,14 +26,15 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bleeding;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cripple;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Roots;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Wound;
-import com.watabou.utils.Random;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.TrapSprite;
 
 public class GrippingTrap extends Trap {
 
 	{
-		name = "Gripping trap";
-		image = 6;
+		color = TrapSprite.GREY;
+		shape = TrapSprite.CROSSHAIR;
 	}
 
 	@Override
@@ -42,9 +43,10 @@ public class GrippingTrap extends Trap {
 		Char c = Actor.findChar( pos );
 
 		if (c != null) {
-			int damage = Math.max( 0,  (Dungeon.depth + 3) - Random.IntRange( 0, c.dr() / 2 ) );
+			int damage = Math.max( 0,  (Dungeon.depth) - ( c.drRoll() / 2 ) );
 			Buff.affect( c, Bleeding.class ).set( damage );
-			Buff.prolong( c, Cripple.class, Cripple.DURATION );
+			Buff.prolong( c, Cripple.class, 15f);
+			Buff.prolong( c, Roots.class, 5f);
 			Wound.hit( c );
 		} else {
 			Wound.hit( pos );

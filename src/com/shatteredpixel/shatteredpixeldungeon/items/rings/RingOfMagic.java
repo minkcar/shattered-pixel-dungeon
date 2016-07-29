@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,21 +22,9 @@ package com.shatteredpixel.shatteredpixeldungeon.items.rings;
 
 public class RingOfMagic extends Ring {
 	
-	{
-		name = "Ring of Magic";
-	}
-	
 	@Override
 	protected RingBuff buff( ) {
 		return new Magic();
-	}
-	
-	@Override
-	public String desc() {
-		return isKnown() ?
-			"Your wands will become more powerful in the arcane field " +
-			"that radiates from this ring. Degraded rings of magic will instead weaken your wands." :
-			super.desc();
 	}
 	
 	public class Magic extends RingBuff {

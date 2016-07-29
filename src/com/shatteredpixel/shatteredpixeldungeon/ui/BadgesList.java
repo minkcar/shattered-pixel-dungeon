@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,18 +20,18 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.ui;
 
-import java.util.ArrayList;
-
-import com.watabou.noosa.BitmapText;
-import com.watabou.noosa.Game;
-import com.watabou.noosa.Image;
-import com.watabou.noosa.audio.Sample;
-import com.watabou.noosa.ui.Component;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.effects.BadgeBanner;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndBadge;
+import com.watabou.noosa.Game;
+import com.watabou.noosa.Image;
+import com.watabou.noosa.RenderedText;
+import com.watabou.noosa.audio.Sample;
+import com.watabou.noosa.ui.Component;
+
+import java.util.ArrayList;
 
 public class BadgesList extends ScrollPane {
 
@@ -54,7 +54,6 @@ public class BadgesList extends ScrollPane {
 	
 	@Override
 	protected void layout() {
-		super.layout();
 		
 		float pos = 0;
 		
@@ -65,6 +64,8 @@ public class BadgesList extends ScrollPane {
 		}
 		
 		content.setSize( width, pos );
+
+		super.layout();
 	}
 	
 	@Override
@@ -84,14 +85,14 @@ public class BadgesList extends ScrollPane {
 		private Badges.Badge badge;
 		
 		private Image icon;
-		private BitmapText label;
+		private RenderedText label;
 		
 		public ListItem( Badges.Badge badge ) {
 			super();
 			
 			this.badge = badge;
 			icon.copy( BadgeBanner.image( badge.image ));
-			label.text( badge.description );
+			label.text( badge.desc() );
 		}
 		
 		@Override
@@ -99,17 +100,19 @@ public class BadgesList extends ScrollPane {
 			icon = new Image();
 			add( icon );
 			
-			label = PixelScene.createText( 6 );
+			label = PixelScene.renderText( 6 );
 			add( label );
 		}
 		
 		@Override
 		protected void layout() {
 			icon.x = x;
-			icon.y = PixelScene.align( y + (height - icon.height) / 2 );
+			icon.y = y + (height - icon.height) / 2;
+			PixelScene.align(icon);
 			
 			label.x = icon.x + icon.width + 2;
-			label.y = PixelScene.align( y + (height - label.baseLine()) / 2 );
+			label.y = y + (height - label.baseLine()) / 2;
+			PixelScene.align(label);
 		}
 		
 		public boolean onClick( float x, float y ) {

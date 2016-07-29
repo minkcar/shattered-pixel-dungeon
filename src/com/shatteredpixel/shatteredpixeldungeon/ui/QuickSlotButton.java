@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,21 +20,20 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.ui;
 
-import com.shatteredpixel.shatteredpixeldungeon.items.EquipableItem;
-import com.watabou.noosa.Image;
-import com.watabou.noosa.ui.Button;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.DungeonTilemap;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndBag;
+import com.watabou.noosa.Image;
+import com.watabou.noosa.ui.Button;
 
 public class QuickSlotButton extends Button implements WndBag.Listener {
-
-	private static final String TXT_SELECT_ITEM = "Select an item for the quickslot";
 	
 	private static QuickSlotButton[] instance = new QuickSlotButton[4];
 	private int slotNum;
@@ -45,7 +44,7 @@ public class QuickSlotButton extends Button implements WndBag.Listener {
 	private static Image crossM;
 	
 	private static boolean targeting = false;
-	private static Char lastTarget= null;
+	public static Char lastTarget = null;
 	
 	public QuickSlotButton( int slotNum ) {
 		super();
@@ -76,10 +75,17 @@ public class QuickSlotButton extends Button implements WndBag.Listener {
 			@Override
 			protected void onClick() {
 				if (targeting) {
-					GameScene.handleCell( lastTarget.pos );
+					int cell = autoAim(lastTarget, select(slotNum));
+
+					if (cell != -1){
+						GameScene.handleCell(cell);
+					} else {
+						//couldn't auto-aim, just target the position and hope for the best.
+						GameScene.handleCell( lastTarget.pos );
+					}
 				} else {
 					Item item = select(slotNum);
-					if (item instanceof EquipableItem)
+					if (item.usesTargeting)
 						useTargeting();
 					item.execute( Dungeon.hero );
 				}
@@ -114,18 +120,19 @@ public class QuickSlotButton extends Button implements WndBag.Listener {
 		
 		slot.fill( this );
 		
-		crossB.x = PixelScene.align( x + (width - crossB.width) / 2 );
-		crossB.y = PixelScene.align( y + (height - crossB.height) / 2 );
+		crossB.x = x + (width - crossB.width) / 2;
+		crossB.y = y + (height - crossB.height) / 2;
+		PixelScene.align(crossB);
 	}
 	
 	@Override
 	protected void onClick() {
-		GameScene.selectItem( this, WndBag.Mode.QUICKSLOT, TXT_SELECT_ITEM );
+		GameScene.selectItem( this, WndBag.Mode.QUICKSLOT, Messages.get(this, "select_item") );
 	}
 	
 	@Override
 	protected boolean onLongClick() {
-		GameScene.selectItem( this, WndBag.Mode.QUICKSLOT, TXT_SELECT_ITEM );
+		GameScene.selectItem( this, WndBag.Mode.QUICKSLOT, Messages.get(this, "select_item") );
 		return true;
 	}
 
@@ -160,20 +167,49 @@ public class QuickSlotButton extends Button implements WndBag.Listener {
 	}
 	
 	private void useTargeting() {
-		
-		targeting = lastTarget != null && lastTarget.isAlive() && Dungeon.visible[lastTarget.pos];
-		
-		if (targeting) {
-			if (Actor.chars().contains( lastTarget )) {
-				lastTarget.sprite.parent.add( crossM );
-				crossM.point( DungeonTilemap.tileToWorld( lastTarget.pos ) );
-				crossB.x = PixelScene.align( x + (width - crossB.width) / 2 );
-				crossB.y = PixelScene.align( y + (height - crossB.height) / 2 );
-				crossB.visible = true;
-			} else {
-				lastTarget = null;
+
+		if (lastTarget != null &&
+				Actor.chars().contains( lastTarget ) &&
+				lastTarget.isAlive() &&
+				Dungeon.visible[lastTarget.pos]) {
+
+			targeting = true;
+			lastTarget.sprite.parent.add( crossM );
+			crossM.point( DungeonTilemap.tileToWorld( lastTarget.pos ) );
+			crossB.x = x + (width - crossB.width) / 2;
+			crossB.y = y + (height - crossB.height) / 2;
+			crossB.visible = true;
+
+		} else {
+
+			lastTarget = null;
+			targeting = false;
+
+		}
+
+	}
+
+	public static int autoAim(Char target){
+		//will use generic projectile logic if no item is specified
+		return autoAim(target, new Item());
+	}
+
+	public static int autoAim(Char target, Item item){
+
+		//first try to directly target
+		if (item.throwPos(Dungeon.hero, target.pos) == target.pos) {
+			return target.pos;
+		}
+
+		//Otherwise pick nearby tiles to try and 'angle' the shot, auto-aim basically.
+		for (int i : Level.NEIGHBOURS9DIST2) {
+			if (item.throwPos(Dungeon.hero, target.pos+i) == target.pos){
+				return target.pos+i;
 			}
 		}
+
+		//couldn't find a cell, give up.
+		return -1;
 	}
 	
 	public static void refresh() {

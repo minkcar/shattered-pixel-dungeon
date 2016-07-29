@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,12 +20,6 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cripple;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Paralysis;
-import com.shatteredpixel.shatteredpixeldungeon.effects.MagicMissile;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
-import com.watabou.noosa.audio.Sample;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -33,21 +27,37 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Fire;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cripple;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Paralysis;
+import com.shatteredpixel.shatteredpixeldungeon.effects.MagicMissile;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Blazing;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
+import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Callback;
-import com.watabou.utils.Random;
 
 import java.util.HashSet;
 
-public class WandOfFireblast extends Wand {
+public class WandOfFireblast extends DamageWand {
 
 	{
-		name = "Wand of Fireblast";
 		image = ItemSpriteSheet.WAND_FIREBOLT;
 
 		collisionProperties = Ballistica.STOP_TERRAIN;
+	}
+
+	//1x/1.5x/2.25x damage
+	public int min(int lvl){
+		return (int)Math.round((1+lvl) * Math.pow(1.5f, chargesPerCast()-1));
+	}
+
+	//1x/1.5x/2.25x damage
+	public int max(int lvl){
+		return (int)Math.round((5+3*lvl) * Math.pow(1.5f, chargesPerCast()-1));
 	}
 
 	//the actual affected cells
@@ -68,17 +78,17 @@ public class WandOfFireblast extends Wand {
 			Char ch = Actor.findChar( cell );
 			if (ch != null) {
 
-				ch.damage(Random.NormalIntRange(1, (int) (8 + (level * level * (1 + chargesPerCast()) / 6f))), this);
+				int damage = damageRoll();
+
+				ch.damage(damage, this);
 				Buff.affect( ch, Burning.class ).reignite( ch );
 				switch(chargesPerCast()){
 					case 1:
-						Buff.affect(ch, Cripple.class, 3f); break;
+						break; //no effects
 					case 2:
-						Buff.affect(ch, Cripple.class, 6f); break;
+						Buff.affect(ch, Cripple.class, 4f); break;
 					case 3:
-						Buff.affect(ch, Paralysis.class, 3f); break;
-					case 4:
-						Buff.affect(ch, Paralysis.class, 6f); break;
+						Buff.affect(ch, Paralysis.class, 4f); break;
 				}
 			}
 		}
@@ -110,9 +120,8 @@ public class WandOfFireblast extends Wand {
 
 	@Override
 	public void onHit(MagesStaff staff, Char attacker, Char defender, int damage) {
-		//acts like blazing enchantment, package conflict.....
-		new com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Fire()
-				.proc( staff, attacker, defender, damage);
+		//acts like blazing enchantment
+		new Blazing().proc( staff, attacker, defender, damage);
 	}
 
 	@Override
@@ -121,7 +130,8 @@ public class WandOfFireblast extends Wand {
 		affectedCells = new HashSet<>();
 		visualCells = new HashSet<>();
 
-		int maxDist = 1 + chargesPerCast()*2;
+		// 4/6/9 distance
+		int maxDist = (int)(4 * Math.pow(1.5,(chargesPerCast()-1)));
 		int dist = Math.min(bolt.dist, maxDist);
 
 		for (int i = 0; i < Level.NEIGHBOURS8.length; i++){
@@ -157,8 +167,16 @@ public class WandOfFireblast extends Wand {
 
 	@Override
 	protected int chargesPerCast() {
-		//consumes 40% of current charges, rounded up, with a minimum of one.
-		return Math.max(1, (int)Math.ceil(curCharges*0.4f));
+		//consumes 30% of current charges, rounded up, with a minimum of one.
+		return Math.max(1, (int)Math.ceil(curCharges*0.3f));
+	}
+
+	@Override
+	public String statsDesc() {
+		if (levelKnown)
+			return Messages.get(this, "stats_desc", chargesPerCast(), min(), max());
+		else
+			return Messages.get(this, "stats_desc", chargesPerCast(), min(0), max(0));
 	}
 
 	@Override
@@ -171,13 +189,4 @@ public class WandOfFireblast extends Wand {
 		particle.shuffleXY(2f);
 	}
 
-	@Override
-	public String desc() {
-		return
-			"This wand is made from red-lacquered wood with golden leaf used liberally to make it look quite regal. " +
-			"It crackles and hisses at the tip, eager to unleash its powerful magic.\n" +
-			"\n" +
-			"This wand produces a blast of fire when used, extending out into a cone shape. As this wand is upgraded " +
-			"it will consume more charges, the effect becomes significantly more powerful the more charges are consumed.";
-	}
 }

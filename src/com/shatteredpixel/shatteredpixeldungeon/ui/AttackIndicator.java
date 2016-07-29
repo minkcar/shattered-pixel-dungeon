@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,35 +20,35 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.ui;
 
-import java.util.ArrayList;
-
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
-import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.watabou.noosa.Game;
 import com.watabou.utils.Random;
+
+import java.util.ArrayList;
 
 public class AttackIndicator extends Tag {
 	
 	private static final float ENABLED	= 1.0f;
 	private static final float DISABLED	= 0.3f;
 
-	private static float delay = 0.75f;
+	private static float delay;
 	
 	private static AttackIndicator instance;
 	
 	private CharSprite sprite = null;
 	
-	private static Mob lastTarget = null;
+	private static Mob lastTarget;
 	private ArrayList<Mob> candidates = new ArrayList<Mob>();
 	
 	public AttackIndicator() {
 		super( DangerIndicator.COLOR );
 		
 		instance = this;
+		lastTarget = null;
 		
 		setSize( 24, 24 );
 		visible( false );
@@ -67,7 +67,7 @@ public class AttackIndicator extends Tag {
 		if (sprite != null) {
 			sprite.x = x + (width - sprite.width()) / 2;
 			sprite.y = y + (height - sprite.height()) / 2;
-			PixelScene.align( sprite );
+			PixelScene.align(sprite);
 		}
 	}
 	
@@ -95,13 +95,12 @@ public class AttackIndicator extends Tag {
 	}
 	
 	private void checkEnemies() {
-		
-		int heroPos = Dungeon.hero.pos;
+
 		candidates.clear();
 		int v = Dungeon.hero.visibleEnemies();
 		for (int i=0; i < v; i++) {
 			Mob mob = Dungeon.hero.visibleEnemy( i );
-			if (Level.adjacent( heroPos, mob.pos )) {
+			if ( Dungeon.hero.canAttack( mob) ) {
 				candidates.add( mob );
 			}
 		}
@@ -142,7 +141,7 @@ public class AttackIndicator extends Tag {
 
 			sprite.x = x + (width - sprite.width()) / 2 + 1;
 			sprite.y = y + (height - sprite.height()) / 2;
-			PixelScene.align( sprite );
+			PixelScene.align(sprite);
 			
 		} catch (Exception e) {
 		}

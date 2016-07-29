@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,8 +20,6 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import java.util.HashSet;
-
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Amok;
@@ -31,16 +29,17 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
 import com.shatteredpixel.shatteredpixeldungeon.items.KindOfWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.Food;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Knuckles;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MonkSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
+import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
-public class Monk extends Mob {
+import java.util.HashSet;
 
-	public static final String TXT_DISARM	= "%s has knocked the %s from your hands!";
+public class Monk extends Mob {
 	
 	{
-		name = "dwarf monk";
 		spriteClass = MonkSprite.class;
 		
 		HP = HT = 70;
@@ -51,11 +50,13 @@ public class Monk extends Mob {
 		
 		loot = new Food();
 		lootChance = 0.083f;
+
+		properties.add(Property.UNDEAD);
 	}
 	
 	@Override
 	public int damageRoll() {
-		return Random.NormalIntRange( 12, 16 );
+		return Random.NormalIntRange( 12, 25 );
 	}
 	
 	@Override
@@ -69,13 +70,8 @@ public class Monk extends Mob {
 	}
 	
 	@Override
-	public int dr() {
-		return 2;
-	}
-	
-	@Override
-	public String defenseVerb() {
-		return "parried";
+	public int drRoll() {
+		return Random.NormalIntRange(0, 2);
 	}
 	
 	@Override
@@ -84,34 +80,34 @@ public class Monk extends Mob {
 		
 		super.die( cause );
 	}
+
+	private int hitsToDisarm = 0;
 	
 	@Override
 	public int attackProc( Char enemy, int damage ) {
 		
-		if (Random.Int( 6 ) == 0 && enemy == Dungeon.hero) {
+		if (enemy == Dungeon.hero) {
 			
 			Hero hero = Dungeon.hero;
 			KindOfWeapon weapon = hero.belongings.weapon;
 			
 			if (weapon != null && !(weapon instanceof Knuckles) && !weapon.cursed) {
-				hero.belongings.weapon = null;
-				Dungeon.quickslot.clearItem( weapon );
-				Dungeon.level.drop( weapon, hero.pos ).sprite.drop();
-				GLog.w( TXT_DISARM, name, weapon.name() );
+				if (hitsToDisarm == 0) hitsToDisarm = Random.NormalIntRange(4, 8);
+
+				if (--hitsToDisarm == 0) {
+					hero.belongings.weapon = null;
+					Dungeon.quickslot.clearItem(weapon);
+					weapon.updateQuickslot();
+					Dungeon.level.drop(weapon, hero.pos).sprite.drop();
+					GLog.w(Messages.get(this, "disarm", weapon.name()));
+				}
 			}
 		}
 		
 		return damage;
 	}
 	
-	@Override
-	public String description() {
-		return
-			"These monks are fanatics, who devoted themselves to protecting their city's secrets from all aliens. " +
-			"They don't use any armor or weapons, relying solely on the art of hand-to-hand combat.";
-	}
-	
-	private static final HashSet<Class<?>> IMMUNITIES = new HashSet<Class<?>>();
+	private static final HashSet<Class<?>> IMMUNITIES = new HashSet<>();
 	static {
 		IMMUNITIES.add( Amok.class );
 		IMMUNITIES.add( Terror.class );
@@ -120,5 +116,19 @@ public class Monk extends Mob {
 	@Override
 	public HashSet<Class<?>> immunities() {
 		return IMMUNITIES;
+	}
+
+	private static String DISARMHITS = "hitsToDisarm";
+
+	@Override
+	public void storeInBundle(Bundle bundle) {
+		super.storeInBundle(bundle);
+		bundle.put(DISARMHITS, hitsToDisarm);
+	}
+
+	@Override
+	public void restoreFromBundle(Bundle bundle) {
+		super.restoreFromBundle(bundle);
+		hitsToDisarm = bundle.getInt(DISARMHITS);
 	}
 }

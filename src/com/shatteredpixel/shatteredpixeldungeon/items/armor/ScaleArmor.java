@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,21 +22,14 @@ package com.shatteredpixel.shatteredpixeldungeon.items.armor;
 
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
-
 public class ScaleArmor extends Armor {
 
 	{
-		name = "scale armor";
 		image = ItemSpriteSheet.ARMOR_SCALE;
 	}
 	
 	public ScaleArmor() {
 		super( 4 );
 	}
-	
-	@Override
-	public String desc() {
-		return
-			"The metal scales sewn onto a leather vest create a flexible, yet protective armor.";
-	}
+
 }

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,10 +29,13 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Amok;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Corruption;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Hunger;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Sleep;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.SoulMark;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Terror;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Surprise;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Wound;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
@@ -42,9 +45,9 @@ import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfAccuracy;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfWealth;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level.Feeling;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
-import com.shatteredpixel.shatteredpixeldungeon.utils.Utils;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
@@ -53,6 +56,7 @@ import java.util.HashSet;
 public abstract class Mob extends Char {
 
 	{
+		name = Messages.get(this, "name");
 		actPriority = 2; //hero gets priority over mobs.
 	}
 	
@@ -153,7 +157,7 @@ public abstract class Mob extends Char {
 		
 		sprite.hideAlert();
 		
-		if (paralysed) {
+		if (paralysed > 0) {
 			enemySeen = false;
 			spend( TICK );
 			return true;
@@ -176,20 +180,24 @@ public abstract class Mob extends Char {
 			}
 		}
 
-		//resets target if: the target is dead, the target has been lost (wandering)
-		//or if the mob is amoked/corrupted and targeting the hero (will try to target something else)
-		if ( enemy != null &&
-				!enemy.isAlive() || state == WANDERING ||
-				((buff( Amok.class ) != null || buff(Corruption.class) != null) && enemy == Dungeon.hero ))
-			enemy = null;
+		//find a new enemy if..
+		boolean newEnemy = false;
+		//we have no enemy, or the current one is dead
+		if ( enemy == null || !enemy.isAlive() || state == WANDERING)
+			newEnemy = true;
+		//We are amoked and current enemy is the hero
+		else if (buff( Amok.class ) != null && enemy == Dungeon.hero)
+			newEnemy = true;
+		//We are corrupted, and current enemy is either the hero or another corrupted character.
+		else if (buff(Corruption.class) != null && (enemy == Dungeon.hero || enemy.buff(Corruption.class) != null))
+			newEnemy = true;
 
-		//if there is no current target, find a new one.
-		if (enemy == null) {
+		if ( newEnemy ) {
 
-			HashSet<Char> enemies = new HashSet<Char>();
+			HashSet<Char> enemies = new HashSet<>();
 
-			//if the mob is amoked or corrupted...
-			if ( buff(Amok.class) != null || buff(Corruption.class) != null) {
+			//if the mob is amoked...
+			if ( buff(Amok.class) != null) {
 
 				//try to find an enemy mob to attack first.
 				for (Mob mob : Dungeon.level.mobs)
@@ -203,11 +211,21 @@ public abstract class Mob extends Char {
 						enemies.add(mob);
 				if (enemies.size() > 0) return Random.element(enemies);
 
-				//if there is nothing, go for the hero, unless corrupted, then go for nothing.
-				if (buff(Corruption.class) != null) return null;
+				//if there is nothing, go for the hero
 				else return Dungeon.hero;
 
-			//if the mob is not amoked...
+			//if the mob is corrupted...
+			} else if (buff(Corruption.class) != null) {
+
+				//look for enemy mobs to attack, which are also not corrupted
+				for (Mob mob : Dungeon.level.mobs)
+					if (mob != this && Level.fieldOfView[mob.pos] && mob.hostile && mob.buff(Corruption.class) == null)
+						enemies.add(mob);
+				if (enemies.size() > 0) return Random.element(enemies);
+
+				//otherwise go for nothing
+				return null;
+
 			} else {
 
 				//try to find ally mobs to attack.
@@ -243,7 +261,7 @@ public abstract class Mob extends Char {
 		super.add( buff );
 		if (buff instanceof Amok) {
 			if (sprite != null) {
-				sprite.showStatus( CharSprite.NEGATIVE, TXT_RAGE );
+				sprite.showStatus( CharSprite.NEGATIVE, Messages.get(this, "rage") );
 			}
 			state = HUNTING;
 		} else if (buff instanceof Terror) {
@@ -259,7 +277,7 @@ public abstract class Mob extends Char {
 	public void remove( Buff buff ) {
 		super.remove( buff );
 		if (buff instanceof Terror) {
-			sprite.showStatus( CharSprite.NEGATIVE, TXT_RAGE );
+			sprite.showStatus( CharSprite.NEGATIVE, Messages.get(this, "rage") );
 			state = HUNTING;
 		}
 	}
@@ -340,12 +358,10 @@ public abstract class Mob extends Char {
 	
 	@Override
 	public int defenseSkill( Char enemy ) {
-		if (enemySeen && !paralysed) {
+		boolean seen = enemySeen || (enemy == Dungeon.hero && !Dungeon.hero.canSurpriseAttack());
+		if (seen && paralysed == 0) {
 			int defenseSkill = this.defenseSkill;
-			int penalty = 0;
-			for (Buff buff : enemy.buffs(RingOfAccuracy.Accuracy.class)) {
-				penalty += ((RingOfAccuracy.Accuracy) buff).level;
-			}
+			int penalty = RingOfAccuracy.getBonus(enemy, RingOfAccuracy.Accuracy.class);
 			if (penalty != 0 && enemy == Dungeon.hero)
 				defenseSkill *= Math.pow(0.75, penalty);
 			return defenseSkill;
@@ -356,9 +372,9 @@ public abstract class Mob extends Char {
 	
 	@Override
 	public int defenseProc( Char enemy, int damage ) {
-		if (!enemySeen && enemy == Dungeon.hero) {
+		if (!enemySeen && enemy == Dungeon.hero && Dungeon.hero.canSurpriseAttack()) {
 			if (((Hero)enemy).subClass == HeroSubClass.ASSASSIN) {
-				damage *= 1.34f;
+				damage *= 1.25f;
 				Wound.hit(this);
 			} else {
 				Surprise.hit(this);
@@ -373,11 +389,25 @@ public abstract class Mob extends Char {
 				state = HUNTING;
 		}
 
+		if (buff(SoulMark.class) != null) {
+			int restoration = Math.max(damage, HP);
+			Dungeon.hero.buff(Hunger.class).satisfy(restoration*0.5f);
+			Dungeon.hero.HP = (int)Math.ceil(Math.min(Dungeon.hero.HT, Dungeon.hero.HP+(restoration*0.25f)));
+			Dungeon.hero.sprite.emitter().burst( Speck.factory(Speck.HEALING), 1 );
+		}
+
 		return damage;
+	}
+
+	public boolean surprisedBy( Char enemy ){
+		return !enemySeen && enemy == Dungeon.hero;
 	}
 
 	public void aggro( Char ch ) {
 		enemy = ch;
+		if (state != PASSIVE){
+			state = HUNTING;
+		}
 	}
 
 	@Override
@@ -415,12 +445,17 @@ public abstract class Mob extends Char {
 				}
 				Badges.validateNightHunter();
 			}
-			
-			if (Dungeon.hero.lvl <= maxLvl && EXP > 0) {
-				Dungeon.hero.sprite.showStatus( CharSprite.POSITIVE, TXT_EXP, EXP );
-				Dungeon.hero.earnExp( EXP );
+
+			int exp = exp();
+			if (exp > 0) {
+				Dungeon.hero.sprite.showStatus( CharSprite.POSITIVE, Messages.get(this, "exp", exp) );
+				Dungeon.hero.earnExp( exp );
 			}
 		}
+	}
+
+	public int exp() {
+		return Dungeon.hero.lvl <= maxLvl ? EXP : 0;
 	}
 	
 	@Override
@@ -429,11 +464,7 @@ public abstract class Mob extends Char {
 		super.die( cause );
 
 		float lootChance = this.lootChance;
-		int bonus = 0;
-		for (Buff buff : Dungeon.hero.buffs(RingOfWealth.Wealth.class)) {
-			bonus += ((RingOfWealth.Wealth) buff).level;
-		}
-
+		int bonus = RingOfWealth.getBonus(Dungeon.hero, RingOfWealth.Wealth.class);
 		lootChance *= Math.pow(1.1, bonus);
 		
 		if (Random.Float() < lootChance && Dungeon.hero.lvl <= maxLvl + 2) {
@@ -443,7 +474,7 @@ public abstract class Mob extends Char {
 		}
 		
 		if (Dungeon.hero.isAlive() && !Dungeon.visible[pos]) {
-			GLog.i( TXT_DIED );
+			GLog.i( Messages.get(this, "died") );
 		}
 	}
 	
@@ -484,7 +515,7 @@ public abstract class Mob extends Char {
 	}
 	
 	public String description() {
-		return "Real description is coming soon!";
+		return Messages.get(this, "desc");
 	}
 	
 	public void notice() {
@@ -501,11 +532,11 @@ public abstract class Mob extends Char {
 	}
 
 	public interface AiState {
-		public boolean act( boolean enemyInFOV, boolean justAlerted );
-		public String status();
+		boolean act( boolean enemyInFOV, boolean justAlerted );
+		String status();
 	}
 
-	private class Sleeping implements AiState {
+	protected class Sleeping implements AiState {
 
 		public static final String TAG	= "SLEEPING";
 
@@ -541,11 +572,11 @@ public abstract class Mob extends Char {
 
 		@Override
 		public String status() {
-			return Utils.format( "This %s is sleeping", name );
+			return Messages.get(this, "status", name );
 		}
 	}
 
-	private class Wandering implements AiState {
+	protected class Wandering implements AiState {
 
 		public static final String TAG	= "WANDERING";
 
@@ -578,11 +609,11 @@ public abstract class Mob extends Char {
 
 		@Override
 		public String status() {
-			return Utils.format( "This %s is wandering", name );
+			return Messages.get(this, "status", name );
 		}
 	}
 
-	private class Hunting implements AiState {
+	protected class Hunting implements AiState {
 
 		public static final String TAG	= "HUNTING";
 
@@ -617,7 +648,7 @@ public abstract class Mob extends Char {
 
 		@Override
 		public String status() {
-			return Utils.format( "This %s is hunting", name );
+			return Messages.get(this, "status", name );
 		}
 	}
 
@@ -628,7 +659,10 @@ public abstract class Mob extends Char {
 		@Override
 		public boolean act( boolean enemyInFOV, boolean justAlerted ) {
 			enemySeen = enemyInFOV;
-			if (enemyInFOV) {
+			//loses target when 0-dist rolls a 6 or greater.
+			if (enemy == null || !enemyInFOV && 1 + Random.Int(Level.distance(pos, target)) >= 6){
+				target = -1;
+			} else {
 				target = enemy.pos;
 			}
 
@@ -652,11 +686,11 @@ public abstract class Mob extends Char {
 
 		@Override
 		public String status() {
-			return Utils.format( "This %s is fleeing", name );
+			return Messages.get(this, "status", name );
 		}
 	}
 
-	private class Passive implements AiState {
+	protected class Passive implements AiState {
 
 		public static final String TAG	= "PASSIVE";
 
@@ -669,7 +703,7 @@ public abstract class Mob extends Char {
 
 		@Override
 		public String status() {
-			return Utils.format( "This %s is passive", name );
+			return Messages.get(this, "status", name );
 		}
 	}
 }

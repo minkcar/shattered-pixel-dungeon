@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,10 +32,14 @@ public class Regeneration extends Buff {
 	public boolean act() {
 		if (target.isAlive()) {
 
-
-
 			if (target.HP < target.HT && !((Hero)target).isStarving()) {
-				target.HP += 1;
+				LockedFloor lock = target.buff(LockedFloor.class);
+				if (target.HP > 0 && (lock == null || lock.regenOn())) {
+					target.HP += 1;
+					if (target.HP == target.HT) {
+						((Hero) target).resting = false;
+					}
+				}
 			}
 
 			ChaliceOfBlood.chaliceRegen regenBuff = Dungeon.hero.buff( ChaliceOfBlood.chaliceRegen.class);
@@ -44,7 +48,7 @@ public class Regeneration extends Buff {
 				if (regenBuff.isCursed())
 					spend( REGENERATION_DELAY * 1.5f );
 				else
-					spend( REGENERATION_DELAY - regenBuff.level()*0.9f );
+					spend( REGENERATION_DELAY - regenBuff.itemLevel()*0.9f );
 			else
 				spend( REGENERATION_DELAY );
 			

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,43 +23,40 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.shatteredpixel.shatteredpixeldungeon.ResultDescriptions;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Artifact;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HornOfPlenty;
-import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRecharging;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
-import com.watabou.utils.Random;
 
 public class Hunger extends Buff implements Hero.Doom {
 
 	private static final float STEP	= 10f;
 
-	public static final float HUNGRY	= 260f;
-	public static final float STARVING	= 360f;
-
-	private static final String TXT_HUNGRY		= "You are hungry.";
-	private static final String TXT_STARVING	= "You are starving!";
-	private static final String TXT_DEATH		= "You starved to death...";
+	public static final float HUNGRY	= 300f;
+	public static final float STARVING	= 400f;
 
 	private float level;
+	private float partialDamage;
 
-	private static final String LEVEL	= "level";
+	private static final String LEVEL			= "level";
+	private static final String PARTIALDAMAGE 	= "partialDamage";
 
 	@Override
 	public void storeInBundle( Bundle bundle ) {
 		super.storeInBundle(bundle);
 		bundle.put( LEVEL, level );
+		bundle.put( PARTIALDAMAGE, partialDamage );
 	}
 
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
 		super.restoreFromBundle( bundle );
 		level = bundle.getFloat( LEVEL );
+		partialDamage = bundle.getFloat(PARTIALDAMAGE);
 	}
 
 	@Override
@@ -76,18 +73,21 @@ public class Hunger extends Buff implements Hero.Doom {
 
 			if (isStarving()) {
 
-				if (Random.Float() < 0.3f && (target.HP > 1 || !target.paralysed)) {
+				partialDamage += target.HT/100f;
 
-					hero.damage( 1, this );
-
+				if (partialDamage > 1){
+					target.damage( (int)partialDamage, this);
+					partialDamage -= (int)partialDamage;
 				}
+				
 			} else {
 
 				float newLevel = level + STEP;
 				boolean statusUpdated = false;
 				if (newLevel >= STARVING) {
 
-					GLog.n( TXT_STARVING );
+					GLog.n( Messages.get(this, "onstarving") );
+					hero.resting = false;
 					hero.damage( 1, this );
 					statusUpdated = true;
 
@@ -95,7 +95,7 @@ public class Hunger extends Buff implements Hero.Doom {
 
 				} else if (newLevel >= HUNGRY && level < HUNGRY) {
 
-					GLog.w( TXT_HUNGRY );
+					GLog.w( Messages.get(this, "onhungry") );
 					statusUpdated = true;
 
 				}
@@ -120,27 +120,12 @@ public class Hunger extends Buff implements Hero.Doom {
 	}
 
 	public void satisfy( float energy ) {
-		if (((Hero) target).subClass == HeroSubClass.WARLOCK){
-			Buff.affect( target, ScrollOfRecharging.Recharging.class, energy/50f);
-			return;
-		}
 
 		Artifact.ArtifactBuff buff = target.buff( HornOfPlenty.hornRecharge.class );
 		if (buff != null && buff.isCursed()){
 			energy *= 0.67f;
-			GLog.n("The cursed horn steals some of the food energy as you eat.");
+			GLog.n( Messages.get(this, "cursedhorn") );
 		}
-
-		if (!Dungeon.isChallenged(Challenges.NO_FOOD))
-			reduceHunger( energy );
-	}
-
-	public void consumeSoul( float energy ){
-
-		if (level >= STARVING)
-			energy *= 1.33f;
-		else if (level < HUNGRY)
-			energy *= 0.67f;
 
 		if (!Dungeon.isChallenged(Challenges.NO_FOOD))
 			reduceHunger( energy );
@@ -177,9 +162,9 @@ public class Hunger extends Buff implements Hero.Doom {
 	@Override
 	public String toString() {
 		if (level < STARVING) {
-			return "Hungry";
+			return Messages.get(this, "hungry");
 		} else {
-			return "Starving";
+			return Messages.get(this, "starving");
 		}
 	}
 
@@ -187,16 +172,12 @@ public class Hunger extends Buff implements Hero.Doom {
 	public String desc() {
 		String result;
 		if (level < STARVING) {
-			result = "You can feel your stomach calling out for food, but it's not too urgent yet.\n\n";
+			result = Messages.get(this, "desc_intro_hungry");
 		} else {
-			result = "You're so hungry it hurts.\n\n";
+			result = Messages.get(this, "desc_intro_starving");
 		}
 
-		result += "Hunger slowly increases as you spend time in the dungeon, eventually you will begin to starve. " +
-				"While starving you will slowly lose health instead of regenerating it.\n" +
-				"\n" +
-				"Rationing is important! If you have health to spare starving isn't a bad idea if it means there will " +
-				"be more food later. Effective rationing can make food last a lot longer!\n\n";
+		result += Messages.get(this, "desc");
 
 		return result;
 	}
@@ -206,7 +187,7 @@ public class Hunger extends Buff implements Hero.Doom {
 
 		Badges.validateDeathFromHunger();
 
-		Dungeon.fail( ResultDescriptions.HUNGER );
-		GLog.n( TXT_DEATH );
+		Dungeon.fail( getClass() );
+		GLog.n( Messages.get(this, "ondeath") );
 	}
 }

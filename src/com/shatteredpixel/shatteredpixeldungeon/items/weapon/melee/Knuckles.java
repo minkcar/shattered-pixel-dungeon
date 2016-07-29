@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,16 +25,16 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 public class Knuckles extends MeleeWeapon {
 
 	{
-		name = "knuckleduster";
 		image = ItemSpriteSheet.KNUCKLEDUSTER;
+
+		tier = 1;
+		DLY = 0.5f; //2x speed
 	}
-	
-	public Knuckles() {
-		super( 1, 1f, 0.5f );
-	}
-	
+
 	@Override
-	public String desc() {
-		return "A piece of iron shaped to fit around the knuckles.";
+	public int max(int lvl) {
+		return  3*(tier+1) +    //6 base, down from 10
+				lvl*tier;       //+1 per level, down from +2
 	}
+
 }

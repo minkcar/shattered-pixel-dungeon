@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,50 +20,103 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.windows;
 
-import java.util.Collections;
-
-import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
-import com.watabou.noosa.BitmapText;
-import com.watabou.noosa.Image;
-import com.watabou.noosa.ui.Component;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Journal;
+import com.shatteredpixel.shatteredpixeldungeon.items.keys.GoldenKey;
+import com.shatteredpixel.shatteredpixeldungeon.items.keys.IronKey;
+import com.shatteredpixel.shatteredpixeldungeon.items.keys.SkeletonKey;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
+import com.shatteredpixel.shatteredpixeldungeon.ui.RedButton;
+import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextMultiline;
 import com.shatteredpixel.shatteredpixeldungeon.ui.ScrollPane;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
+import com.watabou.noosa.BitmapText;
+import com.watabou.noosa.ColorBlock;
+import com.watabou.noosa.Image;
+import com.watabou.noosa.ui.Component;
+
+import java.util.Collections;
 
 public class WndJournal extends Window {
 
-	private static final int WIDTH        = 112;
-	private static final int HEIGHT_P    = 160;
-	private static final int HEIGHT_L    = 144;
+	private static final int WIDTH      = 112;
+	private static final int HEIGHT     = 160;
 
-	private static final int ITEM_HEIGHT	= 18;
+	private static final int ITEM_HEIGHT	= 17;
 	
-	private static final String TXT_TITLE	= "Journal";
-	
-	private BitmapText txtTitle;
+	private RedButton btnTitle;
+	private RedButton btnCatalogues;
 	private ScrollPane list;
 	
 	public WndJournal() {
 		
 		super();
-		resize( WIDTH, ShatteredPixelDungeon.landscape() ? HEIGHT_L : HEIGHT_P );
+		resize( WIDTH, HEIGHT );
 
-		txtTitle = PixelScene.createText( TXT_TITLE, 9 );
-		txtTitle.hardlight( Window.TITLE_COLOR );
-		txtTitle.measure();
-		txtTitle.x = PixelScene.align( PixelScene.uiCamera, (WIDTH - txtTitle.width()) / 2 );
-		add( txtTitle );
+		//does nothing, we're already in the journal
+		btnTitle = new RedButton( Messages.get(this, "title"), 9 );
+		btnTitle.textColor( Window.TITLE_COLOR );
+		btnTitle.setRect(0, 0, WIDTH/2f - 1, btnTitle.reqHeight());
+		PixelScene.align(btnTitle);
+		add( btnTitle );
+
+		btnCatalogues = new RedButton( Messages.get(WndCatalogs.class, "title"), 9 ){
+			@Override
+			protected void onClick() {
+				hide();
+				GameScene.show(new WndCatalogs());
+			}
+		};
+		btnCatalogues.setRect(WIDTH/2f + 1, 0, WIDTH/2f - 1, btnCatalogues.reqHeight());
+		PixelScene.align( btnCatalogues );
+		add( btnCatalogues );
 		
 		Component content = new Component();
 		
 		Collections.sort( Journal.records );
 		
 		float pos = 0;
+
+		//Keys
+		for (int i = Dungeon.hero.belongings.ironKeys.length-1; i > 0; i--){
+			if (Dungeon.hero.belongings.specialKeys[i] > 0){
+				String text;
+				if (i % 5 == 0)
+					text = Messages.capitalize(Messages.get(SkeletonKey.class, "name"));
+				else
+					text = Messages.capitalize(Messages.get(GoldenKey.class, "name"));
+
+				if (Dungeon.hero.belongings.specialKeys[i] > 1){
+					text += " x" + Dungeon.hero.belongings.specialKeys[i];
+				}
+				ListItem item = new ListItem( Messages.titleCase(text), i );
+				item.setRect( 0, pos, WIDTH, ITEM_HEIGHT );
+				content.add( item );
+
+				pos += item.height();
+			}
+			if (Dungeon.hero.belongings.ironKeys[i] > 0){
+				String text = Messages.titleCase(Messages.get(IronKey.class, "name"));
+
+				if (Dungeon.hero.belongings.ironKeys[i] > 1){
+					text += " x" + Dungeon.hero.belongings.ironKeys[i];
+				}
+
+				ListItem item = new ListItem( text, i );
+				item.setRect( 0, pos, WIDTH, ITEM_HEIGHT );
+				content.add( item );
+
+				pos += item.height();
+			}
+
+		}
+
+		//Journal entries
 		for (Journal.Record rec : Journal.records) {
-			ListItem item = new ListItem( rec.feature, rec.depth );
+			ListItem item = new ListItem( rec.feature.desc(), rec.depth );
 			item.setRect( 0, pos, WIDTH, ITEM_HEIGHT );
 			content.add( item );
 			
@@ -75,21 +128,20 @@ public class WndJournal extends Window {
 		list = new ScrollPane( content );
 		add( list );
 
-		list.setRect( 0, txtTitle.height(), WIDTH, height - txtTitle.height() );
+		list.setRect( 0, btnTitle.height() + 1, WIDTH, height - btnTitle.height() - 1 );
 	}
 	
 	private static class ListItem extends Component {
 		
-		private BitmapText feature;
+		private RenderedTextMultiline feature;
 		private BitmapText depth;
-		
+		private ColorBlock line;
 		private Image icon;
 		
-		public ListItem( Journal.Feature f, int d ) {
+		public ListItem( String text, int d ) {
 			super();
 			
-			feature.text( f.desc );
-			feature.measure();
+			feature.text( text );
 			
 			depth.text( Integer.toString( d ) );
 			depth.measure();
@@ -102,11 +154,14 @@ public class WndJournal extends Window {
 		
 		@Override
 		protected void createChildren() {
-			feature = PixelScene.createText( 9 );
+			feature = PixelScene.renderMultiline( 7 );
 			add( feature );
-			
-			depth = new BitmapText( PixelScene.font1x );
+
+			depth = new BitmapText( PixelScene.pixelFont);
 			add( depth );
+
+			line = new ColorBlock( 1, 1, 0xFF222222);
+			add(line);
 			
 			icon = Icons.get( Icons.DEPTH );
 			add( icon );
@@ -114,15 +169,22 @@ public class WndJournal extends Window {
 		
 		@Override
 		protected void layout() {
-			
-			icon.x = width - icon.width;
-			
-			depth.x = icon.x - 1 - depth.width();
-			depth.y = PixelScene.align( y + (height - depth.height()) / 2 );
-			
-			icon.y = depth.y - 1;
-			
-			feature.y = PixelScene.align( depth.y + depth.baseLine() - feature.baseLine() );
+
+			depth.x = (8 - depth.width())/2f;
+			depth.y = y + 1.5f + (height() - 1 - depth.height()) / 2f;
+			PixelScene.align(depth);
+
+			icon.x = 8;
+			icon.y = y + 1 + (height() - 1 - icon.height()) / 2f;
+			PixelScene.align(icon);
+
+			line.size(width, 1);
+			line.x = 0;
+			line.y = y;
+
+			feature.maxWidth((int)(width - icon.width() - 8 - 1));
+			feature.setPos(icon.x + icon.width() + 1, y + 1 + (height() - 1 - feature.height()) / 2f);
+			PixelScene.align(feature);
 		}
 	}
 }

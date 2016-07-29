@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,16 +20,35 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.levels;
 
-import com.watabou.noosa.Game;
-import com.watabou.noosa.Group;
-import com.watabou.noosa.Scene;
-import com.watabou.noosa.particles.PixelParticle;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.DungeonTilemap;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Room.Type;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ConfusionTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ExplosiveTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.FireTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.FlashingTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.FlockTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.FrostTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.GrippingTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.GuardianTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.LightningTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.OozeTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ParalyticTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.PitfallTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.PoisonTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.RockfallTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.SpearTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.SummoningTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.TeleportationTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.VenomTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.WarpingTrap;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.watabou.noosa.Game;
+import com.watabou.noosa.Group;
+import com.watabou.noosa.particles.PixelParticle;
 import com.watabou.utils.PointF;
 import com.watabou.utils.Random;
 import com.watabou.utils.Rect;
@@ -60,10 +79,26 @@ public class CavesLevel extends RegularLevel {
 	protected boolean[] grass() {
 		return Patch.generate( feeling == Feeling.GRASS ? 0.55f : 0.35f, 3 );
 	}
+
+	@Override
+	protected Class<?>[] trapClasses() {
+		return new Class[]{ FireTrap.class, FrostTrap.class, PoisonTrap.class, SpearTrap.class, VenomTrap.class,
+				ExplosiveTrap.class, FlashingTrap.class, GrippingTrap.class, ParalyticTrap.class, LightningTrap.class, RockfallTrap.class, OozeTrap.class,
+				ConfusionTrap.class, FlockTrap.class, GuardianTrap.class, PitfallTrap.class, SummoningTrap.class, TeleportationTrap.class,
+				WarpingTrap.class};
+	}
+
+	@Override
+	protected float[] trapChances() {
+		return new float[]{ 8, 8, 8, 8, 8,
+				4, 4, 4, 4, 4, 4, 4,
+				2, 2, 2, 2, 2, 2,
+				1 };
+	}
 	
 	@Override
 	protected boolean assignRoomType() {
-		super.assignRoomType();
+		if (!super.assignRoomType()) return false;
 
 		if (!Blacksmith.Quest.spawn( rooms ) && Dungeon.depth == 14)
 			return false;
@@ -189,45 +224,46 @@ public class CavesLevel extends RegularLevel {
 	@Override
 	public String tileName( int tile ) {
 		switch (tile) {
-		case Terrain.GRASS:
-			return "Fluorescent moss";
-		case Terrain.HIGH_GRASS:
-			return "Fluorescent mushrooms";
-		case Terrain.WATER:
-			return "Freezing cold water.";
-		default:
-			return super.tileName( tile );
+			case Terrain.GRASS:
+				return Messages.get(CavesLevel.class, "grass_name");
+			case Terrain.HIGH_GRASS:
+				return Messages.get(CavesLevel.class, "high_grass_name");
+			case Terrain.WATER:
+				return Messages.get(CavesLevel.class, "water_name");
+			default:
+				return super.tileName( tile );
 		}
 	}
 	
 	@Override
 	public String tileDesc( int tile ) {
 		switch (tile) {
-		case Terrain.ENTRANCE:
-			return "The ladder leads up to the upper depth.";
-		case Terrain.EXIT:
-			return "The ladder leads down to the lower depth.";
-		case Terrain.HIGH_GRASS:
-			return "Huge mushrooms block the view.";
-		case Terrain.WALL_DECO:
-			return "A vein of some ore is visible on the wall. Gold?";
-		case Terrain.BOOKSHELF:
-			return "Who would need a bookshelf in a cave?";
-		default:
-			return super.tileDesc( tile );
+			case Terrain.ENTRANCE:
+				return Messages.get(CavesLevel.class, "entrance_desc");
+			case Terrain.EXIT:
+				return Messages.get(CavesLevel.class, "exit_desc");
+			case Terrain.HIGH_GRASS:
+				return Messages.get(CavesLevel.class, "high_grass_desc");
+			case Terrain.WALL_DECO:
+				return Messages.get(CavesLevel.class, "wall_deco_desc");
+			case Terrain.BOOKSHELF:
+				return Messages.get(CavesLevel.class, "bookshelf_desc");
+			default:
+				return super.tileDesc( tile );
 		}
 	}
 	
 	@Override
-	public void addVisuals( Scene scene ) {
-		super.addVisuals( scene );
-		addVisuals( this, scene );
+	public Group addVisuals() {
+		super.addVisuals();
+		addCavesVisuals( this, visuals );
+		return visuals;
 	}
 	
-	public static void addVisuals( Level level, Scene scene ) {
+	public static void addCavesVisuals( Level level, Group group ) {
 		for (int i=0; i < LENGTH; i++) {
 			if (level.map[i] == Terrain.WALL_DECO) {
-				scene.add( new Vein( i ) );
+				group.add( new Vein( i ) );
 			}
 		}
 	}
@@ -252,8 +288,14 @@ public class CavesLevel extends RegularLevel {
 			if (visible = Dungeon.visible[pos]) {
 				
 				super.update();
-				
+
 				if ((delay -= Game.elapsed) <= 0) {
+
+					//pickaxe can remove the ore, should remove the sparkling too.
+					if (Dungeon.level.map[pos] != Terrain.WALL_DECO){
+						kill();
+						return;
+					}
 					
 					delay = Random.Float();
 					

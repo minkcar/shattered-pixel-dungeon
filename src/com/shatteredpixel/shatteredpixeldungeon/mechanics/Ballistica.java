@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,9 +41,6 @@ public class Ballistica {
 	public static final int STOP_TERRAIN = 4; //ballistica will stop on terrain(LOS blocking, impassable, etc.)
 
 	public static final int PROJECTILE =  	STOP_TARGET	| STOP_CHARS	| STOP_TERRAIN;
-
-	//TODO: consider if we want thrown items to use this, or just have them all be projectileWeapons
-	public static final int THROWN_ITEM =   STOP_TARGET | STOP_TERRAIN;
 
 	public static final int MAGIC_BOLT =    STOP_CHARS  | STOP_TERRAIN;
 

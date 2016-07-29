@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,15 +29,12 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Blindness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cripple;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Light;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.*;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Ghost;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Beam;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.RainbowParticle;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShadowParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMagicMapping;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Paralysis;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
@@ -49,65 +46,51 @@ import com.watabou.utils.Callback;
 import com.watabou.utils.PointF;
 import com.watabou.utils.Random;
 
-import java.util.Arrays;
-import java.util.HashSet;
-
-public class WandOfPrismaticLight extends Wand {
+public class WandOfPrismaticLight extends DamageWand {
 
 	{
-		name = "Wand of Prismatic Light";
 		image = ItemSpriteSheet.WAND_PRISMATIC_LIGHT;
 
 		collisionProperties = Ballistica.MAGIC_BOLT;
 	}
 
-	//FIXME: this is sloppy
-	private static HashSet<Class> evilMobs = new HashSet<Class>(Arrays.asList(
-			//Any Location
-			Mimic.class, Wraith.class,
-			//Sewers
-			Ghost.FetidRat.class,
-			Goo.class,
-			//Prison
-			Skeleton.class , Thief.class, Bandit.class,
-			//Caves
+	public int min(int lvl){
+		return 1+lvl;
+	}
 
-			//City
-			Warlock.class, Monk.class, Senior.class,
-			King.class, King.Undead.class,
-			//Halls
-			Succubus.class, Eye.class, Scorpio.class, Acidic.class,
-			Yog.class, Yog.RottingFist.class, Yog.BurningFist.class, Yog.Larva.class
-	));
+	public int max(int lvl){
+		return 5+3*lvl;
+	}
 
 	@Override
 	protected void onZap(Ballistica beam) {
 		Char ch = Actor.findChar(beam.collisionPos);
 		if (ch != null){
-		   affectTarget(ch);
+			processSoulMark(ch, chargesPerCast());
+			affectTarget(ch);
 		}
 		affectMap(beam);
 
-		if (curUser.viewDistance < 4)
-			Buff.prolong( curUser, Light.class, 10f+level*5);
+		if (Dungeon.level.viewDistance < 4)
+			Buff.prolong( curUser, Light.class, 10f+level()*5);
 	}
 
 	private void affectTarget(Char ch){
-		int dmg = Random.NormalIntRange(level, (int) (8+(level*(level/5f))));
+		int dmg = damageRoll();
 
 		//three in (5+lvl) chance of failing
-		if (Random.Int(5+level) >= 3) {
-			Buff.prolong(ch, Blindness.class, 2f + (level * 0.34f));
+		if (Random.Int(5+level()) >= 3) {
+			Buff.prolong(ch, Blindness.class, 2f + (level() * 0.333f));
 			ch.sprite.emitter().burst(Speck.factory(Speck.LIGHT), 6 );
 		}
 
-		if (evilMobs.contains(ch.getClass())){
-			ch.sprite.emitter().start( ShadowParticle.UP, 0.05f, 10+level );
+		if (ch.properties().contains(Char.Property.DEMONIC) || ch.properties().contains(Char.Property.UNDEAD)){
+			ch.sprite.emitter().start( ShadowParticle.UP, 0.05f, 10+level() );
 			Sample.INSTANCE.play(Assets.SND_BURNING);
 
-			ch.damage((int)(dmg*1.5), this);
+			ch.damage(Math.round(dmg*1.333f), this);
 		} else {
-			ch.sprite.centerEmitter().burst( RainbowParticle.BURST, 10+level );
+			ch.sprite.centerEmitter().burst( RainbowParticle.BURST, 10+level() );
 
 			ch.damage(dmg, this);
 		}
@@ -155,7 +138,7 @@ public class WandOfPrismaticLight extends Wand {
 	@Override
 	public void onHit(MagesStaff staff, Char attacker, Char defender, int damage) {
 		//cripples enemy
-		Buff.prolong( defender, Cripple.class, 1f+staff.level);
+		Buff.prolong( defender, Cripple.class, 1f+staff.level());
 	}
 
 	@Override
@@ -168,13 +151,4 @@ public class WandOfPrismaticLight extends Wand {
 		particle.radiateXY(1f);
 	}
 
-	@Override
-	public String desc() {
-		return
-			"This wand is made of a solid piece of translucent crystal, like a long chunk of smooth glass. " +
-			"It becomes clear towards the tip, where you can see colorful lights dancing around inside it.\n\n" +
-			"This wand shoots rays of light which damage and blind enemies and cut through the darkness of the dungeon, " +
-			"revealing hidden areas and traps. Evildoers, demons, and the undead will burn in the bright light " +
-			"of the wand, taking significant bonus damage.";
-	}
 }

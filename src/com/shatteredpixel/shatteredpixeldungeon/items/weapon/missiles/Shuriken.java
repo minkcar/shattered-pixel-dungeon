@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,17 +27,26 @@ import com.watabou.utils.Random;
 public class Shuriken extends MissileWeapon {
 
 	{
-		name = "shuriken";
 		image = ItemSpriteSheet.SHURIKEN;
-		
-		STR = 13;
-		
-		MIN = 2;
-		MAX = 6;
-		
+
 		DLY = 0.5f;
 	}
-	
+
+	@Override
+	public int min(int lvl) {
+		return 2;
+	}
+
+	@Override
+	public int max(int lvl) {
+		return 6;
+	}
+
+	@Override
+	public int STRReq(int lvl) {
+		return 13;
+	}
+
 	public Shuriken() {
 		this( 1 );
 	}
@@ -45,13 +54,6 @@ public class Shuriken extends MissileWeapon {
 	public Shuriken( int number ) {
 		super();
 		quantity = number;
-	}
-	
-	@Override
-	public String desc() {
-		return
-			"Star-shaped pieces of metal with razor-sharp blades do significant damage " +
-			"when they hit a target. They can be thrown at very high rate.";
 	}
 	
 	@Override

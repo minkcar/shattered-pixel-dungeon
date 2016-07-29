@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,25 +21,23 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Ghost;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.watabou.utils.Random;
 
 public class Rat extends Mob {
 
 	{
-		name = "marsupial rat";
 		spriteClass = RatSprite.class;
 		
 		HP = HT = 8;
-		defenseSkill = 3;
+		defenseSkill = 2;
 		
 		maxLvl = 5;
 	}
 	
 	@Override
 	public int damageRoll() {
-		return Random.NormalIntRange( 1, 5 );
+		return Random.NormalIntRange( 1, 4 );
 	}
 	
 	@Override
@@ -48,14 +46,7 @@ public class Rat extends Mob {
 	}
 	
 	@Override
-	public int dr() {
-		return 1;
-	}
-	
-	@Override
-	public String description() {
-		return
-			"Marsupial rats are aggressive but rather weak denizens " +
-			"of the sewers. They have a nasty bite, but are only life threatening in large numbers.";
+	public int drRoll() {
+		return Random.NormalIntRange(0, 1);
 	}
 }

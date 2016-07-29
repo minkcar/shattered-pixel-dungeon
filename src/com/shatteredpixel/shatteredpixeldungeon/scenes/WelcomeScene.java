@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,237 +20,182 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.scenes;
 
-import com.shatteredpixel.shatteredpixeldungeon.Badges;
-import com.shatteredpixel.shatteredpixeldungeon.Chrome;
+import android.opengl.GLES20;
+import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Rankings;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
-import com.shatteredpixel.shatteredpixeldungeon.ui.Archs;
+import com.shatteredpixel.shatteredpixeldungeon.effects.BannerSprites;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Fireball;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RedButton;
-import com.shatteredpixel.shatteredpixeldungeon.ui.ScrollPane;
-import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
-import com.watabou.noosa.BitmapTextMultiline;
+import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextMultiline;
 import com.watabou.noosa.Camera;
 import com.watabou.noosa.Game;
-import com.watabou.noosa.NinePatch;
-import com.watabou.noosa.ui.Component;
+import com.watabou.noosa.Image;
+import com.watabou.noosa.audio.Sample;
 
-//TODO: update this class with relevant info as new versions come out.
+import javax.microedition.khronos.opengles.GL10;
+
 public class WelcomeScene extends PixelScene {
 
-	private static final String TTL_Welcome = "Welcome!";
-
-	private static final String TTL_Update = "v0.3.0: The Wand Rework!";
-
-	private static final String TTL_Future = "Wait What?";
-
-	private static final String TXT_Welcome =
-			"Shattered Pixel Dungeon is a rework/expansion of Watabou's Pixel Dungeon.\n\n"+
-			"The goal is to enhance the game by improving existing content and adding tonnes of new stuff!\n\n"+
-			"Shattered Pixel Dungeon is being constantly updated, so expect more new content soon!\n\n"+
-			"Happy Dungeoneering!";
-
-	private static final String TXT_Update =
-			"v0.3.0e & v0.3.0d:\n" +
-					"- Performance improvements\n" +
-					"- Various bugfixes\n" +
-					"\n" +
-					"v0.3.0c:\n" +
-					"- Lots of under-the-hood changes\n" +
-					"(let me know if you run into any bugs)\n" +
-					"- Many bugfixes\n" +
-					"Rebalances:\n" +
-					"- Wand of Corruption & Venom rebalanced.\n" +
-					"- Mages staff now has +1 max charges\n" +
-					"- Mage now partially IDs wands on use\n" +
-					"- Magic missile wand reduced to 3 max charges\n" +
-					"- Warlock gets more recharge from food\n" +
-					"- Battlemage only recharges his staff\n" +
-					"- Many battlemage effects tweaked\n" +
-					"- Yog Dzewa now heals 1hp per turn\n" +
-					"\n" +
-					"v0.3.0b & v0.3.0a:\n" +
-					"- Fixed many bugs\n" +
-					"- Buffed mage and huntress base damages to compensate for increased rat numbers on floor 1.\n" +
-					"\n" +
-					"v0.3.0:\n" +
-					"Mage reworked!:\n" +
-					"- No longer starts with knuckledusters or a wand\n" +
-					"- Can no longer equip wands\n" +
-					"- Now starts with a unique mages staff, empowered with magic missile to start.\n" +
-					"- Battlemage reworked, staff now deals bonus effects when used as a melee weapon.\n" +
-					"- Warlock reworked, gains more health and fullness from gaining exp, but food no longer restores hunger.\n" +
-					"\n" +
-					"General Wand Changes:\n" +
-					"- Wand types are now known by default.\n" +
-					"- Wands now each have unique sprites.\n" +
-					"- Wands now cap at 10 charges instead of 9\n" +
-					"- Wands now recharge faster the more charges are missing, for all classes.\n" +
-					"- Self-targeting with wands is no longer possible.\n" +
-					"- Wand recharge effects now give charge over time, instead of instantly.\n" +
-					"- Wands can now be cursed!\n" +
-					"\n" +
-					"All wands have been reworked!\n" +
-					"\n" +
-					"Removed wands:\n" +
-					"- Flock\n" +
-					"- Blink\n" +
-					"- Teleportation\n" +
-					"- Avalanche\n" +
-					"\n" +
-					"Reworked wands:\n" +
-					"- Magic Missile\n" +
-					"- Lightning\n" +
-					"- Disintegration\n" +
-					"- Fireblast (previously Firebolt)\n" +
-					"- Venom (previously poison)\n" +
-					"- Frost (previously Slowing)\n" +
-					"- Blast Wave (previously Telekinesis)\n" +
-					"- Corruption (previously Amok)\n" +
-					"- Regrowth\n" +
-					"\n" +
-					"New Wands:\n" +
-					"- Prismatic Light\n" +
-					"- Transfusion\n" +
-					"\n" +
-					"New Artifacts:\n" +
-					"- Ethereal Chains\n" +
-					"- Lloyd's Beacon\n" +
-					"\n" +
-					"Misc. Balance changes:\n" +
-					"- Blessed Ankhs now revive at 1/4hp, but also grant initiative.\n" +
-					"- Alchemist's Toolkit removed (will be reworked)\n" +
-					"- Chalice of blood nerfed, now regens less hp at high levels.\n" +
-					"- Cape of Thorns buffed, now absorbs all damage, but only deflects adjacent attacks.\n" +
-					"- Sandals of nature adjusted, now give more seeds, less dew.\n" +
-					"- Hunger no longer increases while fighting bosses.\n" +
-					"- Floor 1 now spawns 10 rats every time, exactly enough to level up.\n" +
-					"- Scrolls of recharging and mirror image are now more common.\n" +
-					"- Mimics are now less common, stronger, & give better loot.\n" +
-					"\n" +
-					"UI tweaks:\n" +
-					"- New app icon!\n" +
-					"- Shading added to main game interface\n" +
-					"- Buffs now have descriptions, tap their icons!\n" +
-					"- Visual indicator added for surprising enemies";
-
-	private static final String TXT_Future =
-			"It seems that your current saves are from a future version of Shattered Pixel Dungeon!\n\n"+
-			"Either you're messing around with older versions of the app, or something has gone buggy.\n\n"+
-			"Regardless, tread with caution! Your saves may contain things which don't exist in this version, "+
-			"this could cause some very weird errors to occur.";
-
-	private static final String LNK = "https://play.google.com/store/apps/details?id=com.shatteredpixel.shatteredpixeldungeon";
+	private static int LATEST_UPDATE = 114;
 
 	@Override
 	public void create() {
 		super.create();
 
-		final int gameversion = ShatteredPixelDungeon.version();
+		final int previousVersion = ShatteredPixelDungeon.version();
 
-		BitmapTextMultiline title;
-		BitmapTextMultiline text;
-
-		if (gameversion == 0) {
-
-			text = createMultiline(TXT_Welcome, 8);
-			title = createMultiline(TTL_Welcome, 16);
-
-		} else if (gameversion <= Game.versionCode) {
-
-			text = createMultiline(TXT_Update, 6 );
-			title = createMultiline(TTL_Update, 9 );
-
-		} else {
-
-			text = createMultiline( TXT_Future, 8 );
-			title = createMultiline( TTL_Future, 16 );
-
+		if (ShatteredPixelDungeon.versionCode == previousVersion) {
+			ShatteredPixelDungeon.switchNoFade(TitleScene.class);
+			return;
 		}
+
+		uiCamera.visible = false;
 
 		int w = Camera.main.width;
 		int h = Camera.main.height;
 
-		int pw = w - 10;
-		int ph = h - 50;
-
-		title.maxWidth = pw;
-		title.measure();
-		title.hardlight(Window.SHPX_COLOR);
-
-		title.x = align( (w - title.width()) / 2 );
-		title.y = align( 8 );
+		Image title = BannerSprites.get( BannerSprites.Type.PIXEL_DUNGEON );
+		title.brightness(0.6f);
 		add( title );
 
-		NinePatch panel = Chrome.get(Chrome.Type.WINDOW);
-		panel.size( pw, ph );
-		panel.x = (w - pw) / 2;
-		panel.y = (h - ph) / 2;
-		add( panel );
+		float topRegion = Math.max(95f, h*0.45f);
 
-		ScrollPane list = new ScrollPane( new Component() );
-		add( list );
-		list.setRect(
-				panel.x + panel.marginLeft(),
-				panel.y + panel.marginTop(),
-				panel.innerWidth(),
-				panel.innerHeight());
-		list.scrollTo( 0, 0 );
+		title.x = (w - title.width()) / 2f;
+		if (ShatteredPixelDungeon.landscape())
+			title.y = (topRegion - title.height()) / 2f;
+		else
+			title.y = 16 + (topRegion - title.height() - 16) / 2f;
 
-		Component content = list.content();
-		content.clear();
+		align(title);
 
-		text.maxWidth = (int) panel.innerWidth();
-		text.measure();
+		Image signs = new Image( BannerSprites.get( BannerSprites.Type.PIXEL_DUNGEON_SIGNS ) ) {
+			private float time = 0;
+			@Override
+			public void update() {
+				super.update();
+				am = (float)Math.sin( -(time += Game.elapsed) );
+			}
+			@Override
+			public void draw() {
+				GLES20.glBlendFunc( GL10.GL_SRC_ALPHA, GL10.GL_ONE );
+				super.draw();
+				GLES20.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+			}
+		};
+		signs.x = title.x + (title.width() - signs.width())/2f;
+		signs.y = title.y;
+		add( signs );
 
-		content.add(text);
-
-		content.setSize( panel.innerWidth(), text.height() );
-
-		RedButton okay = new RedButton("Okay!") {
+		DarkRedButton okay = new DarkRedButton(Messages.get(this, "continue")){
 			@Override
 			protected void onClick() {
+				super.onClick();
+				updateVersion(previousVersion);
+				ShatteredPixelDungeon.switchScene(TitleScene.class);
+			}
+		};
 
+		if (previousVersion != 0){
+			DarkRedButton changes = new DarkRedButton(Messages.get(this, "changelist")){
+				@Override
+				protected void onClick() {
+					super.onClick();
+					updateVersion(previousVersion);
+					ShatteredPixelDungeon.switchScene(ChangesScene.class);
+				}
+			};
+			okay.setRect(title.x, h-20, (title.width()/2)-2, 16);
+			okay.textColor(0xBBBB33);
+			add(okay);
 
-				if (gameversion <= 32){
-					//removes all bags bought badge from pre-0.2.4 saves.
-					Badges.disown(Badges.Badge.ALL_BAGS_BOUGHT);
-					Badges.saveGlobal();
+			changes.setRect(okay.right()+2, h-20, (title.width()/2)-2, 16);
+			changes.textColor(0xBBBB33);
+			add(changes);
+		} else {
+			okay.setRect(title.x, h-20, title.width(), 16);
+			okay.textColor(0xBBBB33);
+			add(okay);
+		}
 
-					//imports new ranking data for pre-0.2.3 saves.
-					if (gameversion <= 29){
-						Rankings.INSTANCE.load();
-						Rankings.INSTANCE.save();
-					}
+		RenderedTextMultiline text = PixelScene.renderMultiline(6);
+		String message;
+		if (previousVersion == 0) {
+			message = Messages.get(this, "welcome_msg");
+		} else if (previousVersion <= ShatteredPixelDungeon.versionCode) {
+			if (previousVersion < LATEST_UPDATE){
+				message = Messages.get(this, "update_intro");
+				message += "\n\n" + Messages.get(this, "update_msg");
+			} else {
+				//TODO: change the messages here in accordance with the type of patch.
+				message = Messages.get(this, "patch_intro");
+				message += "\n\n" + Messages.get(this, "patch_bugfixes");
+				message += "\n" + Messages.get(this, "patch_translations");
+				message += "\n" + Messages.get(this, "patch_balance");
+
+			}
+		} else {
+			message = Messages.get(this, "what_msg");
+		}
+		text.text(message, w-20);
+		float textSpace = h - title.y - (title.height() - 10) - okay.height() - 2;
+		text.setPos((w - text.width()) / 2f, title.y+(title.height() - 10) + ((textSpace - text.height()) / 2));
+		add(text);
+
+	}
+
+	private void updateVersion(int previousVersion){
+		//rankings conversion
+		if (previousVersion < 108){
+			Rankings.INSTANCE.load();
+			for (Rankings.Record rec : Rankings.INSTANCE.records){
+				try{
+					Dungeon.loadGame(rec.gameFile, false);
+					rec.gameID = rec.gameFile.replaceAll("\\D", "");
+
+					Rankings.INSTANCE.saveGameData(rec);
+				} catch (Exception e){
+					rec.gameID = rec.gameFile.replaceAll("\\D", "");
+					rec.gameData = null;
 				}
 
-				ShatteredPixelDungeon.version(Game.versionCode);
-				Game.switchScene(TitleScene.class);
+				String file = rec.gameFile;
+				rec.gameFile = "";
+				Game.instance.deleteFile(file);
 			}
-		};
+			Rankings.INSTANCE.save();
+		}
 
-		/*
-		okay.setRect(text.x, text.y + text.height() + 5, 55, 18);
-		add(okay);
+		ShatteredPixelDungeon.version(ShatteredPixelDungeon.versionCode);
+	}
 
-		RedButton changes = new RedButton("Changes") {
-			@Override
-			protected void onClick() {
-				parent.add(new WndChanges());
-			}
-		};
+	private void placeTorch( float x, float y ) {
+		Fireball fb = new Fireball();
+		fb.setPos( x, y );
+		add( fb );
+	}
 
-		changes.setRect(text.x + 65, text.y + text.height() + 5, 55, 18);
-		add(changes);*/
+	private class DarkRedButton extends RedButton{
+		{
+			bg.brightness(0.4f);
+		}
 
-		okay.setRect((w - pw) / 2, h - 22, pw, 18);
-		add(okay);
+		DarkRedButton(String text){
+			super(text);
+		}
 
-		Archs archs = new Archs();
-		archs.setSize( Camera.main.width, Camera.main.height );
-		addToBack( archs );
+		@Override
+		protected void onTouchDown() {
+			bg.brightness(0.5f);
+			Sample.INSTANCE.play( Assets.SND_CLICK );
+		}
 
-		fadeIn();
+		@Override
+		protected void onTouchUp() {
+			super.onTouchUp();
+			bg.brightness(0.4f);
+		}
 	}
 }
-
-

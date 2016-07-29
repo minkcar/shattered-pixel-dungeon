@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,8 +20,6 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Ghost;
 import com.watabou.utils.Random;
 
 public class Bestiary {
@@ -76,12 +74,12 @@ public class Bestiary {
 			classes = new Class<?>[]{ Rat.class, Gnoll.class };
 			break;
 		case 3:
-			chances = new float[]{ 1, 2, 1,   0.02f };
-			classes = new Class<?>[]{ Rat.class, Gnoll.class, Crab.class,   Swarm.class };
+			chances = new float[]{ 2, 4, 1, 1 };
+			classes = new Class<?>[]{ Rat.class, Gnoll.class, Crab.class, Swarm.class };
 			break;
 		case 4:
-			chances = new float[]{ 1, 2, 3,   0.02f, 0.01f, 0.01f };
-			classes = new Class<?>[]{ Rat.class, Gnoll.class, Crab.class,   Swarm.class, Skeleton.class, Thief.class };
+			chances = new float[]{ 1, 2, 3, 1,   0.01f, 0.01f };
+			classes = new Class<?>[]{ Rat.class, Gnoll.class, Crab.class, Swarm.class,    Skeleton.class, Thief.class };
 			break;
 			
 		case 5:
@@ -90,20 +88,20 @@ public class Bestiary {
 			break;
 			
 		case 6:
-			chances = new float[]{ 4, 2, 1,   0.2f };
+			chances = new float[]{ 3, 1, 1,     0.2f };
 			classes = new Class<?>[]{ Skeleton.class, Thief.class, Swarm.class,   Shaman.class };
 			break;
 		case 7:
 			chances = new float[]{ 3, 1, 1, 1 };
-			classes = new Class<?>[]{ Skeleton.class, Shaman.class, Thief.class, Swarm.class };
+			classes = new Class<?>[]{ Skeleton.class, Shaman.class, Thief.class, Guard.class };
 			break;
 		case 8:
-			chances = new float[]{ 3, 2, 1, 1, 1,   0.02f };
-			classes = new Class<?>[]{ Skeleton.class, Shaman.class, Gnoll.class, Thief.class, Swarm.class,   Bat.class };
+			chances = new float[]{ 3, 2, 2, 1,   0.02f };
+			classes = new Class<?>[]{ Skeleton.class, Shaman.class, Guard.class, Thief.class,   Bat.class };
 			break;
 		case 9:
-			chances = new float[]{ 3, 3, 1, 1,   0.02f, 0.01f };
-			classes = new Class<?>[]{ Skeleton.class, Shaman.class, Thief.class, Swarm.class,   Bat.class, Brute.class };
+			chances = new float[]{ 3, 3, 2, 1,   0.02f, 0.01f };
+			classes = new Class<?>[]{ Skeleton.class, Guard.class, Shaman.class, Thief.class,   Bat.class, Brute.class };
 			break;
 			
 		case 10:
@@ -179,11 +177,5 @@ public class Bestiary {
 		}
 		
 		return classes[ Random.chances( chances )];
-	}
-	
-	public static boolean isUnique( Char mob ) {
-		return mob instanceof Goo || mob instanceof Tengu || mob instanceof DM300 || mob instanceof King
-				|| mob instanceof Yog.BurningFist || mob instanceof Yog.RottingFist
-			|| mob instanceof Ghost.FetidRat || mob instanceof Ghost.GnollTrickster || mob instanceof Ghost.GreatCrab;
 	}
 }

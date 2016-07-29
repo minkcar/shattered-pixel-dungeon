@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,11 +32,11 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.particles.LeafParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Dewdrop;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.armor.glyphs.Camouflage;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.SandalsOfNature;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.plants.BlandfruitBush;
-import com.shatteredpixel.shatteredpixeldungeon.plants.Plant;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.watabou.utils.Random;
 
@@ -54,7 +54,7 @@ public class HighGrass {
 				SandalsOfNature.Naturalism naturalism = ch.buff( SandalsOfNature.Naturalism.class );
 				if (naturalism != null) {
 					if (!naturalism.isCursed()) {
-						naturalismLevel = naturalism.level() + 1;
+						naturalismLevel = naturalism.itemLevel() + 1;
 						naturalism.charge();
 					} else {
 						naturalismLevel = -1;
@@ -85,10 +85,21 @@ public class HighGrass {
 
 		int leaves = 4;
 		
-		// Barkskin
-		if (ch instanceof Hero && ((Hero)ch).subClass == HeroSubClass.WARDEN) {
-			Buff.affect( ch, Barkskin.class ).level( ch.HT / 3 );
-			leaves = 8;
+
+		if (ch instanceof Hero) {
+			Hero hero = (Hero)ch;
+
+			// Barkskin
+			if (hero.subClass == HeroSubClass.WARDEN) {
+				Buff.affect(ch, Barkskin.class).level(ch.HT / 3);
+				leaves += 4;
+			}
+
+			//Camouflage
+			if (hero.belongings.armor != null && hero.belongings.armor.hasGlyph(Camouflage.class)){
+				Buff.affect(hero, Camouflage.Camo.class).set(3 + hero.belongings.armor.level());
+				leaves += 4;
+			}
 		}
 		
 		CellEmitter.get( pos ).burst( LeafParticle.LEVEL_SPECIFIC, leaves );

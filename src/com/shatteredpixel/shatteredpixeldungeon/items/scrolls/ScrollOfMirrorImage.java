@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,25 +20,24 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items.scrolls;
 
-import java.util.ArrayList;
-
-import com.watabou.noosa.audio.Sample;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.MirrorImage;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Random;
+
+import java.util.ArrayList;
 
 public class ScrollOfMirrorImage extends Scroll {
 
-	private static final int NIMAGES	= 3;
-	
 	{
-		name = "Scroll of Mirror Image";
-		initials = "MI";
+		initials = 4;
 	}
+
+	private static final int NIMAGES	= 3;
 	
 	@Override
 	protected void doRead() {
@@ -71,13 +70,12 @@ public class ScrollOfMirrorImage extends Scroll {
 		
 		Sample.INSTANCE.play( Assets.SND_READ );
 		Invisibility.dispel();
-		
-		curUser.spendAndNext( TIME_TO_READ );
+
+		readAnimation();
 	}
-	
+
 	@Override
-	public String desc() {
-		return
-			"The incantation on this scroll will create illusionary twins of the reader, which will chase his enemies.";
+	public int price() {
+		return isKnown() ? 30 * quantity : super.price();
 	}
 }

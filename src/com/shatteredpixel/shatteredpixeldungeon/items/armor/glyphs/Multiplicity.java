@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,8 +20,6 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items.armor.glyphs;
 
-import java.util.ArrayList;
-
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
@@ -35,16 +33,16 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite.Glowing;
 import com.watabou.utils.Random;
 
-public class Multiplicity extends Glyph {
+import java.util.ArrayList;
 
-	private static final String TXT_MULTIPLICITY	= "%s of multiplicity";
+public class Multiplicity extends Glyph {
 	
 	private static ItemSprite.Glowing PINK = new ItemSprite.Glowing( 0xCCAA88 );
 	
 	@Override
 	public int proc( Armor armor, Char attacker, Char defender, int damage) {
 
-		int level = Math.max( 0, armor.level );
+		int level = Math.max( 0, armor.level() );
 		
 		if (Random.Int( level / 2 + 6 ) >= 5) {
 			
@@ -70,11 +68,6 @@ public class Multiplicity extends Glyph {
 		}
 		
 		return damage;
-	}
-	
-	@Override
-	public String name( String weaponName) {
-		return String.format( TXT_MULTIPLICITY, weaponName );
 	}
 
 	@Override

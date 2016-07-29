@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,9 +20,7 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
-import java.text.DecimalFormat;
-
-//buff whose only logic is to wait and detach after a time.
+//buff whose only internal logic is to wait and detach after a time.
 public class FlavourBuff extends Buff {
 	
 	@Override
@@ -34,7 +32,6 @@ public class FlavourBuff extends Buff {
 	//flavour buffs can all just rely on cooldown()
 	protected String dispTurns() {
 		//add one turn as buffs act last, we want them to end at 1 visually, even if they end at 0 internally.
-		float visualTurnsLeft = cooldown()+1f;
-		return visualTurnsLeft == 1 ? "1 more turn" : new DecimalFormat("#.##").format(visualTurnsLeft) + " more turns";
+		return dispTurns(cooldown()+1f);
 	}
 }

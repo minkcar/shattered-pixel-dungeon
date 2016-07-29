@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,28 +20,27 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import java.util.HashSet;
-
-import com.watabou.noosa.audio.Sample;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.shatteredpixel.shatteredpixeldungeon.ResultDescriptions;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Death;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Grim;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.SkeletonSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
-import com.shatteredpixel.shatteredpixeldungeon.utils.Utils;
+import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Random;
+
+import java.util.HashSet;
 
 public class Skeleton extends Mob {
 
 	private static final String TXT_HERO_KILLED = "You were killed by the explosion of bones...";
 	
 	{
-		name = "skeleton";
 		spriteClass = SkeletonSprite.class;
 		
 		HP = HT = 25;
@@ -52,11 +51,13 @@ public class Skeleton extends Mob {
 
 		loot = Generator.Category.WEAPON;
 		lootChance = 0.2f;
+
+		properties.add(Property.UNDEAD);
 	}
 	
 	@Override
 	public int damageRoll() {
-		return Random.NormalIntRange( 3, 8 );
+		return Random.NormalIntRange( 2, 10 );
 	}
 	
 	@Override
@@ -68,7 +69,7 @@ public class Skeleton extends Mob {
 		for (int i=0; i < Level.NEIGHBOURS8.length; i++) {
 			Char ch = findChar( pos + Level.NEIGHBOURS8[i] );
 			if (ch != null && ch.isAlive()) {
-				int damage = Math.max( 0,  damageRoll() - Random.IntRange( 0, ch.dr() / 2 ) );
+				int damage = Math.max( 0,  damageRoll() - (ch.drRoll() / 2) );
 				ch.damage( damage, this );
 				if (ch == Dungeon.hero && !ch.isAlive()) {
 					heroKilled = true;
@@ -81,20 +82,19 @@ public class Skeleton extends Mob {
 		}
 		
 		if (heroKilled) {
-			Dungeon.fail( Utils.format( ResultDescriptions.MOB, Utils.indefinite( name ) ) );
-			GLog.n( TXT_HERO_KILLED );
+			Dungeon.fail( getClass() );
+			GLog.n( Messages.get(this, "explo_kill") );
 		}
 	}
 	
 	@Override
 	protected Item createLoot() {
-		Item loot = Generator.random( Generator.Category.WEAPON );
-		for (int i=0; i < 2; i++) {
-			Item l = Generator.random( Generator.Category.WEAPON );
-			if (l.level < loot.level) {
-				loot = l;
-			}
-		}
+		Item loot;
+		do {
+			loot = Generator.random(Generator.Category.WEAPON);
+			//50% chance of re-rolling tier 4 or 5 items
+		} while (loot instanceof MeleeWeapon && ((MeleeWeapon) loot).tier >= 4 && Random.Int(2) == 0);
+		loot.level(0);
 		return loot;
 	}
 	
@@ -104,26 +104,13 @@ public class Skeleton extends Mob {
 	}
 	
 	@Override
-	public int dr() {
-		return 5;
+	public int drRoll() {
+		return Random.NormalIntRange(0, 5);
 	}
 	
-	@Override
-	public String defenseVerb() {
-		return "blocked";
-	}
-	
-	@Override
-	public String description() {
-		return
-			"Skeletons are composed of corpses bones from unlucky adventurers and inhabitants of the dungeon, " +
-			"animated by emanations of evil magic from the depths below. After they have been " +
-			"damaged enough, they disintegrate in an explosion of bones.";
-	}
-	
-	private static final HashSet<Class<?>> IMMUNITIES = new HashSet<Class<?>>();
+	private static final HashSet<Class<?>> IMMUNITIES = new HashSet<>();
 	static {
-		IMMUNITIES.add( Death.class );
+		IMMUNITIES.add( Grim.class );
 	}
 	
 	@Override

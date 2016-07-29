@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,20 +20,38 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.levels;
 
-import javax.microedition.khronos.opengles.GL10;
-
 import android.opengl.GLES20;
-
-import com.watabou.noosa.Game;
-import com.watabou.noosa.Group;
-import com.watabou.noosa.Scene;
-import com.watabou.noosa.particles.PixelParticle;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.DungeonTilemap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Torch;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.BlazingTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.CursingTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.DisarmingTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.DisintegrationTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.DistortionTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ExplosiveTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.FlockTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.FrostTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.GrimTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.GrippingTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.GuardianTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.LightningTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.OozeTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.SpearTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.SummoningTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.TeleportationTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.VenomTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.WarpingTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.WeakeningTrap;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.watabou.noosa.Game;
+import com.watabou.noosa.Group;
+import com.watabou.noosa.particles.PixelParticle;
 import com.watabou.utils.PointF;
 import com.watabou.utils.Random;
+
+import javax.microedition.khronos.opengles.GL10;
 
 public class HallsLevel extends RegularLevel {
 
@@ -69,6 +87,22 @@ public class HallsLevel extends RegularLevel {
 	protected boolean[] grass() {
 		return Patch.generate( feeling == Feeling.GRASS ? 0.55f : 0.30f, 3 );
 	}
+
+	@Override
+	protected Class<?>[] trapClasses() {
+		return new Class[]{ BlazingTrap.class, DisintegrationTrap.class, FrostTrap.class, SpearTrap.class, VenomTrap.class,
+				ExplosiveTrap.class, GrippingTrap.class, LightningTrap.class, OozeTrap.class, WeakeningTrap.class,
+				CursingTrap.class, FlockTrap.class, GrimTrap.class, GuardianTrap.class, SummoningTrap.class, TeleportationTrap.class,
+				DisarmingTrap.class, DistortionTrap.class, WarpingTrap.class};
+	}
+
+	@Override
+	protected float[] trapChances() {
+		return new float[]{ 8, 8, 8, 8, 8,
+				4, 4, 4, 4, 4,
+				2, 2, 2, 2, 2, 2,
+				1, 1, 1 };
+	}
 	
 	@Override
 	protected void decorate() {
@@ -103,45 +137,46 @@ public class HallsLevel extends RegularLevel {
 	@Override
 	public String tileName( int tile ) {
 		switch (tile) {
-		case Terrain.WATER:
-			return "Cold lava";
-		case Terrain.GRASS:
-			return "Embermoss";
-		case Terrain.HIGH_GRASS:
-			return "Emberfungi";
-		case Terrain.STATUE:
-		case Terrain.STATUE_SP:
-			return "Pillar";
-		default:
-			return super.tileName( tile );
+			case Terrain.WATER:
+				return Messages.get(HallsLevel.class, "water_name");
+			case Terrain.GRASS:
+				return Messages.get(HallsLevel.class, "grass_name");
+			case Terrain.HIGH_GRASS:
+				return Messages.get(HallsLevel.class, "high_grass_name");
+			case Terrain.STATUE:
+			case Terrain.STATUE_SP:
+				return Messages.get(HallsLevel.class, "statue_name");
+			default:
+				return super.tileName( tile );
 		}
 	}
 	
 	@Override
 	public String tileDesc(int tile) {
 		switch (tile) {
-		case Terrain.WATER:
-			return "It looks like lava, but it's cold and probably safe to touch.";
-		case Terrain.STATUE:
-		case Terrain.STATUE_SP:
-			return "The pillar is made of real humanoid skulls. Awesome.";
-		case Terrain.BOOKSHELF:
-			return "Books in ancient languages smoulder in the bookshelf.";
-		default:
-			return super.tileDesc( tile );
+			case Terrain.WATER:
+				return Messages.get(HallsLevel.class, "water_desc");
+			case Terrain.STATUE:
+			case Terrain.STATUE_SP:
+				return Messages.get(HallsLevel.class, "statue_desc");
+			case Terrain.BOOKSHELF:
+				return Messages.get(HallsLevel.class, "bookshelf_desc");
+			default:
+				return super.tileDesc( tile );
 		}
 	}
 	
 	@Override
-	public void addVisuals( Scene scene ) {
-		super.addVisuals( scene );
-		addVisuals( this, scene );
+	public Group addVisuals() {
+		super.addVisuals();
+		addHallsVisuals( this, visuals );
+		return visuals;
 	}
 	
-	public static void addVisuals( Level level, Scene scene ) {
+	public static void addHallsVisuals( Level level, Group group ) {
 		for (int i=0; i < LENGTH; i++) {
-			if (level.map[i] == 63) {
-				scene.add( new Stream( i ) );
+			if (level.map[i] == Terrain.WATER) {
+				group.add( new Stream( i ) );
 			}
 		}
 	}

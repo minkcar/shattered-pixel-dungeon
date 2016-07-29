@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,11 +20,9 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.windows;
 
-import java.io.IOException;
-
-import com.watabou.noosa.Game;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.InterlevelScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.RankingsScene;
@@ -32,17 +30,12 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.TitleScene;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RedButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
+import com.watabou.noosa.Game;
+
+import java.io.IOException;
 
 public class WndGame extends Window {
-	
-	private static final String TXT_SETTINGS	= "Settings";
-	private static final String TXT_CHALLEGES	= "Challenges";
-	private static final String TXT_RANKINGS	= "Rankings";
-	private static final String TXT_START		= "Start New Game";
-	private static final String TXT_MENU		= "Main Menu";
-	private static final String TXT_EXIT		= "Exit Game";
-	private static final String TXT_RETURN		= "Return to Game";
-	
+
 	private static final int WIDTH		= 120;
 	private static final int BTN_HEIGHT	= 20;
 	private static final int GAP		= 2;
@@ -53,17 +46,17 @@ public class WndGame extends Window {
 		
 		super();
 		
-		addButton( new RedButton( TXT_SETTINGS ) {
+		addButton( new RedButton( Messages.get(this, "settings") ) {
 			@Override
 			protected void onClick() {
 				hide();
-				GameScene.show( new WndSettings( true ) );
+				GameScene.show(new WndSettings());
 			}
-		} );
+		});
 
 		// Challenges window
 		if (Dungeon.challenges > 0) {
-			addButton( new RedButton( TXT_CHALLEGES ) {
+			addButton( new RedButton( Messages.get(this, "challenges") ) {
 				@Override
 				protected void onClick() {
 					hide();
@@ -76,7 +69,7 @@ public class WndGame extends Window {
 		if (!Dungeon.hero.isAlive()) {
 			
 			RedButton btnStart;
-			addButton( btnStart = new RedButton( TXT_START ) {
+			addButton( btnStart = new RedButton( Messages.get(this, "start") ) {
 				@Override
 				protected void onClick() {
 					Dungeon.hero = null;
@@ -88,7 +81,7 @@ public class WndGame extends Window {
 			} );
 			btnStart.icon( Icons.get( Dungeon.hero.heroClass ) );
 			
-			addButton( new RedButton( TXT_RANKINGS ) {
+			addButton( new RedButton( Messages.get(this, "rankings") ) {
 				@Override
 				protected void onClick() {
 					InterlevelScene.mode = InterlevelScene.Mode.DESCEND;
@@ -99,7 +92,7 @@ public class WndGame extends Window {
 
 		addButtons(
 				// Main menu
-				new RedButton(TXT_MENU) {
+				new RedButton( Messages.get(this, "menu") ) {
 					@Override
 					protected void onClick() {
 						try {
@@ -111,7 +104,7 @@ public class WndGame extends Window {
 					}
 				},
 				// Quit
-				new RedButton( TXT_EXIT ) {
+				new RedButton( Messages.get(this, "exit") ) {
 					@Override
 					protected void onClick() {
 						Game.instance.finish();
@@ -120,7 +113,7 @@ public class WndGame extends Window {
 		);
 
 		// Cancel
-		addButton( new RedButton( TXT_RETURN ) {
+		addButton( new RedButton( Messages.get(this, "return") ) {
 			@Override
 			protected void onClick() {
 				hide();

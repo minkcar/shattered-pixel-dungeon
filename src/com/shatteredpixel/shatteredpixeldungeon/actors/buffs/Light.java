@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 
@@ -63,15 +64,11 @@ public class Light extends FlavourBuff {
 
 	@Override
 	public String toString() {
-		return "Illuminated";
+		return Messages.get(this, "name");
 	}
 
 	@Override
 	public String desc() {
-		return "Even in the Darkest Dungeon, a steady light at your side is always comforting.\n" +
-				"\n" +
-				"Light helps keep darkness at bay, allowing you to see a reasonable distance despite the environment.\n" +
-				"\n" +
-				"The light will last for " + dispTurns() + ".";
+		return Messages.get(this, "desc", dispTurns());
 	}
 }

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,33 +20,25 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.scenes;
 
-import com.watabou.noosa.BitmapTextMultiline;
+import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Flare;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
+import com.shatteredpixel.shatteredpixeldungeon.items.Amulet;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.ui.RedButton;
+import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextMultiline;
 import com.watabou.noosa.Camera;
 import com.watabou.noosa.Game;
 import com.watabou.noosa.Image;
-import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.shatteredpixel.shatteredpixeldungeon.ResultDescriptions;
-import com.shatteredpixel.shatteredpixeldungeon.effects.Flare;
-import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
-import com.shatteredpixel.shatteredpixeldungeon.ui.RedButton;
 import com.watabou.utils.Random;
 
 public class AmuletScene extends PixelScene {
-
-	private static final String TXT_EXIT	= "Let's call it a day";
-	private static final String TXT_STAY	= "I'm not done yet";
 	
 	private static final int WIDTH			= 120;
 	private static final int BTN_HEIGHT		= 18;
 	private static final float SMALL_GAP	= 2;
 	private static final float LARGE_GAP	= 8;
-	
-	private static final String TXT =
-		"You finally hold it in your hands, the Amulet of Yendor. Using its power " +
-		"you can take over the world or bring peace and prosperity to people or whatever. " +
-		"Anyway, your life will change forever and this game will end here. " +
-		"Or you can stay a mere mortal a little longer.";
 	
 	public static boolean noText = false;
 	
@@ -56,29 +48,28 @@ public class AmuletScene extends PixelScene {
 	public void create() {
 		super.create();
 		
-		BitmapTextMultiline text = null;
+		RenderedTextMultiline text = null;
 		if (!noText) {
-			text = createMultiline( TXT, 8 );
-			text.maxWidth = WIDTH;
-			text.measure();
+			text = renderMultiline( Messages.get(this, "text"), 8 );
+			text.maxWidth(WIDTH);
 			add( text );
 		}
 		
 		amulet = new Image( Assets.AMULET );
 		add( amulet );
 		
-		RedButton btnExit = new RedButton( TXT_EXIT ) {
+		RedButton btnExit = new RedButton( Messages.get(this, "exit") ) {
 			@Override
 			protected void onClick() {
-				Dungeon.win( ResultDescriptions.WIN );
+				Dungeon.win( Amulet.class );
 				Dungeon.deleteGame( Dungeon.hero.heroClass, true );
-				Game.switchScene( noText ? TitleScene.class : RankingsScene.class );
+				Game.switchScene( RankingsScene.class );
 			}
 		};
 		btnExit.setSize( WIDTH, BTN_HEIGHT );
 		add( btnExit );
 		
-		RedButton btnStay = new RedButton( TXT_STAY ) {
+		RedButton btnStay = new RedButton( Messages.get(this, "stay") ) {
 			@Override
 			protected void onClick() {
 				onBackPressed();
@@ -91,22 +82,24 @@ public class AmuletScene extends PixelScene {
 		if (noText) {
 			height = amulet.height + LARGE_GAP + btnExit.height() + SMALL_GAP + btnStay.height();
 			
-			amulet.x = align( (Camera.main.width - amulet.width) / 2 );
-			amulet.y = align( (Camera.main.height - height) / 2 );
-			
+			amulet.x = (Camera.main.width - amulet.width) / 2;
+			amulet.y = (Camera.main.height - height) / 2;
+			align(amulet);
+
 			btnExit.setPos( (Camera.main.width - btnExit.width()) / 2, amulet.y + amulet.height + LARGE_GAP );
 			btnStay.setPos( btnExit.left(), btnExit.bottom() + SMALL_GAP );
 			
 		} else {
 			height = amulet.height + LARGE_GAP + text.height() + LARGE_GAP + btnExit.height() + SMALL_GAP + btnStay.height();
 			
-			amulet.x = align( (Camera.main.width - amulet.width) / 2 );
-			amulet.y = align( (Camera.main.height - height) / 2 );
+			amulet.x = (Camera.main.width - amulet.width) / 2;
+			amulet.y = (Camera.main.height - height) / 2;
+			align(amulet);
+
+			text.setPos((Camera.main.width - text.width()) / 2, amulet.y + amulet.height + LARGE_GAP);
+			align(text);
 			
-			text.x =  align( (Camera.main.width - text.width()) / 2 );
-			text.y = amulet.y + amulet.height + LARGE_GAP;
-			
-			btnExit.setPos( (Camera.main.width - btnExit.width()) / 2, text.y + text.height() + LARGE_GAP );
+			btnExit.setPos( (Camera.main.width - btnExit.width()) / 2, text.top() + text.height() + LARGE_GAP );
 			btnStay.setPos( btnExit.left(), btnExit.bottom() + SMALL_GAP );
 		}
 

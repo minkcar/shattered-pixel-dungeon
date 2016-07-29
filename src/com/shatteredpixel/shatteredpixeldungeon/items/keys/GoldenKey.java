@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,15 +20,22 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items.keys;
 
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public class GoldenKey extends Key {
 	
 	{
-		name = "golden key";
 		image = ItemSpriteSheet.GOLDEN_KEY;
 	}
-	
+
+	@Override
+	public boolean doPickUp(Hero hero) {
+		Dungeon.hero.belongings.specialKeys[depth] += quantity();
+		return super.doPickUp(hero);
+	}
+
 	public GoldenKey() {
 		this( 0 );
 	}
@@ -37,11 +44,5 @@ public class GoldenKey extends Key {
 		super();
 		this.depth = depth;
 	}
-	
-	@Override
-	public String info() {
-		return
-			"The notches on this golden key are tiny and intricate. " +
-			"Maybe it can open some chest lock?";
-	}
+
 }

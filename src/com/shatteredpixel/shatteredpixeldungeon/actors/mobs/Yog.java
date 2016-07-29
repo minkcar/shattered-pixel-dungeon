@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,11 +20,7 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.shatteredpixel.shatteredpixeldungeon.ResultDescriptions;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
@@ -34,6 +30,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Amok;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Charm;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LockedFloor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Ooze;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Sleep;
@@ -43,23 +40,27 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShadowParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.keys.SkeletonKey;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfPsionicBlast;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Death;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Grim;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.BurningFistSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.LarvaSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.RottingFistSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.YogSprite;
+import com.shatteredpixel.shatteredpixeldungeon.ui.BossHealthBar;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
-import com.shatteredpixel.shatteredpixeldungeon.utils.Utils;
+import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
+
+import java.util.ArrayList;
+import java.util.HashSet;
 
 public class Yog extends Mob {
 	
 	{
-		name = "Yog-Dzewa";
 		spriteClass = YogSprite.class;
 		
 		HP = HT = 300;
@@ -67,12 +68,11 @@ public class Yog extends Mob {
 		EXP = 50;
 		
 		state = PASSIVE;
+
+		properties.add(Property.BOSS);
+		properties.add(Property.IMMOVABLE);
+		properties.add(Property.DEMONIC);
 	}
-	
-	private static final String TXT_DESC =
-		"Yog-Dzewa is an Old God, a powerful entity from the realms of chaos. A century ago, the ancient dwarves " +
-		"barely won the war against its army of demons, but were unable to kill the god itself. Instead, they then " +
-		"imprisoned it in the halls below their city, believing it to be too weak to rise ever again.";
 	
 	public Yog() {
 		super();
@@ -89,6 +89,8 @@ public class Yog extends Mob {
 		
 		GameScene.add( fist1 );
 		GameScene.add( fist2 );
+
+		notice();
 	}
 
 	@Override
@@ -114,12 +116,17 @@ public class Yog extends Mob {
 		dmg >>= fists.size();
 		
 		super.damage( dmg, src );
+
+
+		LockedFloor lock = Dungeon.hero.buff(LockedFloor.class);
+		if (lock != null) lock.addTime(dmg*0.5f);
+
 	}
 	
 	@Override
 	public int defenseProc( Char enemy, int damage ) {
 
-		ArrayList<Integer> spawnPoints = new ArrayList<Integer>();
+		ArrayList<Integer> spawnPoints = new ArrayList<>();
 		
 		for (int i=0; i < Level.NEIGHBOURS8.length; i++) {
 			int p = pos + Level.NEIGHBOURS8[i];
@@ -163,25 +170,20 @@ public class Yog extends Mob {
 		Dungeon.level.drop( new SkeletonKey( Dungeon.depth ), pos ).sprite.drop();
 		super.die( cause );
 		
-		yell( "..." );
+		yell( Messages.get(this, "defeated") );
 	}
 	
 	@Override
 	public void notice() {
 		super.notice();
-		yell( "Hope is an illusion..." );
+		BossHealthBar.assignBoss(this);
+		yell( Messages.get(this, "notice") );
 	}
 	
-	@Override
-	public String description() {
-		return TXT_DESC;
-			
-	}
-	
-	private static final HashSet<Class<?>> IMMUNITIES = new HashSet<Class<?>>();
+	private static final HashSet<Class<?>> IMMUNITIES = new HashSet<>();
 	static {
 		
-		IMMUNITIES.add( Death.class );
+		IMMUNITIES.add( Grim.class );
 		IMMUNITIES.add( Terror.class );
 		IMMUNITIES.add( Amok.class );
 		IMMUNITIES.add( Charm.class );
@@ -196,13 +198,18 @@ public class Yog extends Mob {
 	public HashSet<Class<?>> immunities() {
 		return IMMUNITIES;
 	}
-	
+
+	@Override
+	public void restoreFromBundle(Bundle bundle) {
+		super.restoreFromBundle(bundle);
+		BossHealthBar.assignBoss(this);
+	}
+
 	public static class RottingFist extends Mob {
 	
 		private static final int REGENERATION	= 4;
 		
 		{
-			name = "rotting fist";
 			spriteClass = RottingFistSprite.class;
 			
 			HP = HT = 300;
@@ -211,6 +218,9 @@ public class Yog extends Mob {
 			EXP = 0;
 			
 			state = WANDERING;
+
+			properties.add(Property.BOSS);
+			properties.add(Property.DEMONIC);
 		}
 		
 		@Override
@@ -220,12 +230,12 @@ public class Yog extends Mob {
 		
 		@Override
 		public int damageRoll() {
-			return Random.NormalIntRange( 24, 36 );
+			return Random.NormalIntRange( 20, 50 );
 		}
 		
 		@Override
-		public int dr() {
-			return 15;
+		public int drRoll() {
+			return Random.NormalIntRange(0, 15);
 		}
 		
 		@Override
@@ -248,17 +258,18 @@ public class Yog extends Mob {
 			
 			return super.act();
 		}
-		
+
 		@Override
-		public String description() {
-			return TXT_DESC;
-				
+		public void damage(int dmg, Object src) {
+			super.damage(dmg, src);
+			LockedFloor lock = Dungeon.hero.buff(LockedFloor.class);
+			if (lock != null) lock.addTime(dmg*0.5f);
 		}
 		
-		private static final HashSet<Class<?>> RESISTANCES = new HashSet<Class<?>>();
+		private static final HashSet<Class<?>> RESISTANCES = new HashSet<>();
 		static {
 			RESISTANCES.add( ToxicGas.class );
-			RESISTANCES.add( Death.class );
+			RESISTANCES.add( Grim.class );
 			RESISTANCES.add( ScrollOfPsionicBlast.class );
 		}
 		
@@ -267,7 +278,7 @@ public class Yog extends Mob {
 			return RESISTANCES;
 		}
 		
-		private static final HashSet<Class<?>> IMMUNITIES = new HashSet<Class<?>>();
+		private static final HashSet<Class<?>> IMMUNITIES = new HashSet<>();
 		static {
 			IMMUNITIES.add( Amok.class );
 			IMMUNITIES.add( Sleep.class );
@@ -285,7 +296,6 @@ public class Yog extends Mob {
 	public static class BurningFist extends Mob {
 		
 		{
-			name = "burning fist";
 			spriteClass = BurningFistSprite.class;
 			
 			HP = HT = 200;
@@ -294,6 +304,9 @@ public class Yog extends Mob {
 			EXP = 0;
 			
 			state = WANDERING;
+
+			properties.add(Property.BOSS);
+			properties.add(Property.DEMONIC);
 		}
 		
 		@Override
@@ -303,12 +316,12 @@ public class Yog extends Mob {
 		
 		@Override
 		public int damageRoll() {
-			return Random.NormalIntRange( 20, 32 );
+			return Random.NormalIntRange( 26, 32 );
 		}
 		
 		@Override
-		public int dr() {
-			return 15;
+		public int drRoll() {
+			return Random.NormalIntRange(0, 15);
 		}
 		
 		@Override
@@ -331,8 +344,8 @@ public class Yog extends Mob {
 					enemy.sprite.flash();
 					
 					if (!enemy.isAlive() && enemy == Dungeon.hero) {
-						Dungeon.fail( Utils.format( ResultDescriptions.UNIQUE, name ) );
-						GLog.n( TXT_KILL, name );
+						Dungeon.fail( getClass() );
+						GLog.n( Messages.get(Char.class, "kill", name) );
 					}
 					return true;
 					
@@ -355,17 +368,18 @@ public class Yog extends Mob {
 			
 			return super.act();
 		}
-		
+
 		@Override
-		public String description() {
-			return TXT_DESC;
-				
+		public void damage(int dmg, Object src) {
+			super.damage(dmg, src);
+			LockedFloor lock = Dungeon.hero.buff(LockedFloor.class);
+			if (lock != null) lock.addTime(dmg*0.5f);
 		}
 		
-		private static final HashSet<Class<?>> RESISTANCES = new HashSet<Class<?>>();
+		private static final HashSet<Class<?>> RESISTANCES = new HashSet<>();
 		static {
 			RESISTANCES.add( ToxicGas.class );
-			RESISTANCES.add( Death.class );
+			RESISTANCES.add( Grim.class );
 
 		}
 		
@@ -374,7 +388,7 @@ public class Yog extends Mob {
 			return RESISTANCES;
 		}
 		
-		private static final HashSet<Class<?>> IMMUNITIES = new HashSet<Class<?>>();
+		private static final HashSet<Class<?>> IMMUNITIES = new HashSet<>();
 		static {
 			IMMUNITIES.add( Amok.class );
 			IMMUNITIES.add( Sleep.class );
@@ -393,7 +407,6 @@ public class Yog extends Mob {
 	public static class Larva extends Mob {
 		
 		{
-			name = "god's larva";
 			spriteClass = LarvaSprite.class;
 			
 			HP = HT = 25;
@@ -402,6 +415,8 @@ public class Yog extends Mob {
 			EXP = 0;
 			
 			state = HUNTING;
+
+			properties.add(Property.DEMONIC);
 		}
 		
 		@Override
@@ -411,18 +426,13 @@ public class Yog extends Mob {
 		
 		@Override
 		public int damageRoll() {
-			return Random.NormalIntRange( 15, 20 );
+			return Random.NormalIntRange( 22, 30 );
 		}
 		
 		@Override
-		public int dr() {
-			return 8;
+		public int drRoll() {
+			return Random.NormalIntRange(0, 8);
 		}
-		
-		@Override
-		public String description() {
-			return TXT_DESC;
-				
-		}
+
 	}
 }

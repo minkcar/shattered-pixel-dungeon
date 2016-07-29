@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,8 +25,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 public class PotionOfExperience extends Potion {
 
 	{
-		name = "Potion of Experience";
-		initials = "Ex";
+		initials = 0;
 
 		bones = true;
 	}
@@ -38,14 +37,7 @@ public class PotionOfExperience extends Potion {
 	}
 	
 	@Override
-	public String desc() {
-		return
-			"The storied experiences of multitudes of battles reduced to liquid form, " +
-			"this draught will instantly raise your experience level.";
-	}
-	
-	@Override
 	public int price() {
-		return isKnown() ? 80 * quantity : super.price();
+		return isKnown() ? 50 * quantity : super.price();
 	}
 }

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,6 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 public class DwarfToken extends Item {
 	
 	{
-		name = "dwarf token";
 		image = ItemSpriteSheet.TOKEN;
 		
 		stackable = true;
@@ -41,17 +40,5 @@ public class DwarfToken extends Item {
 	@Override
 	public boolean isIdentified() {
 		return true;
-	}
-	
-	@Override
-	public String info() {
-		return
-			"Many dwarves and some of their larger creations carry these small pieces of metal of unknown purpose. " +
-			"Maybe they are jewelry or maybe some kind of ID. Dwarves are strange folk.";
-	}
-	
-	@Override
-	public int price() {
-		return quantity * 100;
 	}
 }

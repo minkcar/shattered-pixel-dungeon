@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,53 +20,37 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero;
 
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.watabou.utils.Bundle;
 
 public enum HeroSubClass {
 
-	NONE( null, null ),
+	NONE( null ),
 	
-	GLADIATOR( "gladiator",
-		"A successful attack with a melee weapon allows the _Gladiator_ to start a combo, " +
-		"in which every next successful hit inflicts more damage." ),
-	BERSERKER( "berserker",
-		"When severely wounded, the _Berserker_ enters a state of wild fury " +
-		"significantly increasing his damage output." ),
+	GLADIATOR( "gladiator" ),
+	BERSERKER( "berserker" ),
 	
-	WARLOCK( "warlock",
-		"Normal food grants the _Warlock_ additional wand recharge, but does not satisfy his hunger. " +
-		"Instead, after killing an enemy, he consumes its soul to heal his wounds and satisfy hunger." ),
-	BATTLEMAGE( "battlemage",
-		"When fighting with his staff, the _Battlemage_ conjures bonus effects depending on the wand " +
-		"his staff is imbued with. His staff will also gain charge through combat." ),
+	WARLOCK( "warlock" ),
+	BATTLEMAGE( "battlemage" ),
 	
-	ASSASSIN( "assassin",
-		"When performing a surprise attack, the _Assassin_ inflicts additional damage to his target." ),
-	FREERUNNER( "freerunner",
-		"The _Freerunner_ moves faster when he unencumbered and not starving, " +
-		"if he is invisible, this speed boost is much stronger." ),
+	ASSASSIN( "assassin" ),
+	FREERUNNER( "freerunner" ),
 		
-	SNIPER( "sniper",
-		"_Snipers_ are able to detect weak points in an enemy's armor, " +
-		"effectively ignoring it when using a missile weapon." ),
-	WARDEN( "warden",
-		"Having a strong connection with forces of nature gives _Wardens_ an ability to gather dewdrops and " +
-		"seeds from plants. Also trampling a high grass grants them a temporary armor buff." );
+	SNIPER( "sniper" ),
+	WARDEN( "warden" );
 	
 	private String title;
-	private String desc;
 	
-	private HeroSubClass( String title, String desc ) {
+	HeroSubClass( String title ) {
 		this.title = title;
-		this.desc = desc;
 	}
 	
 	public String title() {
-		return title;
+		return Messages.get(this, title);
 	}
 	
 	public String desc() {
-		return desc;
+		return Messages.get(this, title+"_desc");
 	}
 	
 	private static final String SUBCLASS	= "subClass";
@@ -77,11 +61,7 @@ public enum HeroSubClass {
 	
 	public static HeroSubClass restoreInBundle( Bundle bundle ) {
 		String value = bundle.getString( SUBCLASS );
-		try {
-			return valueOf( value );
-		} catch (Exception e) {
-			return NONE;
-		}
+		return valueOf( value );
 	}
 	
 }

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,8 +20,6 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.levels;
 
-import com.watabou.noosa.Scene;
-import com.watabou.noosa.tweeners.AlphaTweener;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Bones;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
@@ -33,7 +31,10 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.keys.SkeletonKey;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.watabou.noosa.Group;
+import com.watabou.noosa.tweeners.AlphaTweener;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
@@ -169,7 +170,11 @@ public class CityBossLevel extends Level {
 	
 	@Override
 	public int randomRespawnCell() {
-		return -1;
+		int cell = entrance + NEIGHBOURS8[Random.Int(8)];
+		while (!passable[cell]){
+			cell = entrance + NEIGHBOURS8[Random.Int(8)];
+		}
+		return cell;
 	}
 	
 	@Override
@@ -183,7 +188,7 @@ public class CityBossLevel extends Level {
 			seal();
 			
 			Mob boss = Bestiary.mob( Dungeon.depth );
-			boss.state = boss.HUNTING;
+			boss.state = boss.WANDERING;
 			int count = 0;
 			do {
 				boss.pos = Random.Int( LENGTH );
@@ -228,39 +233,41 @@ public class CityBossLevel extends Level {
 	@Override
 	public String tileName( int tile ) {
 		switch (tile) {
-		case Terrain.WATER:
-			return "Suspiciously colored water";
-		case Terrain.HIGH_GRASS:
-			return "High blooming flowers";
-		default:
-			return super.tileName( tile );
+			case Terrain.WATER:
+				return Messages.get(CityLevel.class, "water_name");
+			case Terrain.HIGH_GRASS:
+				return Messages.get(CityLevel.class, "high_grass_name");
+			default:
+				return super.tileName( tile );
 		}
 	}
 	
 	@Override
 	public String tileDesc(int tile) {
 		switch (tile) {
-		case Terrain.ENTRANCE:
-			return "A ramp leads up to the upper depth.";
-		case Terrain.EXIT:
-			return "A ramp leads down to the lower depth.";
-		case Terrain.WALL_DECO:
-		case Terrain.EMPTY_DECO:
-			return "Several tiles are missing here.";
-		case Terrain.EMPTY_SP:
-			return "Thick carpet covers the floor.";
-		case Terrain.STATUE:
-		case Terrain.STATUE_SP:
-			return "The statue depicts some dwarf standing in a heroic stance.";
-		case Terrain.BOOKSHELF:
-			return "The rows of books on different disciplines fill the bookshelf.";
-		default:
-			return super.tileDesc( tile );
+			case Terrain.ENTRANCE:
+				return Messages.get(CityLevel.class, "entrance_desc");
+			case Terrain.EXIT:
+				return Messages.get(CityLevel.class, "exit_desc");
+			case Terrain.WALL_DECO:
+			case Terrain.EMPTY_DECO:
+				return Messages.get(CityLevel.class, "deco_desc");
+			case Terrain.EMPTY_SP:
+				return Messages.get(CityLevel.class, "sp_desc");
+			case Terrain.STATUE:
+			case Terrain.STATUE_SP:
+				return Messages.get(CityLevel.class, "statue_desc");
+			case Terrain.BOOKSHELF:
+				return Messages.get(CityLevel.class, "bookshelf_desc");
+			default:
+				return super.tileDesc( tile );
 		}
 	}
 	
 	@Override
-	public void addVisuals( Scene scene ) {
-		CityLevel.addVisuals( this, scene );
+	public Group addVisuals( ) {
+		super.addVisuals();
+		CityLevel.addCityVisuals(this, visuals);
+		return visuals;
 	}
 }

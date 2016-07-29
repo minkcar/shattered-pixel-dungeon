@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,21 +20,20 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items;
 
-import com.watabou.noosa.audio.Sample;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
+import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
+import com.watabou.noosa.audio.Sample;
 
 public class Dewdrop extends Item {
-
-	private static final String TXT_VALUE	= "%+dHP";
 	
 	{
-		name = "dewdrop";
 		image = ItemSpriteSheet.DEWDROP;
 		
 		stackable = true;
@@ -48,18 +47,21 @@ public class Dewdrop extends Item {
 		if (hero.HP < hero.HT || vial == null || vial.isFull()) {
 			
 			int value = 1 + (Dungeon.depth - 1) / 5;
-			if (hero.heroClass == HeroClass.HUNTRESS) {
-				value++;
+			if (hero.subClass == HeroSubClass.WARDEN) {
+				value+=2;
 			}
 			
 			int effect = Math.min( hero.HT - hero.HP, value * quantity );
 			if (effect > 0) {
 				hero.HP += effect;
 				hero.sprite.emitter().burst( Speck.factory( Speck.HEALING ), 1 );
-				hero.sprite.showStatus( CharSprite.POSITIVE, TXT_VALUE, effect );
+				hero.sprite.showStatus( CharSprite.POSITIVE, Messages.get(this, "value", effect) );
+			} else {
+				GLog.i( Messages.get(this, "already_full") );
+				return false;
 			}
 			
-		} else if (vial != null) {
+		} else {
 			
 			vial.collectDew( this );
 			
@@ -70,9 +72,12 @@ public class Dewdrop extends Item {
 		
 		return true;
 	}
-	
+
 	@Override
-	public String info() {
-		return "A crystal clear dewdrop.";
+	//max of one dew in a stack
+	public Item quantity(int value) {
+		quantity = Math.min( value, 1);
+		return this;
 	}
+
 }

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,32 +20,28 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import java.util.HashSet;
-
-import com.watabou.noosa.Camera;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.shatteredpixel.shatteredpixeldungeon.ResultDescriptions;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SparkParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.LightningTrap;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ShamanSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
-import com.shatteredpixel.shatteredpixeldungeon.utils.Utils;
+import com.watabou.noosa.Camera;
 import com.watabou.utils.Callback;
 import com.watabou.utils.Random;
 
+import java.util.HashSet;
+
 public class Shaman extends Mob implements Callback {
 
-	private static final float TIME_TO_ZAP	= 2f;
-	
-	private static final String TXT_LIGHTNING_KILLED = "%s's lightning bolt killed you...";
+	private static final float TIME_TO_ZAP	= 1f;
 	
 	{
-		name = "gnoll shaman";
 		spriteClass = ShamanSprite.class;
 		
 		HP = HT = 18;
@@ -60,7 +56,7 @@ public class Shaman extends Mob implements Callback {
 	
 	@Override
 	public int damageRoll() {
-		return Random.NormalIntRange( 2, 6 );
+		return Random.NormalIntRange( 2, 8 );
 	}
 	
 	@Override
@@ -69,8 +65,8 @@ public class Shaman extends Mob implements Callback {
 	}
 	
 	@Override
-	public int dr() {
-		return 4;
+	public int drRoll() {
+		return Random.NormalIntRange(0, 4);
 	}
 	
 	@Override
@@ -89,13 +85,13 @@ public class Shaman extends Mob implements Callback {
 			
 			boolean visible = Level.fieldOfView[pos] || Level.fieldOfView[enemy.pos];
 			if (visible) {
-				((ShamanSprite)sprite).zap( enemy.pos );
+				sprite.zap( enemy.pos );
 			}
 			
 			spend( TIME_TO_ZAP );
 			
 			if (hit( this, enemy, true )) {
-				int dmg = Random.Int( 2, 12 );
+				int dmg = Random.NormalIntRange(3, 10);
 				if (Level.water[enemy.pos] && !enemy.flying) {
 					dmg *= 1.5f;
 				}
@@ -109,8 +105,8 @@ public class Shaman extends Mob implements Callback {
 					Camera.main.shake( 2, 0.3f );
 					
 					if (!enemy.isAlive()) {
-						Dungeon.fail( Utils.format( ResultDescriptions.MOB, Utils.indefinite( name ) ) );
-						GLog.n( TXT_LIGHTNING_KILLED, name );
+						Dungeon.fail( getClass() );
+						GLog.n( Messages.get(this, "zap_kill") );
 					}
 				}
 			} else {
@@ -125,16 +121,8 @@ public class Shaman extends Mob implements Callback {
 	public void call() {
 		next();
 	}
-	
-	@Override
-	public String description() {
-		return
-			"The most intelligent gnolls can master shamanistic magic. Gnoll shamans prefer " +
-			"battle spells to compensate for lack of might, not hesitating to use them " +
-			"on those who question their status in a tribe.";
-	}
-	
-	private static final HashSet<Class<?>> RESISTANCES = new HashSet<Class<?>>();
+
+	private static final HashSet<Class<?>> RESISTANCES = new HashSet<>();
 	static {
 		RESISTANCES.add( LightningTrap.Electricity.class );
 	}

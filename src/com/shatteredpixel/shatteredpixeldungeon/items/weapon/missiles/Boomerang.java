@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,26 +24,50 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MissileSprite;
+
+import java.util.ArrayList;
 
 public class Boomerang extends MissileWeapon {
 
 	{
-		name = "boomerang";
 		image = ItemSpriteSheet.BOOMERANG;
-		
-		STR = 10;
-		
-		MIN = 1;
-		MAX = 5;
 
 		stackable = false;
 
 		unique = true;
 		bones = false;
 	}
-	
+
+	@Override
+	public ArrayList<String> actions(Hero hero) {
+		ArrayList<String> actions = super.actions( hero );
+		if (!isEquipped(hero)) actions.add(AC_EQUIP);
+		return actions;
+	}
+
+	@Override
+	public int min(int lvl) {
+		return  1 +
+				lvl;
+	}
+
+	@Override
+	public int max(int lvl) {
+		return  5 +     //half the base damage of a tier-1 weapon
+				2 * lvl;//scales the same as a tier 1 weapon
+	}
+
+	@Override
+	public int STRReq(int lvl) {
+		lvl = Math.max(0, lvl);
+		//strength req decreases at +1,+3,+6,+10,etc.
+		return 10 - (int)(Math.sqrt(8 * lvl + 1) - 1)/2;
+	}
+
 	@Override
 	public boolean isUpgradable() {
 		return true;
@@ -56,8 +80,6 @@ public class Boomerang extends MissileWeapon {
 	
 	@Override
 	public Item upgrade( boolean enchant ) {
-		MIN += 1;
-		MAX += 2;
 		super.upgrade( enchant );
 		
 		updateQuickslot();
@@ -67,17 +89,15 @@ public class Boomerang extends MissileWeapon {
 	
 	@Override
 	public Item degrade() {
-		MIN -= 1;
-		MAX -= 2;
 		return super.degrade();
 	}
 
 	@Override
-	public void proc( Char attacker, Char defender, int damage ) {
-		super.proc( attacker, defender, damage );
+	public int proc( Char attacker, Char defender, int damage ) {
 		if (attacker instanceof Hero && ((Hero)attacker).rangedWeapon == this) {
 			circleBack( defender.pos, (Hero)attacker );
 		}
+		return super.proc( attacker, defender, damage );
 	}
 
 	@Override
@@ -106,22 +126,23 @@ public class Boomerang extends MissileWeapon {
 	@Override
 	public void cast( Hero user, int dst ) {
 		throwEquiped = isEquipped( user );
+		if (throwEquiped) Dungeon.quickslot.convertToPlaceholder(this);
 		super.cast( user, dst );
 	}
 	
 	@Override
 	public String desc() {
-		String info =
-			"Thrown to the enemy this flat curved wooden missile will return to the hands of its thrower.";
+		String info = super.desc();
 		switch (imbue) {
 			case LIGHT:
-				info += "\n\nIt was balanced to be lighter. ";
+				info += "\n\n" + Messages.get(Weapon.class, "lighter");
 				break;
 			case HEAVY:
-				info += "\n\nIt was balanced to be heavier. ";
+				info += "\n\n" + Messages.get(Weapon.class, "heavier");
 				break;
 			case NONE:
 		}
+
 		return info;
 	}
 }

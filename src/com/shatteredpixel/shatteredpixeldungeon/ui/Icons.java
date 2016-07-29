@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,9 +20,9 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.ui;
 
-import com.watabou.noosa.Image;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
+import com.watabou.noosa.Image;
 
 public enum Icons {
 
@@ -53,6 +53,8 @@ public enum Icons {
 	CHECKED,
 	UNCHECKED,
 	EXIT,
+	NOTES,
+	LANGS,
 	CHALLENGE_OFF,
 	CHALLENGE_ON,
 	RESUME;
@@ -110,7 +112,7 @@ public enum Icons {
 			icon.frame( icon.texture.uvRect( 0, 45, 13, 58 ) );
 			break;
 		case DEPTH:
-			icon.frame( icon.texture.uvRect( 45, 12, 54, 20 ) );
+			icon.frame( icon.texture.uvRect( 46, 12, 54, 20 ) );
 			break;
 		case DEPTH_LG:
 			icon.frame( icon.texture.uvRect( 34, 46, 50, 62 ) );
@@ -144,6 +146,12 @@ public enum Icons {
 			break;
 		case EXIT:
 			icon.frame( icon.texture.uvRect( 108, 0, 124, 16 ) );
+			break;
+		case NOTES:
+			icon.frame( icon.texture.uvRect( 79, 40, 94, 56 ) );
+			break;
+		case LANGS:
+			icon.frame( icon.texture.uvRect( 94, 40, 110, 56 ) );
 			break;
 		case CHALLENGE_OFF:
 			icon.frame( icon.texture.uvRect( 78, 16, 102, 40 ) );

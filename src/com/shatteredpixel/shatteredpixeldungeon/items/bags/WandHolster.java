@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items.bags;
 
-import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
@@ -28,11 +27,12 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 public class WandHolster extends Bag {
 
 	{
-		name = "wand holster";
 		image = ItemSpriteSheet.HOLSTER;
 		
 		size = 12;
 	}
+
+	public static float HOLSTER_SCALE_FACTOR = 0.85f;
 	
 	@Override
 	public boolean grab( Item item ) {
@@ -44,7 +44,7 @@ public class WandHolster extends Bag {
 		if (super.collect( container )) {
 			if (owner != null) {
 				for (Item item : items) {
-					((Wand)item).charge( owner );
+					((Wand)item).charge( owner, HOLSTER_SCALE_FACTOR );
 				}
 			}
 			return true;
@@ -65,11 +65,5 @@ public class WandHolster extends Bag {
 	public int price() {
 		return 50;
 	}
-	
-	@Override
-	public String info() {
-		return
-			"This slim holster is made from some exotic animal, and is designed to compactly carry up to " + size + " wands.\n\n" +
-			"The size seems a bit excessive, who would ever have that many wands?";
-	}
+
 }

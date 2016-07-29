@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,18 +23,24 @@ package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Recharging;
 import com.shatteredpixel.shatteredpixeldungeon.effects.SpellSprite;
-import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRecharging;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
-import com.watabou.utils.Random;
 
-public class WandOfMagicMissile extends Wand {
+public class WandOfMagicMissile extends DamageWand {
 
 	{
-		name = "Wand of Magic Missile";
 		image = ItemSpriteSheet.WAND_MAGIC_MISSILE;
+	}
+
+	public int min(int lvl){
+		return 2+lvl;
+	}
+
+	public int max(int lvl){
+		return 8+2*lvl;
 	}
 	
 	@Override
@@ -42,32 +48,24 @@ public class WandOfMagicMissile extends Wand {
 				
 		Char ch = Actor.findChar( bolt.collisionPos );
 		if (ch != null) {
-			
-			int level = level();
 
-			ch.damage(Random.NormalIntRange(4 , 6 + level * 2), this);
+			processSoulMark(ch, chargesPerCast());
+			ch.damage(damageRoll(), this);
 
-			ch.sprite.burst(0xFFFFFFFF, level / 2 + 2);
+			ch.sprite.burst(0xFFFFFFFF, level() / 2 + 2);
 
 		}
 	}
 
 	@Override
 	public void onHit(MagesStaff staff, Char attacker, Char defender, int damage) {
-		//gain 1 turn of recharging buff per level of the wand.
-		if (level > 0) {
-			Buff.prolong( attacker, ScrollOfRecharging.Recharging.class, (float)staff.level);
-			SpellSprite.show(attacker, SpellSprite.CHARGE);
-		}
+		Buff.prolong( attacker, Recharging.class, 1 + staff.level()/2f);
+		SpellSprite.show(attacker, SpellSprite.CHARGE);
+
 	}
 	
 	protected int initialCharges() {
 		return 3;
 	}
-	
-	@Override
-	public String desc() {
-		return
-			"This wand launches missiles of pure magical energy, dealing moderate damage to a target creature.";
-	}
+
 }

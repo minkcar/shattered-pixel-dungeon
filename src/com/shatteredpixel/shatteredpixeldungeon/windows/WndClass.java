@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,18 +20,16 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.windows;
 
-import com.watabou.noosa.BitmapText;
-import com.watabou.noosa.BitmapTextMultiline;
-import com.watabou.noosa.Group;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
-import com.shatteredpixel.shatteredpixeldungeon.utils.Utils;
+import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextMultiline;
+import com.watabou.noosa.BitmapText;
+import com.watabou.noosa.Group;
 
 public class WndClass extends WndTabbed {
-
-	private static final String TXT_MASTERY	= "Mastery";
 
 	private static final int WIDTH			= 110;
 
@@ -51,7 +49,7 @@ public class WndClass extends WndTabbed {
 		tabPerks = new PerksTab();
 		add( tabPerks );
 
-		Tab tab = new RankingTab( Utils.capitalize( cl.title() ), tabPerks );
+		Tab tab = new RankingTab( cl.title().toUpperCase(), tabPerks );
 		tab.setSize( TAB_WIDTH, tabHeight() );
 		add( tab );
 
@@ -59,7 +57,7 @@ public class WndClass extends WndTabbed {
 			tabMastery = new MasteryTab();
 			add( tabMastery );
 
-			tab = new RankingTab( TXT_MASTERY, tabMastery );
+			tab = new RankingTab( Messages.get(this, "mastery"), tabMastery );
 			add( tab );
 
 			resize(
@@ -97,8 +95,6 @@ public class WndClass extends WndTabbed {
 		private static final int MARGIN	= 4;
 		private static final int GAP	= 4;
 
-		private static final String DOT	= "\u007F";
-
 		public float height;
 		public float width;
 
@@ -116,7 +112,7 @@ public class WndClass extends WndTabbed {
 					pos += GAP;
 				}
 
-				BitmapText dot = PixelScene.createText( DOT, 6 );
+				BitmapText dot = PixelScene.createText( "-", 6 );
 				dot.x = MARGIN;
 				dot.y = pos;
 				if (dotWidth == 0) {
@@ -125,11 +121,9 @@ public class WndClass extends WndTabbed {
 				}
 				add( dot );
 
-				BitmapTextMultiline item = PixelScene.createMultiline( items[i], 6 );
-				item.x = dot.x + dotWidth;
-				item.y = pos;
-				item.maxWidth = (int)(WIDTH - MARGIN * 2 - dotWidth);
-				item.measure();
+				RenderedTextMultiline item = PixelScene.renderMultiline( items[i], 6 );
+				item.maxWidth((int)(WIDTH - MARGIN * 2 - dotWidth));
+				item.setPos(dot.x + dotWidth, pos);
 				add( item );
 
 				pos += item.height();
@@ -148,56 +142,35 @@ public class WndClass extends WndTabbed {
 
 		private static final int MARGIN	= 4;
 
-		private BitmapTextMultiline normal;
-		private BitmapTextMultiline highlighted;
-
 		public float height;
 		public float width;
 
 		public MasteryTab() {
 			super();
 
-			String text = null;
+			String message = null;
 			switch (cl) {
 				case WARRIOR:
-					text = HeroSubClass.GLADIATOR.desc() + "\n\n" + HeroSubClass.BERSERKER.desc();
+					message = HeroSubClass.GLADIATOR.desc() + "\n\n" + HeroSubClass.BERSERKER.desc();
 					break;
 				case MAGE:
-					text = HeroSubClass.BATTLEMAGE.desc() + "\n\n" + HeroSubClass.WARLOCK.desc();
+					message = HeroSubClass.BATTLEMAGE.desc() + "\n\n" + HeroSubClass.WARLOCK.desc();
 					break;
 				case ROGUE:
-					text = HeroSubClass.FREERUNNER.desc() + "\n\n" + HeroSubClass.ASSASSIN.desc();
+					message = HeroSubClass.FREERUNNER.desc() + "\n\n" + HeroSubClass.ASSASSIN.desc();
 					break;
 				case HUNTRESS:
-					text = HeroSubClass.SNIPER.desc() + "\n\n" + HeroSubClass.WARDEN.desc();
+					message = HeroSubClass.SNIPER.desc() + "\n\n" + HeroSubClass.WARDEN.desc();
 					break;
 			}
 
-			Highlighter hl = new Highlighter( text );
+			RenderedTextMultiline text = PixelScene.renderMultiline( 6 );
+			text.text( message, WIDTH - MARGIN * 2 );
+			text.setPos( MARGIN, MARGIN );
+			add( text );
 
-			normal = PixelScene.createMultiline( hl.text, 6 );
-			normal.maxWidth = WIDTH - MARGIN * 2;
-			normal.measure();
-			normal.x = MARGIN;
-			normal.y = MARGIN;
-			add( normal );
-
-			if (hl.isHighlighted()) {
-				normal.mask = hl.inverted();
-
-				highlighted = PixelScene.createMultiline( hl.text, 6 );
-				highlighted.maxWidth = normal.maxWidth;
-				highlighted.measure();
-				highlighted.x = normal.x;
-				highlighted.y = normal.y;
-				add( highlighted );
-
-				highlighted.mask = hl.mask;
-				highlighted.hardlight( TITLE_COLOR );
-			}
-
-			height = normal.y + normal.height() + MARGIN;
-			width = normal.x + normal.width() + MARGIN;
+			height = text.bottom() + MARGIN;
+			width = text.right() + MARGIN;
 		}
 	}
 }

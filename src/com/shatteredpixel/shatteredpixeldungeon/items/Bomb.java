@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015 Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,37 +20,35 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items;
 
-import com.shatteredpixel.shatteredpixeldungeon.ResultDescriptions;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
-import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
-import com.shatteredpixel.shatteredpixeldungeon.utils.Utils;
-import com.watabou.noosa.audio.Sample;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.BlastParticle;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SmokeParticle;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
-import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
+import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
+import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 
 public class Bomb extends Item {
 	
 	{
-		name = "bomb";
 		image = ItemSpriteSheet.BOMB;
+
 		defaultAction = AC_LIGHTTHROW;
+		usesTargeting = true;
+
 		stackable = true;
 	}
 
@@ -59,7 +57,7 @@ public class Bomb extends Item {
 	//FIXME using a static variable for this is kinda gross, should be a better way
 	private static boolean lightingFuse = false;
 
-	private static final String AC_LIGHTTHROW = "Light & Throw";
+	private static final String AC_LIGHTTHROW = "LIGHTTHROW";
 
 	@Override
 	public boolean isSimilar(Item item) {
@@ -75,7 +73,8 @@ public class Bomb extends Item {
 
 	@Override
 	public void execute(Hero hero, String action) {
-		if (action.equals( AC_LIGHTTHROW )){
+
+		if (action.equals(AC_LIGHTTHROW)) {
 			lightingFuse = true;
 			action = AC_THROW;
 		} else
@@ -103,7 +102,7 @@ public class Bomb extends Item {
 	@Override
 	public boolean doPickUp(Hero hero) {
 		if (fuse != null) {
-			GLog.w("You quickly snuff the bomb's fuse.");
+			GLog.w( Messages.get(this, "snuff_fuse") );
 			fuse = null;
 		}
 		return super.doPickUp(hero);
@@ -113,7 +112,7 @@ public class Bomb extends Item {
 		//We're blowing up, so no need for a fuse anymore.
 		this.fuse = null;
 
-		Sample.INSTANCE.play( Assets.SND_BLAST, 2 );
+		Sample.INSTANCE.play( Assets.SND_BLAST );
 
 		if (Dungeon.visible[cell]) {
 			CellEmitter.center( cell ).burst( BlastParticle.FACTORY, 30 );
@@ -128,7 +127,7 @@ public class Bomb extends Item {
 				}
 
 				if (Level.flamable[c]) {
-					Level.set( c, Terrain.EMBERS );
+					Dungeon.level.destroy( c );
 					GameScene.updateMap( c );
 					terrainAffected = true;
 				}
@@ -144,14 +143,13 @@ public class Bomb extends Item {
 					int minDamage = c == cell ? Dungeon.depth+5 : 1;
 					int maxDamage = 10 + Dungeon.depth * 2;
 
-					int dmg = Random.NormalIntRange( minDamage, maxDamage ) - Random.Int( ch.dr() );
+					int dmg = Random.NormalIntRange( minDamage, maxDamage ) - ch.drRoll();
 					if (dmg > 0) {
 						ch.damage( dmg, this );
 					}
 
 					if (ch == Dungeon.hero && !ch.isAlive())
-						//constant is used here in the rare instance a player is killed by a double bomb.
-						Dungeon.fail(Utils.format(ResultDescriptions.ITEM, "bomb"));
+						Dungeon.fail( getClass() );
 				}
 			}
 		}
@@ -193,11 +191,11 @@ public class Bomb extends Item {
 	}
 	
 	@Override
-	public String info() {
-		return
-			"A fairly hefty black powder bomb. An explosion from this would certainly do damage to anything nearby." +
-				(fuse != null ? "\n\nThe bomb's fuse is burning away, keep your distance or put it out!" :
-					"\n\nIt looks like the fuse will take a couple rounds to burn down once it is lit.");
+	public String desc() {
+		if (fuse == null)
+			return super.desc();
+		else
+			return Messages.get(this, "desc_burning");
 	}
 
 	private static final String FUSE = "fuse";
@@ -250,8 +248,10 @@ public class Bomb extends Item {
 				}
 			}
 
-			//can't find our bomb, this should never happen, throw an exception.
-			throw new RuntimeException("Something caused a lit bomb to not be present in a heap on the level!");
+			//can't find our bomb, something must have removed it, do nothing.
+			bomb.fuse = null;
+			Actor.remove( this );
+			return true;
 		}
 	}
 
@@ -259,15 +259,8 @@ public class Bomb extends Item {
 	public static class DoubleBomb extends Bomb{
 
 		{
-			name = "two bombs";
 			image = ItemSpriteSheet.DBL_BOMB;
 			stackable = false;
-		}
-
-		@Override
-		public String info() {
-			return
-				"A stack of two hefty black powder bombs, looks like you get one free!";
 		}
 
 		@Override
@@ -275,8 +268,9 @@ public class Bomb extends Item {
 			Bomb bomb = new Bomb();
 			bomb.quantity(2);
 			if (bomb.doPickUp(hero)) {
-				//isaaaaac....
-				hero.sprite.showStatus(CharSprite.NEUTRAL, "1+1 free!");
+				//isaaaaac.... (don't bother doing this when not in english)
+				if (Messages.get(this, "name").equals("two bombs"))
+					hero.sprite.showStatus(CharSprite.NEUTRAL, "1+1 free!");
 				return true;
 			}
 			return false;

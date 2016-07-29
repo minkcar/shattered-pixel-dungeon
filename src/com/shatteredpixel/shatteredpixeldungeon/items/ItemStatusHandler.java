@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,121 +20,127 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items;
 
+import com.watabou.utils.Bundle;
+import com.watabou.utils.Random;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-
-import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.watabou.utils.Bundle;
-import com.watabou.utils.Random;
+import java.util.List;
 
 public class ItemStatusHandler<T extends Item> {
 
 	private Class<? extends T>[] items;
-	
-	private HashMap<Class<? extends T>, Integer> images;
-	private HashMap<Class<? extends T>, String> labels;
+	private HashMap<Class<? extends T>, String> itemLabels;
+	private HashMap<String, Integer> labelImages;
 	private HashSet<Class<? extends T>> known;
-	
-	public ItemStatusHandler( Class<? extends T>[] items, String[] allLabels, Integer[] allImages ) {
-		
+
+	public ItemStatusHandler( Class<? extends T>[] items, HashMap<String, Integer> labelImages ) {
+
 		this.items = items;
-		
-		this.images = new HashMap<Class<? extends T>, Integer>();
-		this.labels = new HashMap<Class<? extends T>, String>();
+
+		this.itemLabels = new HashMap<>();
+		this.labelImages = new HashMap<>(labelImages);
 		known = new HashSet<Class<? extends T>>();
-		
-		ArrayList<String> labelsLeft = new ArrayList<String>( Arrays.asList( allLabels ) );
-		ArrayList<Integer> imagesLeft = new ArrayList<Integer>( Arrays.asList( allImages ) );
-		
+
+		ArrayList<String> labelsLeft = new ArrayList<String>( labelImages.keySet() );
+
 		for (int i=0; i < items.length; i++) {
-			
-			Class<? extends T> item = (Class<? extends T>)(items[i]);
-			
+
+			Class<? extends T> item = items[i];
+
 			int index = Random.Int( labelsLeft.size() );
-			
-			labels.put( item, labelsLeft.get( index ) );
+
+			itemLabels.put( item, labelsLeft.get( index ) );
 			labelsLeft.remove( index );
-			
-			images.put( item, imagesLeft.get( index ) );
-			imagesLeft.remove( index );
+
 		}
 	}
-	
-	public ItemStatusHandler( Class<? extends T>[] items, String[] labels, Integer[] images, Bundle bundle ) {
-		
+
+	public ItemStatusHandler( Class<? extends T>[] items, HashMap<String, Integer> labelImages, Bundle bundle ) {
+
 		this.items = items;
-		
-		this.images = new HashMap<Class<? extends T>, Integer>();
-		this.labels = new HashMap<Class<? extends T>, String>();
-		known = new HashSet<Class<? extends T>>();
-		
-		restore( bundle, labels, images );
+
+		this.itemLabels = new HashMap<>();
+		this.labelImages = new HashMap<>(labelImages);
+		known = new HashSet<>();
+
+		ArrayList<String> allLabels = new ArrayList<String>( labelImages.keySet() );
+
+		restore(bundle, allLabels);
 	}
-	
-	private static final String PFX_IMAGE	= "_image";
+
 	private static final String PFX_LABEL	= "_label";
 	private static final String PFX_KNOWN	= "_known";
 	
 	public void save( Bundle bundle ) {
 		for (int i=0; i < items.length; i++) {
 			String itemName = items[i].toString();
-			bundle.put( itemName + PFX_IMAGE, images.get( items[i] ) );
-			bundle.put( itemName + PFX_LABEL, labels.get( items[i] ) );
+			bundle.put( itemName + PFX_LABEL, itemLabels.get( items[i] ) );
 			bundle.put( itemName + PFX_KNOWN, known.contains( items[i] ) );
 		}
 	}
-	
-	private void restore( Bundle bundle, String[] allLabels, Integer[] allImages ) {
-		
-		ArrayList<String> labelsLeft = new ArrayList<String>( Arrays.asList( allLabels ) );
-		ArrayList<Integer> imagesLeft = new ArrayList<Integer>( Arrays.asList( allImages ) );
-		
-		for (int i=0; i < items.length; i++) {
-			
-			Class<? extends T> item = (Class<? extends T>)(items[i]);
-			String itemName = item.toString();
-			
-			if (bundle.contains( itemName + PFX_LABEL ) && Dungeon.version > 4) {
-				
-				String label = bundle.getString( itemName + PFX_LABEL );
-				labels.put( item, label );
-				labelsLeft.remove( label );
 
-				Integer image = bundle.getInt( itemName + PFX_IMAGE );
-				images.put( item, image );
-				imagesLeft.remove( image );
+	public void saveSelectively( Bundle bundle, ArrayList<Item> itemsToSave ){
+		List<Class<? extends T>> items = Arrays.asList(this.items);
+		for (Item item : itemsToSave){
+			if (items.contains(item.getClass())){
+				Class<? extends T> cls = items.get(items.indexOf(item.getClass()));
+				String itemName = cls.toString();
+				bundle.put( itemName + PFX_LABEL, itemLabels.get( cls ) );
+				bundle.put( itemName + PFX_KNOWN, known.contains( cls ) );
+			}
+		}
+	}
+
+	private void restore( Bundle bundle, ArrayList<String> labelsLeft  ) {
+
+		ArrayList<Class<? extends T>> unlabelled = new ArrayList<>();
+
+		for (int i=0; i < items.length; i++) {
+
+			Class<? extends T> item = items[i];
+			String itemName = item.toString();
+
+			if (bundle.contains( itemName + PFX_LABEL )) {
+
+				String label = bundle.getString( itemName + PFX_LABEL );
+				itemLabels.put( item, label );
+				labelsLeft.remove( label );
 
 				if (bundle.getBoolean( itemName + PFX_KNOWN )) {
 					known.add( item );
 				}
 
-			//if there's a new item, give it a random image
-			//or.. if we're loading from an untrusted version, randomize the image to be safe.
 			} else {
-				
-				int index = Random.Int( labelsLeft.size() );
-				
-				labels.put( item, labelsLeft.get( index ) );
-				labelsLeft.remove( index );
-				
-				images.put( item, imagesLeft.get( index ) );
-				imagesLeft.remove( index );
 
-				if (bundle.contains( itemName + PFX_KNOWN ) && bundle.getBoolean( itemName + PFX_KNOWN )) {
-					known.add( item );
-				}
+				unlabelled.add(items[i]);
+
+			}
+		}
+
+		for (Class<? extends T> item : unlabelled){
+
+			String itemName = item.toString();
+
+			int index = Random.Int( labelsLeft.size() );
+
+			itemLabels.put( item, labelsLeft.get( index ) );
+			labelsLeft.remove( index );
+
+			if (bundle.contains( itemName + PFX_KNOWN ) && bundle.getBoolean( itemName + PFX_KNOWN )) {
+				known.add( item );
 			}
 		}
 	}
 	
 	public int image( T item ) {
-		return images.get( item.getClass() );
+		return labelImages.get(label(item));
 	}
 	
 	public String label( T item ) {
-		return labels.get( item.getClass() );
+		return itemLabels.get(item.getClass());
 	}
 	
 	public boolean isKnown( T item ) {

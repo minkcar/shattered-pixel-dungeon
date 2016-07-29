@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +19,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
-
-import java.util.ArrayList;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -40,21 +38,23 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.SwarmSprite;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
+import java.util.ArrayList;
+
 public class Swarm extends Mob {
 
 	{
-		name = "swarm of flies";
 		spriteClass = SwarmSprite.class;
 		
-		HP = HT = 80;
+		HP = HT = 50;
 		defenseSkill = 5;
-		
-		maxLvl = 10;
+
+		EXP = 3;
+		maxLvl = 9;
 		
 		flying = true;
 
 		loot = new PotionOfHealing();
-		lootChance = 0.2f; //by default, see die()
+		lootChance = 0.1667f; //by default, see die()
 	}
 	
 	private static final float SPLIT_DELAY	= 1f;
@@ -73,18 +73,19 @@ public class Swarm extends Mob {
 	public void restoreFromBundle( Bundle bundle ) {
 		super.restoreFromBundle( bundle );
 		generation = bundle.getInt( GENERATION );
+		if (generation > 0) EXP = 0;
 	}
 	
 	@Override
 	public int damageRoll() {
-		return Random.NormalIntRange( 2, 4 );
+		return Random.NormalIntRange( 1, 4 );
 	}
 	
 	@Override
 	public int defenseProc( Char enemy, int damage ) {
 
 		if (HP >= damage + 2) {
-			ArrayList<Integer> candidates = new ArrayList<Integer>();
+			ArrayList<Integer> candidates = new ArrayList<>();
 			boolean[] passable = Level.passable;
 			
 			int[] neighbours = {pos + 1, pos - 1, pos + Level.WIDTH, pos - Level.WIDTH};
@@ -117,17 +118,13 @@ public class Swarm extends Mob {
 	
 	@Override
 	public int attackSkill( Char target ) {
-		return 12;
-	}
-	
-	@Override
-	public String defenseVerb() {
-		return "evaded";
+		return 10;
 	}
 	
 	private Swarm split() {
 		Swarm clone = new Swarm();
 		clone.generation = generation + 1;
+		clone.EXP = 0;
 		if (buff( Burning.class ) != null) {
 			Buff.affect( clone, Burning.class ).reignite( clone );
 		}
@@ -143,7 +140,7 @@ public class Swarm extends Mob {
 	@Override
 	public void die( Object cause ){
 		//sets drop chance
-		lootChance = 1f/((5 + Dungeon.limitedDrops.swarmHP.count ) * (generation+1) );
+		lootChance = 1f/((6 + 2*Dungeon.limitedDrops.swarmHP.count ) * (generation+1) );
 		super.die( cause );
 	}
 
@@ -151,12 +148,5 @@ public class Swarm extends Mob {
 	protected Item createLoot(){
 		Dungeon.limitedDrops.swarmHP.count++;
 		return super.createLoot();
-	}
-	
-	@Override
-	public String description() {
-		return
-			"The deadly swarm of flies buzzes angrily. Every non-magical attack " +
-			"will split it into two smaller but equally dangerous swarms.";
 	}
 }

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,14 +30,14 @@ public class Challenges {
 	public static final int DARKNESS			= 32;
 	public static final int NO_SCROLLS		    = 64;
 
-	public static final String[] NAMES = {
-			"On diet",
-			"Faith is my armor",
-			"Pharmacophobia",
-			"Barren land",
-			"Swarm intelligence",
-			"Into darkness",
-			"Forbidden runes"
+	public static final String[] NAME_IDS = {
+			"no_food",
+			"no_armor",
+			"no_healing",
+			"no_herbalism",
+			"swarm_intelligence",
+			"darkness",
+			"no_scrolls"
 	};
 
 	public static final int[] MASKS = {

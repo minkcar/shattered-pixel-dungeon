@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,8 +20,6 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.levels;
 
-import com.watabou.noosa.Scene;
-import com.watabou.noosa.particles.Emitter;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.DungeonTilemap;
@@ -29,6 +27,24 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Wandmaker;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Halo;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.FlameParticle;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Room.Type;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.AlarmTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ChillingTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ConfusionTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.FireTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.FlashingTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.FlockTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.GrippingTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.LightningTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.OozeTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ParalyticTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.PoisonTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.SpearTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.SummoningTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.TeleportationTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ToxicTrap;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.watabou.noosa.Group;
+import com.watabou.noosa.particles.Emitter;
 import com.watabou.utils.PointF;
 import com.watabou.utils.Random;
 
@@ -56,10 +72,24 @@ public class PrisonLevel extends RegularLevel {
 	protected boolean[] grass() {
 		return Patch.generate( feeling == Feeling.GRASS ? 0.60f : 0.40f, 3 );
 	}
-	
+
+	@Override
+	protected Class<?>[] trapClasses() {
+		return new Class[]{ ChillingTrap.class, FireTrap.class, PoisonTrap.class, SpearTrap.class, ToxicTrap.class,
+				AlarmTrap.class, FlashingTrap.class, GrippingTrap.class, ParalyticTrap.class, LightningTrap.class, OozeTrap.class,
+				ConfusionTrap.class, FlockTrap.class, SummoningTrap.class, TeleportationTrap.class, };
+	}
+
+	@Override
+	protected float[] trapChances() {
+		return new float[]{ 4, 4, 4, 4,
+				2, 2, 2, 2, 2, 2,
+				1, 1, 1, 1 };
+	}
+
 	@Override
 	protected boolean assignRoomType() {
-		super.assignRoomType();
+		if (!super.assignRoomType()) return false;
 		
 		for (Room r : rooms) {
 			if (r.type == Type.TUNNEL) {
@@ -67,14 +97,7 @@ public class PrisonLevel extends RegularLevel {
 			}
 		}
 
-		return true;
-	}
-	
-	@Override
-	protected void createItems() {
-		super.createItems();
-		
-		Wandmaker.Quest.spawn( this, roomEntrance );
+		return Wandmaker.Quest.spawn( this, roomEntrance, rooms );
 	}
 	
 	@Override
@@ -124,44 +147,45 @@ public class PrisonLevel extends RegularLevel {
 		
 		placeSign();
 	}
-	
+
 	@Override
 	public String tileName( int tile ) {
 		switch (tile) {
-		case Terrain.WATER:
-			return "Dark cold water.";
-		default:
-			return super.tileName( tile );
+			case Terrain.WATER:
+				return Messages.get(PrisonLevel.class, "water_name");
+			default:
+				return super.tileName( tile );
 		}
 	}
-	
+
 	@Override
 	public String tileDesc(int tile) {
 		switch (tile) {
-		case Terrain.EMPTY_DECO:
-			return "There are old blood stains on the floor.";
-		case Terrain.BOOKSHELF:
-			return "This is probably a vestige of a prison library. Might it burn?";
-		default:
-			return super.tileDesc( tile );
+			case Terrain.EMPTY_DECO:
+				return Messages.get(PrisonLevel.class, "empty_deco_desc");
+			case Terrain.BOOKSHELF:
+				return Messages.get(PrisonLevel.class, "bookshelf_desc");
+			default:
+				return super.tileDesc( tile );
 		}
 	}
 	
 	@Override
-	public void addVisuals( Scene scene ) {
-		super.addVisuals( scene );
-		addVisuals( this, scene );
+	public Group addVisuals() {
+		super.addVisuals();
+		addPrisonVisuals(this, visuals);
+		return visuals;
 	}
-	
-	public static void addVisuals( Level level, Scene scene ) {
+
+	public static void addPrisonVisuals(Level level, Group group){
 		for (int i=0; i < LENGTH; i++) {
 			if (level.map[i] == Terrain.WALL_DECO) {
-				scene.add( new Torch( i ) );
+				group.add( new Torch( i ) );
 			}
 		}
 	}
 	
-	private static class Torch extends Emitter {
+	public static class Torch extends Emitter {
 		
 		private int pos;
 		

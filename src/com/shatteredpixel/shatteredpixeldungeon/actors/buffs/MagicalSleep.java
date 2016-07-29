@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,13 +23,13 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 
 public class MagicalSleep extends Buff {
 
 	private static final float STEP = 1f;
-	public static final float SWS	= 1.5f;
 
 	@Override
 	public boolean attachTo( Char target ) {
@@ -37,16 +37,16 @@ public class MagicalSleep extends Buff {
 
 			if (target instanceof Hero)
 				if (target.HP == target.HT) {
-					GLog.i("You are too healthy, and resist the urge to sleep.");
+					GLog.i(Messages.get(this, "toohealthy"));
 					detach();
 					return true;
 				} else {
-					GLog.i("You fall into a deep magical sleep.");
+					GLog.i(Messages.get(this, "fallasleep"));
 				}
 			else if (target instanceof Mob)
 				((Mob)target).state = ((Mob)target).SLEEPING;
 
-			target.paralysed = true;
+			target.paralysed++;
 
 			return true;
 		} else {
@@ -58,9 +58,9 @@ public class MagicalSleep extends Buff {
 	public boolean act(){
 		if (target instanceof Hero) {
 			target.HP = Math.min(target.HP+1, target.HT);
-			((Hero) target).restoreHealth = true;
+			((Hero) target).resting = true;
 			if (target.HP == target.HT) {
-				GLog.p("You wake up feeling refreshed and healthy.");
+				GLog.p(Messages.get(this, "wakeup"));
 				detach();
 			}
 		}
@@ -70,9 +70,10 @@ public class MagicalSleep extends Buff {
 
 	@Override
 	public void detach() {
-		target.paralysed = false;
+		if (target.paralysed > 0)
+			target.paralysed--;
 		if (target instanceof Hero)
-			((Hero) target).restoreHealth = false;
+			((Hero) target).resting = false;
 		super.detach();
 	}
 
@@ -83,15 +84,11 @@ public class MagicalSleep extends Buff {
 
 	@Override
 	public String toString() {
-		return "Magical Sleep";
+		return Messages.get(this, "name");
 	}
 
 	@Override
 	public String desc() {
-		return "This character has fallen into a deep magical sleep which they will not wake from naturally.\n" +
-				"\n" +
-				"Magical sleep is similar to regular sleep, except that only damage will cause the target to wake up. \n" +
-				"\n" +
-				"For the hero, magical sleep has some restorative properties, allowing them to rapidly heal while resting.";
+		return Messages.get(this, "desc");
 	}
 }

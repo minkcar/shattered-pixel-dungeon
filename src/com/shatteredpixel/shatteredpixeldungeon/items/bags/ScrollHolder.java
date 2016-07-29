@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,6 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 public class ScrollHolder extends Bag {
 
 	{
-		name = "scroll holder";
 		image = ItemSpriteSheet.HOLDER;
 		
 		size = 12;
@@ -40,13 +39,7 @@ public class ScrollHolder extends Bag {
 	
 	@Override
 	public int price() {
-		return 50;
+		return 40;
 	}
-	
-	@Override
-	public String info() {
-		return
-			"This tubular container looks like it would hold an astronomer's charts, but your scrolls will fit just as well.\n\n" +
-			"The holder doesn't look very flammable, so your scrolls should be safe from fire inside it.";
-	}
+
 }

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,22 +21,21 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.keys;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.shatteredpixel.shatteredpixeldungeon.items.Item;
-import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
-import com.shatteredpixel.shatteredpixeldungeon.utils.Utils;
 
 public class IronKey extends Key {
-
-	private static final String TXT_FROM_DEPTH = "iron key from depth %d";
-
-	public static int curDepthQuantity = 0;
 	
 	{
-		name = "iron key";
 		image = ItemSpriteSheet.IRON_KEY;
 	}
-	
+
+	@Override
+	public boolean doPickUp(Hero hero) {
+		Dungeon.hero.belongings.ironKeys[depth] += quantity();
+		return super.doPickUp(hero);
+	}
+
 	public IronKey() {
 		this( 0 );
 	}
@@ -45,32 +44,5 @@ public class IronKey extends Key {
 		super();
 		this.depth = depth;
 	}
-	
-	@Override
-	public boolean collect( Bag bag ) {
-		boolean result = super.collect( bag );
-		if (result && depth == Dungeon.depth && Dungeon.hero != null) {
-			Dungeon.hero.belongings.countIronKeys();
-		}
-		return result;
-	}
 
-	@Override
-	public void onDetach( ) {
-		if (depth == Dungeon.depth) {
-			Dungeon.hero.belongings.countIronKeys();
-		}
-	}
-	
-	@Override
-	public String toString() {
-		return Utils.format( TXT_FROM_DEPTH, depth );
-	}
-	
-	@Override
-	public String info() {
-		return
-			"The notches on this ancient iron key are well worn; its leather lanyard " +
-			"is battered by age. What door might it open?";
-	}
 }

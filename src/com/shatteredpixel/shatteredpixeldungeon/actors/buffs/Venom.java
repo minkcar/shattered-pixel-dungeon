@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.watabou.utils.Bundle;
 
@@ -50,7 +51,7 @@ public class Venom extends Poison implements Hero.Doom {
 
 	public void set(float duration, int damage) {
 		set(duration);
-		this.damage = damage;
+		if (this.damage < damage) this.damage = damage;
 	}
 
 	@Override
@@ -60,16 +61,12 @@ public class Venom extends Poison implements Hero.Doom {
 
 	@Override
 	public String toString() {
-		return "Venomed";
+		return Messages.get(this, "name");
 	}
 
 	@Override
 	public String desc() {
-		return "Venom is a extremely caustic and dangerous poison.\n" +
-				"\n" +
-				"Unlike poison, whose damage lowers over time, venom does increasing damage the longer it stays on a target.\n" +
-				"\n" +
-				"This venom will last for " + dispTurns(left) + ", and is currently dealing " + damage + " damage.";
+		return Messages.get(this, "desc", dispTurns(left), damage);
 	}
 
 	@Override

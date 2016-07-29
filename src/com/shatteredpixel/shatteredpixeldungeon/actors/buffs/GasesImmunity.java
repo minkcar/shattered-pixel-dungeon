@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.ParalyticGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.StenchGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.ToxicGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.VenomGas;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 
 public class GasesImmunity extends FlavourBuff {
@@ -38,7 +39,7 @@ public class GasesImmunity extends FlavourBuff {
 	
 	@Override
 	public String toString() {
-		return "Immune to gases";
+		return Messages.get(this, "name");
 	}
 
 	{
@@ -51,11 +52,6 @@ public class GasesImmunity extends FlavourBuff {
 
 	@Override
 	public String desc() {
-		return "some strange force is filtering out the air around you, it's not causing you any harm, but it blocks " +
-				"out everything but air so effectively you can't even smell anything!\n" +
-				"\n" +
-				"You are immune to the effects of all gasses while this buff lasts.\n" +
-				"\n" +
-				"You will be immune for " + dispTurns() + ".";
+		return Messages.get(this, "desc", dispTurns());
 	}
 }

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,24 +20,23 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items.potions;
 
+import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Fire;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.FlameParticle;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
-import com.watabou.noosa.audio.Sample;
-import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
-import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Fire;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.watabou.noosa.audio.Sample;
 
 public class PotionOfLiquidFlame extends Potion {
 
 	{
-		name = "Potion of Liquid Flame";
-		initials = "LF";
+		initials = 5;
 	}
-	
+
 	@Override
 	public void shatter( int cell ) {
 
@@ -64,14 +63,7 @@ public class PotionOfLiquidFlame extends Potion {
 	}
 	
 	@Override
-	public String desc() {
-		return
-			"This flask contains an unstable compound which will burst " +
-			"violently into flame upon exposure to open air.";
-	}
-	
-	@Override
 	public int price() {
-		return isKnown() ? 40 * quantity : super.price();
+		return isKnown() ? 30 * quantity : super.price();
 	}
 }

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,6 +37,7 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ElmoParticle;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.FlameParticle;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShadowParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.AlchemistsToolkit;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Artifact;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.Blandfruit;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.ChargrilledMeat;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.FrozenCarpaccio;
@@ -44,13 +45,16 @@ import com.shatteredpixel.shatteredpixeldungeon.items.food.MysteryMeat;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfExperience;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfMight;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfStrength;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMagicalInfusion;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfUpgrade;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Plant.Seed;
-import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
-import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
-import com.shatteredpixel.shatteredpixeldungeon.windows.WndTitledMessage;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundlable;
 import com.watabou.utils.Bundle;
@@ -61,8 +65,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 
 public class Heap implements Bundlable {
-
-	private static final String TXT_MIMIC = "This is a mimic!";
 
 	private static final int SEEDS_TO_POTION = 3;
 	
@@ -82,6 +84,7 @@ public class Heap implements Bundlable {
 	public int pos = 0;
 	
 	public ItemSprite sprite;
+	public boolean seen = false;
 	
 	public LinkedList<Item> items = new LinkedList<Item>();
 	
@@ -116,7 +119,6 @@ public class Heap implements Bundlable {
 		switch (type) {
 		case MIMIC:
 			if (Mimic.spawnAt(pos, items) != null) {
-				GLog.n(TXT_MIMIC);
 				destroy();
 			} else {
 				type = Type.CHEST;
@@ -125,9 +127,9 @@ public class Heap implements Bundlable {
 		case TOMB:
 			Wraith.spawnAround( hero.pos );
 			break;
-		case SKELETON:
 		case REMAINS:
-			CellEmitter.center( pos ).start( Speck.factory( Speck.RATTLE ), 0.1f, 3 );
+		case SKELETON:
+			CellEmitter.center( pos ).start(Speck.factory(Speck.RATTLE), 0.1f, 3);
 			for (Item item : items) {
 				if (item.cursed) {
 					if (Wraith.spawnAt( pos ) == null) {
@@ -171,7 +173,7 @@ public class Heap implements Bundlable {
 	
 	public void drop( Item item ) {
 		
-		if (item.stackable) {
+		if (item.stackable && type != Type.FOR_SALE) {
 			
 			for (Item i : items) {
 				if (i.isSimilar( item )) {
@@ -225,7 +227,8 @@ public class Heap implements Bundlable {
 		boolean evaporated = false;
 		
 		for (Item item : items.toArray( new Item[0] )) {
-			if (item instanceof Scroll) {
+			if (item instanceof Scroll
+					&& !(item instanceof ScrollOfUpgrade || item instanceof ScrollOfMagicalInfusion)) {
 				items.remove( item );
 				burnt = true;
 			} else if (item instanceof Dewdrop) {
@@ -255,7 +258,7 @@ public class Heap implements Bundlable {
 			if (isEmpty()) {
 				destroy();
 			} else if (sprite != null) {
-				sprite.view( image(), glowing() );
+				sprite.view( items.peek() );
 			}
 			
 		}
@@ -291,13 +294,16 @@ public class Heap implements Bundlable {
 					return;
 
 				//unique and upgraded items can endure the blast
-				} else if (!(item.level > 0 || item.unique))
+				} else if (!(item.level() > 0 || item.unique))
 					items.remove( item );
 
 			}
 
-			if (items.isEmpty())
+			if (isEmpty()){
 				destroy();
+			} else if (sprite != null) {
+				sprite.view( items.peek() );
+			}
 		}
 	}
 	
@@ -320,7 +326,8 @@ public class Heap implements Bundlable {
 			if (item instanceof MysteryMeat) {
 				replace( item, FrozenCarpaccio.cook( (MysteryMeat)item ) );
 				frozen = true;
-			} else if (item instanceof Potion) {
+			} else if (item instanceof Potion
+					&& !(item instanceof PotionOfStrength || item instanceof PotionOfMight)) {
 				items.remove(item);
 				((Potion) item).shatter(pos);
 				frozen = true;
@@ -334,7 +341,7 @@ public class Heap implements Bundlable {
 			if (isEmpty()) {
 				destroy();
 			} else if (sprite != null) {
-				sprite.view( image(), glowing() );
+				sprite.view( items.peek() );
 			}
 		}
 	}
@@ -375,7 +382,7 @@ public class Heap implements Bundlable {
 
 		//alchemists toolkit gives a chance to cook a potion in two or even one seeds
 		AlchemistsToolkit.alchemy alchemy = Dungeon.hero.buff(AlchemistsToolkit.alchemy.class);
-		int bonus = alchemy != null ? alchemy.level() : -1;
+		int bonus = alchemy != null ? alchemy.itemLevel() : -1;
 
 		if (bonus != -1 ? alchemy.tryCook(count) : count >= SEEDS_TO_POTION) {
 
@@ -421,7 +428,7 @@ public class Heap implements Bundlable {
 				if (Random.Int(1000/bonus) == 0)
 					return new PotionOfExperience();
 
-			while (potion instanceof PotionOfHealing && Random.Int(15) - Dungeon.limitedDrops.cookingHP.count >= 0)
+			while (potion instanceof PotionOfHealing && Random.Int(10) < Dungeon.limitedDrops.cookingHP.count)
 				potion = Generator.random( Generator.Category.POTION );
 
 			if (potion instanceof PotionOfHealing)
@@ -456,7 +463,54 @@ public class Heap implements Bundlable {
 		items = null;
 	}
 
+	@Override
+	public String toString(){
+		switch(type){
+			case CHEST:
+			case MIMIC:
+				return Messages.get(this, "chest");
+			case LOCKED_CHEST:
+				return Messages.get(this, "locked_chest");
+			case CRYSTAL_CHEST:
+				return Messages.get(this, "crystal_chest");
+			case TOMB:
+				return Messages.get(this, "tomb");
+			case SKELETON:
+				return Messages.get(this, "skeleton");
+			case REMAINS:
+				return Messages.get(this, "remains");
+			default:
+				return peek().toString();
+		}
+	}
+
+	public String info(){
+		switch(type){
+			case CHEST:
+			case MIMIC:
+				return Messages.get(this, "chest_desc");
+			case LOCKED_CHEST:
+				return Messages.get(this, "locked_chest_desc");
+			case CRYSTAL_CHEST:
+				if (peek() instanceof Artifact)
+					return Messages.get(this, "crystal_chest_desc", Messages.get(this, "artifact") );
+				else if (peek() instanceof Wand)
+					return Messages.get(this, "crystal_chest_desc", Messages.get(this, "wand") );
+				else
+					return Messages.get(this, "crystal_chest_desc", Messages.get(this, "ring") );
+			case TOMB:
+				return Messages.get(this, "tomb_desc");
+			case SKELETON:
+				return Messages.get(this, "skeleton_desc");
+			case REMAINS:
+				return Messages.get(this, "remains_desc");
+			default:
+				return peek().info();
+		}
+	}
+
 	private static final String POS		= "pos";
+	private static final String SEEN	= "seen";
 	private static final String TYPE	= "type";
 	private static final String ITEMS	= "items";
 	
@@ -464,6 +518,7 @@ public class Heap implements Bundlable {
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
 		pos = bundle.getInt( POS );
+		seen = bundle.getBoolean( SEEN );
 		type = Type.valueOf( bundle.getString( TYPE ) );
 		items = new LinkedList<Item>( (Collection<Item>) ((Collection<?>) bundle.getCollection( ITEMS )) );
 		items.removeAll(Collections.singleton(null));
@@ -472,6 +527,7 @@ public class Heap implements Bundlable {
 	@Override
 	public void storeInBundle( Bundle bundle ) {
 		bundle.put( POS, pos );
+		bundle.put( SEEN, seen );
 		bundle.put( TYPE, type.toString() );
 		bundle.put( ITEMS, items );
 	}

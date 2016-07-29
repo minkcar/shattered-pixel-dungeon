@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,66 +20,38 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs;
 
-import java.util.ArrayList;
-
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
-import com.watabou.noosa.audio.Sample;
-import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Journal;
-import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
-import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.ToxicGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Roots;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
-import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
-import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
-import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
+import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
-import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfStrength;
+import com.shatteredpixel.shatteredpixeldungeon.items.quest.CeremonialCandle;
 import com.shatteredpixel.shatteredpixeldungeon.items.quest.CorpseDust;
+import com.shatteredpixel.shatteredpixeldungeon.items.quest.Embers;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.levels.PrisonLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
-import com.shatteredpixel.shatteredpixeldungeon.plants.Plant;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.plants.Rotberry;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.WandmakerSprite;
-import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
-import com.shatteredpixel.shatteredpixeldungeon.utils.Utils;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndQuest;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndWandmaker;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
+import java.util.Collection;
+
 public class Wandmaker extends NPC {
 
 	{
-		name = "old wandmaker";
 		spriteClass = WandmakerSprite.class;
+
+		properties.add(Property.IMMOVABLE);
 	}
-	
-	private static final String TXT_BERRY1	=
-		"Oh, what a pleasant surprise to meet a decent person in such place! I came here for a rare ingredient - " +
-		"a _Rotberry seed_. Being a magic user, I'm quite able to defend myself against local monsters, " +
-		"but I'm getting lost in no time, it's very embarrassing. Probably you could help me? I would be " +
-		"happy to pay for your service with one of my best wands.";
-	
-	private static final String TXT_DUST1	=
-		"Oh, what a pleasant surprise to meet a decent person in such place! I came here for a rare ingredient - " +
-		"_corpse dust_. It can be gathered from skeletal remains and there is an ample number of them in the dungeon. " +
-		"Being a magic user, I'm quite able to defend myself against local monsters, but I'm getting lost in no time, " +
-		"it's very embarrassing. Probably you could help me? I would be happy to pay for your service with one of my best wands.";
-	
-	private static final String TXT_BERRY2	=
-		"Any luck with a Rotberry seed, %s? No? Don't worry, I'm not in a hurry.";
-	
-	private static final String TXT_DUST2	=
-		"Any luck with corpse dust, %s? Bone piles are the most obvious places to look.";
 	
 	@Override
 	protected boolean act() {
@@ -90,11 +62,6 @@ public class Wandmaker extends NPC {
 	@Override
 	public int defenseSkill( Char enemy ) {
 		return 1000;
-	}
-	
-	@Override
-	public String defenseVerb() {
-		return "absorbed";
 	}
 	
 	@Override
@@ -116,42 +83,96 @@ public class Wandmaker extends NPC {
 		sprite.turnTo( pos, Dungeon.hero.pos );
 		if (Quest.given) {
 			
-			Item item = Quest.alternative ?
-				Dungeon.hero.belongings.getItem( CorpseDust.class ) :
-				Dungeon.hero.belongings.getItem( Rotberry.Seed.class );
+			Item item;
+			switch (Quest.type) {
+				case 1:
+				default:
+					item = Dungeon.hero.belongings.getItem(CorpseDust.class);
+					break;
+				case 2:
+					item = Dungeon.hero.belongings.getItem(Embers.class);
+					break;
+				case 3:
+					item = Dungeon.hero.belongings.getItem(Rotberry.Seed.class);
+					break;
+			}
+
 			if (item != null) {
 				GameScene.show( new WndWandmaker( this, item ) );
 			} else {
-				tell( Quest.alternative ? TXT_DUST2 : TXT_BERRY2, Dungeon.hero.givenName() );
+				String msg = "";
+				switch(Quest.type){
+					case 1:
+						msg = Messages.get(this, "reminder_dust", Dungeon.hero.givenName());
+						break;
+					case 2:
+						msg = Messages.get(this, "reminder_ember", Dungeon.hero.givenName());
+						break;
+					case 3:
+						msg = Messages.get(this, "reminder_berry", Dungeon.hero.givenName());
+						break;
+				}
+				GameScene.show(new WndQuest(this, msg));
 			}
 			
 		} else {
-			
-			Quest.placeItem();
 
-			if (Quest.given)
-				tell(Quest.alternative ? TXT_DUST1 : TXT_BERRY1);
-			
+			String msg1 = "";
+			String msg2 = "";
+			switch(Dungeon.hero.heroClass){
+				case WARRIOR:
+					msg1 += Messages.get(this, "intro_warrior");
+					break;
+				case ROGUE:
+					msg1 += Messages.get(this, "intro_rogue");
+					break;
+				case MAGE:
+					msg1 += Messages.get(this, "intro_mage", Dungeon.hero.givenName());
+					break;
+				case HUNTRESS:
+					msg1 += Messages.get(this, "intro_huntress");
+					break;
+			}
+
+			msg1 += Messages.get(this, "intro_1");
+
+			switch (Quest.type){
+				case 1:
+					msg2 += Messages.get(this, "intro_dust");
+					break;
+				case 2:
+					msg2 += Messages.get(this, "intro_ember");
+					break;
+				case 3:
+					msg2 += Messages.get(this, "intro_berry");
+					break;
+			}
+
+			msg2 += Messages.get(this, "intro_2");
+			final String msg2final = msg2;
+			final NPC wandmaker = this;
+
+			GameScene.show(new WndQuest(wandmaker, msg1){
+				@Override
+				public void hide() {
+					super.hide();
+					GameScene.show(new WndQuest(wandmaker, msg2final));
+				}
+			});
+
 			Journal.add( Journal.Feature.WANDMAKER );
+			Quest.given = true;
 		}
 	}
 	
-	private void tell( String format, Object...args ) {
-		GameScene.show( new WndQuest( this, Utils.format( format, args ) ) );
-	}
-	
-	@Override
-	public String description() {
-		return
-			"This old but hale gentleman wears a slightly confused " +
-			"expression. He is protected by a magic shield.";
-	}
-	
 	public static class Quest {
+
+		private static int type;
+		// 1 = corpse dust quest
+		// 2 = elemental embers quest
+		// 3 = rotberry quest
 		
 		private static boolean spawned;
-		
-		private static boolean alternative;
 		
 		private static boolean given;
 		
@@ -160,6 +181,7 @@ public class Wandmaker extends NPC {
 		
 		public static void reset() {
 			spawned = false;
+			type = 0;
 
 			wand1 = null;
 			wand2 = null;
@@ -168,10 +190,12 @@ public class Wandmaker extends NPC {
 		private static final String NODE		= "wandmaker";
 		
 		private static final String SPAWNED		= "spawned";
-		private static final String ALTERNATIVE	= "alternative";
+		private static final String TYPE		= "type";
 		private static final String GIVEN		= "given";
 		private static final String WAND1		= "wand1";
 		private static final String WAND2		= "wand2";
+
+		private static final String RITUALPOS	= "ritualpos";
 		
 		public static void storeInBundle( Bundle bundle ) {
 			
@@ -181,12 +205,17 @@ public class Wandmaker extends NPC {
 			
 			if (spawned) {
 				
-				node.put( ALTERNATIVE, alternative );
+				node.put( TYPE, type );
 				
-				node.put(GIVEN, given );
+				node.put( GIVEN, given );
 				
 				node.put( WAND1, wand1 );
 				node.put( WAND2, wand2 );
+
+				if (type == 2){
+					node.put( RITUALPOS, CeremonialCandle.ritualPos );
+				}
+
 			}
 			
 			bundle.put( NODE, node );
@@ -197,81 +226,95 @@ public class Wandmaker extends NPC {
 			Bundle node = bundle.getBundle( NODE );
 			
 			if (!node.isNull() && (spawned = node.getBoolean( SPAWNED ))) {
-				
-				alternative	=  node.getBoolean( ALTERNATIVE );
+
+				//TODO remove when pre-0.3.2 saves are no longer supported
+				if (node.contains(TYPE)) {
+					type = node.getInt(TYPE);
+				} else {
+					type = node.getBoolean("alternative")? 1 : 3;
+				}
 				
 				given = node.getBoolean( GIVEN );
 				
 				wand1 = (Wand)node.get( WAND1 );
 				wand2 = (Wand)node.get( WAND2 );
+
+				if (type == 2){
+					CeremonialCandle.ritualPos = node.getInt( RITUALPOS );
+				}
+
 			} else {
 				reset();
 			}
 		}
 		
-		public static void spawn( PrisonLevel level, Room room ) {
-			if (!spawned && Dungeon.depth > 6 && Random.Int( 10 - Dungeon.depth ) == 0) {
-				
-				Wandmaker npc = new Wandmaker();
-				do {
-					npc.pos = room.random();
-				} while (level.map[npc.pos] == Terrain.ENTRANCE || level.map[npc.pos] == Terrain.SIGN);
-				level.mobs.add( npc );
-				
-				spawned = true;
-				alternative = Random.Int( 2 ) == 0;
-				
-				given = false;
-				wand1 = (Wand) Generator.random(Generator.Category.WAND);
-				wand1.upgrade();
+		public static boolean spawn( PrisonLevel level, Room room, Collection<Room> rooms ) {
+			if (!spawned && (type != 0 || (Dungeon.depth > 6 && Random.Int( 10 - Dungeon.depth ) == 0))) {
+				// decide between 1,2, or 3 for quest type.
+				// but if the no herbalism challenge is enabled, only pick 1 or 2, no rotberry.
+				if (type == 0) type = Random.Int(Dungeon.isChallenged(Challenges.NO_HERBALISM) ? 2 : 3)+1;
 
-				do {
-					wand2 = (Wand) Generator.random(Generator.Category.WAND);
-				} while (wand2.getClass().equals(wand1.getClass()));
-				wand2.upgrade();
+				//note that we set the type but can fail here. This ensures that if a level needs to be re-generated
+				//we don't re-roll the quest, it will try to assign itself to that new level with the same type.
+				if (setRoom( rooms )){
+					Wandmaker npc = new Wandmaker();
+					do {
+						npc.pos = room.random();
+					} while (level.map[npc.pos] == Terrain.ENTRANCE || level.map[npc.pos] == Terrain.SIGN);
+					level.mobs.add( npc );
+
+					spawned = true;
+
+					given = false;
+					wand1 = (Wand) Generator.random(Generator.Category.WAND);
+					wand1.cursed = false;
+					wand1.identify();
+					wand1.upgrade();
+
+					do {
+						wand2 = (Wand) Generator.random(Generator.Category.WAND);
+					} while (wand2.getClass().equals(wand1.getClass()));
+					wand2.cursed = false;
+					wand2.identify();
+					wand2.upgrade();
+
+					return true;
+				} else {
+					return false;
+				}
+			} else {
+				return true;
 			}
 		}
 		
-		public static void placeItem() {
-			if (alternative) {
-				
-				ArrayList<Heap> candidates = new ArrayList<Heap>();
-				for (Heap heap : Dungeon.level.heaps.values()) {
-					if (heap.type == Heap.Type.SKELETON && !Dungeon.visible[heap.pos]) {
-						candidates.add( heap );
+		private static boolean setRoom( Collection<Room> rooms) {
+			Room questRoom = null;
+			for (Room r : rooms){
+				if (r.type == Room.Type.STANDARD && r.width() > 5 && r.height() > 5){
+					if (type == 2 || r.connected.size() == 1){
+						questRoom = r;
+						break;
 					}
 				}
-				
-				if (candidates.size() > 0) {
-					Random.element( candidates ).drop( new CorpseDust() );
-					given = true;
-				} else {
-					int pos = Dungeon.level.randomRespawnCell();
-					while (Dungeon.level.heaps.get( pos ) != null) {
-						pos = Dungeon.level.randomRespawnCell();
-					}
-
-					if (pos != -1) {
-						Heap heap = Dungeon.level.drop(new CorpseDust(), pos);
-						heap.type = Heap.Type.SKELETON;
-						heap.sprite.link();
-						given = true;
-					}
-				}
-				
-			} else {
-				
-				int shrubPos = Dungeon.level.randomRespawnCell();
-				while (Dungeon.level.heaps.get( shrubPos ) != null) {
-					shrubPos = Dungeon.level.randomRespawnCell();
-				}
-
-				if (shrubPos != -1) {
-					Dungeon.level.plant(new Rotberry.Seed(), shrubPos);
-					given = true;
-				}
-				
 			}
+
+			if (questRoom == null){
+				return false;
+			}
+
+			switch (type){
+				case 1: default:
+					questRoom.type = Room.Type.MASS_GRAVE;
+					break;
+				case 2:
+					questRoom.type = Room.Type.RITUAL_SITE;
+					break;
+				case 3:
+					questRoom.type = Room.Type.ROT_GARDEN;
+					break;
+			}
+
+			return true;
 		}
 		
 		public static void complete() {
@@ -279,72 +322,6 @@ public class Wandmaker extends NPC {
 			wand2 = null;
 			
 			Journal.remove( Journal.Feature.WANDMAKER );
-		}
-	}
-	
-	public static class Rotberry extends Plant {
-		
-		private static final String TXT_DESC =
-			"Berries of this shrub taste like sweet, sweet death.";
-		
-		{
-			image = 7;
-			plantName = "Rotberry";
-		}
-		
-		@Override
-		public void activate() {
-			Char ch = Actor.findChar(pos);
-			
-			GameScene.add( Blob.seed( pos, 100, ToxicGas.class ) );
-			
-			Dungeon.level.drop( new Seed(), pos ).sprite.drop();
-			
-			if (ch != null) {
-				Buff.prolong( ch, Roots.class, TICK * 3 );
-			}
-		}
-		
-		@Override
-		public String desc() {
-			return TXT_DESC;
-		}
-		
-		public static class Seed extends Plant.Seed {
-			{
-				plantName = "Rotberry";
-				
-				name = "seed of " + plantName;
-				image = ItemSpriteSheet.SEED_ROTBERRY;
-				
-				plantClass = Rotberry.class;
-				alchemyClass = PotionOfStrength.class;
-			}
-			
-			@Override
-			public boolean doPickUp( Hero hero ) {
-				if (super.doPickUp(hero)) {
-					
-					if (Dungeon.level != null) {
-						for (Mob mob : Dungeon.level.mobs) {
-							mob.beckon( Dungeon.hero.pos );
-						}
-						
-						GLog.w( "The seed emits a roar that echoes throughout the dungeon!" );
-						CellEmitter.center( Dungeon.hero.pos ).start( Speck.factory( Speck.SCREAM ), 0.3f, 3 );
-						Sample.INSTANCE.play( Assets.SND_CHALLENGE );
-					}
-					
-					return true;
-				} else {
-					return false;
-				}
-			}
-			
-			@Override
-			public String desc() {
-				return TXT_DESC;
-			}
 		}
 	}
 }

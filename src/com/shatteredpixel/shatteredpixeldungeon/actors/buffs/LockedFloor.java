@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,10 +21,14 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
+import com.watabou.utils.Bundle;
 
 public class LockedFloor extends Buff {
-	//this buff is purely meant as a visual indicator that the gameplay implications of a level seal are in effect.
+
+	//the amount of turns remaining before beneficial passive effects turn off
+	private float left = 50; //starts at 50 turns
 
 	@Override
 	public boolean act() {
@@ -33,7 +37,32 @@ public class LockedFloor extends Buff {
 		if (!Dungeon.level.locked)
 			detach();
 
+		if (left >= 1)
+			left --;
+
 		return true;
+	}
+
+	public void addTime(float time){
+		left += time;
+	}
+
+	public boolean regenOn(){
+		return left >= 1;
+	}
+
+	private final String LEFT = "left";
+
+	@Override
+	public void storeInBundle(Bundle bundle) {
+		super.storeInBundle(bundle);
+		bundle.put( LEFT, left );
+	}
+
+	@Override
+	public void restoreFromBundle(Bundle bundle) {
+		super.restoreFromBundle(bundle);
+		left = bundle.getFloat( LEFT );
 	}
 
 	@Override
@@ -43,19 +72,11 @@ public class LockedFloor extends Buff {
 
 	@Override
 	public String toString() {
-		return "Floor is Locked";
+		return Messages.get(this, "name");
 	}
 
 	@Override
 	public String desc() {
-		return "The current floor is locked, and you are unable to leave it!\n" +
-				"\n" +
-				"While a floor is locked, you will not gain hunger, or take damage from starving, " +
-				"but your current hunger state is still in effect. For example, if you are starving you won't take " +
-				"damage, but will still not regenerate health.\n" +
-				"\n" +
-				"Additionally, if you are revived by an unblessed ankh while the floor is locked, then it will reset.\n" +
-				"\n" +
-				"Kill this floor's boss to break the lock.\n";
+		return Messages.get(this, "desc");
 	}
 }

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,9 +20,6 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.levels;
 
-import com.watabou.noosa.Camera;
-import com.watabou.noosa.Scene;
-import com.watabou.noosa.audio.Sample;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Bones;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
@@ -36,7 +33,13 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.keys.SkeletonKey;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ToxicTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.watabou.noosa.Camera;
+import com.watabou.noosa.Group;
+import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
@@ -120,19 +123,13 @@ public class CavesBossLevel extends Level {
 		
 		map[exit] = Terrain.LOCKED_EXIT;
 		
-		for (int i=0; i < LENGTH; i++) {
-			if (map[i] == Terrain.EMPTY && Random.Int( 6 ) == 0) {
-				map[i] = Terrain.INACTIVE_TRAP;
-			}
-		}
-		
 		Painter.fill( this, ROOM_LEFT - 1, ROOM_TOP - 1,
 			ROOM_RIGHT - ROOM_LEFT + 3, ROOM_BOTTOM - ROOM_TOP + 3, Terrain.WALL );
 		Painter.fill( this, ROOM_LEFT, ROOM_TOP + 1,
 			ROOM_RIGHT - ROOM_LEFT + 1, ROOM_BOTTOM - ROOM_TOP, Terrain.EMPTY );
 
 		Painter.fill( this, ROOM_LEFT, ROOM_TOP,
-			ROOM_RIGHT - ROOM_LEFT + 1, 1, Terrain.INACTIVE_TRAP );
+			ROOM_RIGHT - ROOM_LEFT + 1, 1, Terrain.EMPTY_DECO );
 		
 		arenaDoor = Random.Int( ROOM_LEFT, ROOM_RIGHT ) + (ROOM_BOTTOM + 1) * WIDTH;
 		map[arenaDoor] = Terrain.DOOR;
@@ -145,6 +142,15 @@ public class CavesBossLevel extends Level {
 		for (int i=0; i < LENGTH; i++) {
 			if (map[i] == Terrain.EMPTY && patch[i]) {
 				map[i] = Terrain.WATER;
+			}
+		}
+
+		for (int i=0; i < LENGTH; i++) {
+			if (map[i] == Terrain.EMPTY && Random.Int( 6 ) == 0) {
+				map[i] = Terrain.INACTIVE_TRAP;
+				Trap t = new ToxicTrap().reveal();
+				t.active = false;
+				setTrap(t, i);
 			}
 		}
 		
@@ -184,7 +190,7 @@ public class CavesBossLevel extends Level {
 		int sign;
 		do {
 			sign = Random.Int( ROOM_LEFT, ROOM_RIGHT ) + Random.Int( ROOM_TOP, ROOM_BOTTOM ) * WIDTH;
-		} while (sign == entrance);
+		} while (sign == entrance || map[sign] == Terrain.INACTIVE_TRAP);
 		map[sign] = Terrain.SIGN;
 	}
 	
@@ -210,7 +216,11 @@ public class CavesBossLevel extends Level {
 	
 	@Override
 	public int randomRespawnCell() {
-		return -1;
+		int cell = entrance + NEIGHBOURS8[Random.Int(8)];
+		while (!passable[cell]){
+			cell = entrance + NEIGHBOURS8[Random.Int(8)];
+		}
+		return cell;
 	}
 	
 	@Override
@@ -224,7 +234,7 @@ public class CavesBossLevel extends Level {
 			seal();
 			
 			Mob boss = Bestiary.mob( Dungeon.depth );
-			boss.state = boss.HUNTING;
+			boss.state = boss.WANDERING;
 			do {
 				boss.pos = Random.Int( LENGTH );
 			} while (
@@ -270,35 +280,39 @@ public class CavesBossLevel extends Level {
 	@Override
 	public String tileName( int tile ) {
 		switch (tile) {
-		case Terrain.GRASS:
-			return "Fluorescent moss";
-		case Terrain.HIGH_GRASS:
-			return "Fluorescent mushrooms";
-		case Terrain.WATER:
-			return "Freezing cold water.";
-		default:
-			return super.tileName( tile );
+			case Terrain.GRASS:
+				return Messages.get(CavesLevel.class, "grass_name");
+			case Terrain.HIGH_GRASS:
+				return Messages.get(CavesLevel.class, "high_grass_name");
+			case Terrain.WATER:
+				return Messages.get(CavesLevel.class, "water_name");
+			default:
+				return super.tileName( tile );
 		}
 	}
 	
 	@Override
 	public String tileDesc( int tile ) {
 		switch (tile) {
-		case Terrain.ENTRANCE:
-			return "The ladder leads up to the upper depth.";
-		case Terrain.EXIT:
-			return "The ladder leads down to the lower depth.";
-		case Terrain.HIGH_GRASS:
-			return "Huge mushrooms block the view.";
-		case Terrain.WALL_DECO:
-			return "A vein of some ore is visible on the wall. Gold?";
-		default:
-			return super.tileDesc( tile );
+			case Terrain.ENTRANCE:
+				return Messages.get(CavesLevel.class, "entrance_desc");
+			case Terrain.EXIT:
+				return Messages.get(CavesLevel.class, "exit_desc");
+			case Terrain.HIGH_GRASS:
+				return Messages.get(CavesLevel.class, "high_grass_desc");
+			case Terrain.WALL_DECO:
+				return Messages.get(CavesLevel.class, "wall_deco_desc");
+			case Terrain.BOOKSHELF:
+				return Messages.get(CavesLevel.class, "bookshelf_desc");
+			default:
+				return super.tileDesc( tile );
 		}
 	}
-	
+
 	@Override
-	public void addVisuals( Scene scene ) {
-		CavesLevel.addVisuals( this, scene );
+	public Group addVisuals() {
+		super.addVisuals();
+		CavesLevel.addCavesVisuals(this, visuals);
+		return visuals;
 	}
 }

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,16 +25,9 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 public class Sword extends MeleeWeapon {
 	
 	{
-		name = "sword";
 		image = ItemSpriteSheet.SWORD;
+
+		tier = 3;
 	}
-	
-	public Sword() {
-		super( 3, 1f, 1f );
-	}
-	
-	@Override
-	public String desc() {
-		return "The razor-sharp length of steel blade shines reassuringly.";
-	}
+
 }

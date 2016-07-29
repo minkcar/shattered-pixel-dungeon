@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,20 +26,13 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 public class OverpricedRation extends Food {
 
 	{
-		name = "overpriced food ration";
 		image = ItemSpriteSheet.OVERPRICED;
 		energy = Hunger.STARVING - Hunger.HUNGRY;
-		message = "That food tasted ok.";
 		hornValue = 1;
 	}
 	
 	@Override
-	public String info() {
-		return "It looks exactly like a standard ration of food but smaller.";
-	}
-	
-	@Override
 	public int price() {
-		return 20 * quantity;
+		return 10 * quantity;
 	}
 }

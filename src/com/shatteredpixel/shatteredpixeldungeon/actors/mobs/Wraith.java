@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,20 +20,20 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import java.util.HashSet;
-
-import com.watabou.noosa.tweeners.AlphaTweener;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Terror;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShadowParticle;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Death;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Grim;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.WraithSprite;
+import com.watabou.noosa.tweeners.AlphaTweener;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
+
+import java.util.HashSet;
 
 public class Wraith extends Mob {
 
@@ -42,13 +42,14 @@ public class Wraith extends Mob {
 	private int level;
 	
 	{
-		name = "wraith";
 		spriteClass = WraithSprite.class;
 		
 		HP = HT = 1;
 		EXP = 0;
 		
 		flying = true;
+
+		properties.add(Property.UNDEAD);
 	}
 	
 	private static final String LEVEL = "level";
@@ -68,7 +69,7 @@ public class Wraith extends Mob {
 	
 	@Override
 	public int damageRoll() {
-		return Random.NormalIntRange( 1, 3 + level );
+		return Random.NormalIntRange( 1 + level/2, 2 + level );
 	}
 	
 	@Override
@@ -81,23 +82,11 @@ public class Wraith extends Mob {
 		defenseSkill = attackSkill( null ) * 5;
 		enemySeen = true;
 	}
-	
-	@Override
-	public String defenseVerb() {
-		return "evaded";
-	}
-	
+
 	@Override
 	public boolean reset() {
 		state = WANDERING;
 		return true;
-	}
-
-	@Override
-	public String description() {
-		return
-			"A wraith is a vengeful spirit of a sinner, whose grave or tomb was disturbed. " +
-			"Being an ethereal entity, it is very hard to hit with a regular weapon.";
 	}
 	
 	public static void spawnAround( int pos ) {
@@ -129,9 +118,9 @@ public class Wraith extends Mob {
 		}
 	}
 	
-	private static final HashSet<Class<?>> IMMUNITIES = new HashSet<Class<?>>();
+	private static final HashSet<Class<?>> IMMUNITIES = new HashSet<>();
 	static {
-		IMMUNITIES.add( Death.class );
+		IMMUNITIES.add( Grim.class );
 		IMMUNITIES.add( Terror.class );
 	}
 	

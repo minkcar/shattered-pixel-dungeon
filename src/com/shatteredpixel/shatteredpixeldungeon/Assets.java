@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,15 +28,19 @@ public class Assets {
 	
 	public static final String BANNERS	= "banners.png";
 	public static final String BADGES	= "badges.png";
+	public static final String LOCKED	= "locked_badge.png";
 	public static final String AMULET	= "amulet.png";
 	
 	public static final String CHROME	= "chrome.png";
 	public static final String ICONS	= "icons.png";
 	public static final String STATUS	= "status_pane.png";
+	public static final String MENU		= "menu_button.png";
 	public static final String HP_BAR	= "hp_bar.png";
+	public static final String SHLD_BAR = "shield_bar.png";
 	public static final String XP_BAR	= "exp_bar.png";
 	public static final String TOOLBAR	= "toolbar.png";
-	public static final String SHADOW    = "shadow.png";
+	public static final String SHADOW   = "shadow.png";
+	public static final String BOSSHP   = "boss_hp.png";
 
 	public static final String WARRIOR	= "warrior.png";
 	public static final String MAGE		= "mage.png";
@@ -89,6 +93,9 @@ public class Assets {
 	public static final String RATKING	= "ratking.png";
 	public static final String BEE      = "bee.png";
 	public static final String MIMIC    = "mimic.png";
+	public static final String ROT_LASH = "rot_lasher.png";
+	public static final String ROT_HEART= "rot_heart.png";
+	public static final String GUARD    = "guard.png";
 
 	public static final String ITEMS	= "items.png";
 	public static final String PLANTS	= "plants.png";
@@ -105,16 +112,19 @@ public class Assets {
 	public static final String WATER_CAVES	= "water2.png";
 	public static final String WATER_CITY	= "water3.png";
 	public static final String WATER_HALLS	= "water4.png";
+
+	public static final String WEAK_FLOOR   = "custom_tiles/weak_floor.png";
+	public static final String PRISON_QUEST = "custom_tiles/prison_quests.png";
+	public static final String PRISON_EXIT  = "custom_tiles/prison_exit.png";
 	
 	public static final String BUFFS_SMALL	= "buffs.png";
 	public static final String BUFFS_LARGE	= "large_buffs.png";
 	public static final String SPELL_ICONS	= "spell_icons.png";
+	public static final String CONS_ICONS   = "consumable_icons.png";
 	
-	public static final String FONTS1X	= "font1x.png";
-	public static final String FONTS15X	= "font15x.png";
-	public static final String FONTS2X	= "font2x.png";
-	public static final String FONTS25X	= "font25x.png";
-	public static final String FONTS3X	= "font3x.png";
+	public static final String PIXELFONT    = "pixel_font.png";
+	public static final String FONT1X       = "font1x.png";
+	public static final String FONT2X       = "font2x.png";
 	
 	public static final String THEME	= "theme.mp3";
 	public static final String TUNE		= "game.mp3";

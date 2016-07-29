@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,16 +21,15 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.artifacts;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.watabou.utils.Random;
 
 public class MasterThievesArmband extends Artifact {
 
 	{
-		name = "Master Thieves' Armband";
 		image = ItemSpriteSheet.ARTIFACT_ARMBAND;
 
-		level = 0;
 		levelCap = 10;
 
 		charge = 0;
@@ -45,13 +44,10 @@ public class MasterThievesArmband extends Artifact {
 
 	@Override
 	public String desc() {
-		String desc = "This purple velvet armband bears the mark of a master thief. This doesn't belong to you, but " +
-				"you doubt it belonged to the person you took it from either.";
+		String desc = super.desc();
 
 		if ( isEquipped (Dungeon.hero) )
-			desc += "\n\nWith the armband around your wrist you feel more dexterous and cunning. Every piece of gold " +
-					"you find makes you desire others property more. " +
-					"You wonder if Pixel Mart accepts the five finger discount...";
+			desc += "\n\n" + Messages.get(this, "desc_worn");
 
 		return desc;
 	}
@@ -84,17 +80,16 @@ public class MasterThievesArmband extends Artifact {
 					exp += value;
 				}
 			}
-			while(exp >= 600 && level < levelCap) {
-				exp -= 600;
+			while(exp >= (250 + 50*level()) && level() < levelCap) {
+				exp -= (250 + 50*level());
 				upgrade();
 			}
 			return true;
 		}
 
 		public float stealChance(int value){
-				//get lvl*100 gold or lvl*5% item value of free charge, whichever is less.
-				int chargeBonus = Math.min(level*100, (value*level)/20);
-
+				//get lvl*50 gold or lvl*3.33% item value of free charge, whichever is less.
+				int chargeBonus = Math.min(level()*50, (value*level())/30);
 				return (((float)charge + chargeBonus)/value);
 		}
 	}

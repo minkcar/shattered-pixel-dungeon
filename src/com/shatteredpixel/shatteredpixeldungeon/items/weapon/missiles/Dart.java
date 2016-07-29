@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,15 +27,26 @@ import com.watabou.utils.Random;
 public class Dart extends MissileWeapon {
 
 	{
-		name = "dart";
 		image = ItemSpriteSheet.DART;
-		
-		MIN = 1;
-		MAX = 4;
 
 		bones = false; //Finding them in bones would be semi-frequent and disappointing.
 	}
-	
+
+	@Override
+	public int min(int lvl) {
+		return 1;
+	}
+
+	@Override
+	public int max(int lvl) {
+		return 4;
+	}
+
+	@Override
+	public int STRReq(int lvl) {
+		return 10;
+	}
+
 	public Dart() {
 		this( 1 );
 	}
@@ -43,13 +54,6 @@ public class Dart extends MissileWeapon {
 	public Dart( int number ) {
 		super();
 		quantity = number;
-	}
-	
-	@Override
-	public String desc() {
-		return
-			"These simple metal spikes are weighted to fly true and " +
-			"sting their prey with a flick of the wrist.";
 	}
 	
 	@Override

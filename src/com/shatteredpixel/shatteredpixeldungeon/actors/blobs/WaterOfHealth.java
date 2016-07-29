@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.blobs;
 
-import com.watabou.noosa.audio.Sample;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Journal;
@@ -34,12 +33,11 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShaftParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.DewVial;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
+import com.watabou.noosa.audio.Sample;
 
 public class WaterOfHealth extends WellWater {
-
-	private static final String TXT_PROCCED =
-		"As you take a sip, you feel your wounds heal completely.";
 	
 	@Override
 	protected boolean affectHero( Hero hero ) {
@@ -54,7 +52,7 @@ public class WaterOfHealth extends WellWater {
 
 		Dungeon.hero.interrupt();
 	
-		GLog.p( TXT_PROCCED );
+		GLog.p( Messages.get(this, "procced") );
 		
 		Journal.remove( Feature.WELL_OF_HEALTH );
 		
@@ -65,6 +63,7 @@ public class WaterOfHealth extends WellWater {
 	protected Item affectItem( Item item ) {
 		if (item instanceof DewVial && !((DewVial)item).isFull()) {
 			((DewVial)item).fill();
+			Journal.remove( Feature.WELL_OF_HEALTH );
 			return item;
 		}
 		
@@ -79,8 +78,6 @@ public class WaterOfHealth extends WellWater {
 	
 	@Override
 	public String tileDesc() {
-		return
-			"Power of health radiates from the water of this well. " +
-			"Take a sip from it to heal your wounds and satisfy hunger.";
+		return Messages.get(this, "desc");
 	}
 }

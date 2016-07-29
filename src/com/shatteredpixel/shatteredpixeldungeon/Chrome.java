@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -47,7 +47,7 @@ public class Chrome {
 		case TOAST_TR:
 			return new NinePatch( Asset, 40, 0, 18, 18, 5 );
 		case BUTTON:
-			return new NinePatch( Asset, 58, 0, 4, 4, 1 );
+			return new NinePatch( Asset, 58, 0, 6, 6, 2 );
 		case TAG:
 			return new NinePatch( Asset, 22, 18, 16, 14, 3 );
 		case GEM:

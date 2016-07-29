@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,13 +20,12 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import java.util.HashSet;
-
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.ToxicGas;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.VenomGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Frost;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Paralysis;
@@ -36,10 +35,11 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.PiranhaSprite;
 import com.watabou.utils.Random;
 
+import java.util.HashSet;
+
 public class Piranha extends Mob {
 	
 	{
-		name = "giant piranha";
 		spriteClass = PiranhaSprite.class;
 
 		baseSpeed = 2f;
@@ -58,6 +58,7 @@ public class Piranha extends Mob {
 	protected boolean act() {
 		if (!Level.water[pos]) {
 			die( null );
+			sprite.killAndErase();
 			return true;
 		} else {
 			//this causes pirahna to move away when a door is closed on them.
@@ -92,8 +93,8 @@ public class Piranha extends Mob {
 	}
 	
 	@Override
-	public int dr() {
-		return Dungeon.depth;
+	public int drRoll() {
+		return Random.NormalIntRange(0, Dungeon.depth);
 	}
 	
 	@Override
@@ -140,19 +141,13 @@ public class Piranha extends Mob {
 			return false;
 		}
 	}
-
-	@Override
-	public String description() {
-		return
-			"These carnivorous fish are not natural inhabitants of underground pools. " +
-			"They were bred specifically to protect flooded treasure vaults.";
-	}
 	
-	private static final HashSet<Class<?>> IMMUNITIES = new HashSet<Class<?>>();
+	private static final HashSet<Class<?>> IMMUNITIES = new HashSet<>();
 	static {
 		IMMUNITIES.add( Burning.class );
 		IMMUNITIES.add( Paralysis.class );
 		IMMUNITIES.add( ToxicGas.class );
+		IMMUNITIES.add( VenomGas.class );
 		IMMUNITIES.add( Roots.class );
 		IMMUNITIES.add( Frost.class );
 	}

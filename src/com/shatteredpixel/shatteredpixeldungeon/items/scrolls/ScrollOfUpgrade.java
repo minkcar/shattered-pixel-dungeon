@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,19 +24,20 @@ import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
+import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShadowParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
+import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndBag;
 
 public class ScrollOfUpgrade extends InventoryScroll {
-
-	private static final String TXT_LOOKS_BETTER	= "your %s certainly looks better now";
 	
 	{
-		name = "Scroll of Upgrade";
-		initials = "Up";
-
-		inventoryTitle = "Select an item to upgrade";
+		initials = 11;
 		mode = WndBag.Mode.UPGRADEABLE;
 
 		bones = true;
@@ -45,11 +46,69 @@ public class ScrollOfUpgrade extends InventoryScroll {
 	@Override
 	protected void onItemSelected( Item item ) {
 
-		ScrollOfRemoveCurse.uncurse( Dungeon.hero, item );
-		item.upgrade();
-
 		upgrade( curUser );
-		GLog.p( TXT_LOOKS_BETTER, item.name() );
+
+		//logic for telling the user when item properties change from upgrades
+		//...yes this is rather messy
+		if (item instanceof Weapon){
+			Weapon w = (Weapon) item;
+			boolean wasCursed = w.cursed;
+			boolean hadCursedEnchant = w.hasCurseEnchant();
+			boolean hadGoodEnchant = w.hasGoodEnchant();
+
+			w.upgrade();
+
+			if (hadCursedEnchant && !w.hasCurseEnchant()){
+				removeCurse( Dungeon.hero );
+			} else if (wasCursed && !w.cursed){
+				weakenCurse( Dungeon.hero );
+			}
+			if (hadGoodEnchant && !w.hasGoodEnchant()){
+				GLog.w( Messages.get(Weapon.class, "incompatible") );
+			}
+
+		} else if (item instanceof Armor){
+			Armor a = (Armor) item;
+			boolean wasCursed = a.cursed;
+			boolean hadCursedGlyph = a.hasCurseGlyph();
+			boolean hadGoodGlyph = a.hasGoodGlyph();
+
+			a.upgrade();
+
+			if (hadCursedGlyph && !a.hasCurseGlyph()){
+				removeCurse( Dungeon.hero );
+			} else if (wasCursed && !a.cursed){
+				weakenCurse( Dungeon.hero );
+			}
+			if (hadGoodGlyph && !a.hasGoodGlyph()){
+				GLog.w( Messages.get(Armor.class, "incompatible") );
+			}
+
+		} else if (item instanceof Wand) {
+			boolean wasCursed = item.cursed;
+
+			item.upgrade();
+
+			if (wasCursed && !item.cursed){
+				removeCurse( Dungeon.hero );
+			}
+
+		} else if (item instanceof Ring) {
+			boolean wasCursed = item.cursed;
+
+			item.upgrade();
+
+			if (wasCursed && !item.cursed){
+				if (item.level() < 1){
+					weakenCurse( Dungeon.hero );
+				} else {
+					removeCurse( Dungeon.hero );
+				}
+			}
+
+		} else {
+			item.upgrade();
+		}
 		
 		Badges.validateItemLevelAquired( item );
 	}
@@ -57,14 +116,19 @@ public class ScrollOfUpgrade extends InventoryScroll {
 	public static void upgrade( Hero hero ) {
 		hero.sprite.emitter().start( Speck.factory( Speck.UP ), 0.2f, 3 );
 	}
-	
+
+	public static void weakenCurse( Hero hero ){
+		GLog.p( Messages.get(ScrollOfUpgrade.class, "weaken_curse") );
+		hero.sprite.emitter().start( ShadowParticle.UP, 0.05f, 5 );
+	}
+
+	public static void removeCurse( Hero hero ){
+		GLog.p( Messages.get(ScrollOfUpgrade.class, "remove_curse") );
+		hero.sprite.emitter().start( ShadowParticle.UP, 0.05f, 10 );
+	}
+
 	@Override
-	public String desc() {
-		return
-			"This scroll will upgrade a single item, improving its quality. A wand will " +
-			"increase in power and in number of charges; a weapon will inflict more damage " +
-			"or find its mark more frequently; a suit of armor will deflect additional blows; " +
-			"the effect of a ring on its wearer will intensify. Weapons and armor will also " +
-			"require less strength to use, and any curses on the item will be lifted.";
+	public int price() {
+		return isKnown() ? 50 * quantity : super.price();
 	}
 }

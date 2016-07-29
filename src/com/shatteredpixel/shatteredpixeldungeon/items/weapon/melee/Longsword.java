@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,16 +25,9 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 public class Longsword extends MeleeWeapon {
 	
 	{
-		name = "longsword";
-		image = ItemSpriteSheet.LONG_SWORD;
+		image = ItemSpriteSheet.LONGSWORD;
+
+		tier = 4;
 	}
-	
-	public Longsword() {
-		super( 4, 1f, 1f );
-	}
-	
-	@Override
-	public String desc() {
-		return "This towering blade inflicts heavy damage by investing its heft into every cut.";
-	}
+
 }

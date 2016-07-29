@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,16 +25,16 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 public class BattleAxe extends MeleeWeapon {
 
 	{
-		name = "battle axe";
 		image = ItemSpriteSheet.BATTLE_AXE;
+
+		tier = 4;
+		ACC = 1.175f; //17.5% boost to accuracy
 	}
-	
-	public BattleAxe() {
-		super( 4, 1.2f, 1f );
-	}
-	
+
 	@Override
-	public String desc() {
-		return "The enormous steel head of this battle axe puts considerable heft behind each stroke.";
+	public int max(int lvl) {
+		return  4*(tier+1) +    //20 base, down from 25
+				lvl*(tier+1);   //scaling unchanged
 	}
+
 }

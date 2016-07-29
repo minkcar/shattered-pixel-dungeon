@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfElements.Resistance;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.watabou.utils.Bundle;
 
@@ -54,7 +55,7 @@ public class Charm extends FlavourBuff {
 	
 	@Override
 	public String toString() {
-		return "Charmed";
+		return Messages.get(this, "name");
 	}
 	
 	public static float durationFactor( Char ch ) {
@@ -63,12 +64,12 @@ public class Charm extends FlavourBuff {
 	}
 
 	@Override
+	public String heroMessage() {
+		return Messages.get(this, "heromsg");
+	}
+
+	@Override
 	public String desc() {
-		return "A charm is manipulative magic that can make enemies temporarily adore eachother.\n" +
-				"\n" +
-				"Characters affected by charm are unable to directly attack the enemy they are charmed by. " +
-				"Attacking other targets is still possible however.\n" +
-				"\n" +
-				"The charm will last for " + dispTurns() + ".";
+		return Messages.get(this, "desc", dispTurns());
 	}
 }

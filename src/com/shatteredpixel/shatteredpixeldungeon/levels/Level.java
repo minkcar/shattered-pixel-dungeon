@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,21 +60,23 @@ import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfMight;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfStrength;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfWealth;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
-import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfUpgrade;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMagicalInfusion;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfUpgrade;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Chasm;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.HighGrass;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.*;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.ShadowCaster;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.plants.BlandfruitBush;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Plant;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
+import com.shatteredpixel.shatteredpixeldungeon.ui.CustomTileVisual;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.Game;
-import com.watabou.noosa.Scene;
+import com.watabou.noosa.Group;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundlable;
 import com.watabou.utils.Bundle;
@@ -120,8 +122,6 @@ public abstract class Level implements Bundlable {
 	
 	protected static final float TIME_TO_RESPAWN	= 50;
 	
-	private static final String TXT_HIDDEN_PLATE_CLICKS = "A hidden pressure plate clicks!";
-	
 	public static boolean resizingNeeded;
 	public static int loadedMapSize;
 
@@ -158,14 +158,18 @@ public abstract class Level implements Bundlable {
 	public HashMap<Class<? extends Blob>,Blob> blobs;
 	public SparseArray<Plant> plants;
 	public SparseArray<Trap> traps;
+	public HashSet<CustomTileVisual> customTiles;
 	
 	protected ArrayList<Item> itemsToSpawn = new ArrayList<>();
+
+	protected Group visuals;
 	
 	public int color1 = 0x004400;
 	public int color2 = 0x88CC44;
-	
+
+	//FIXME this is sloppy. Should be able to keep track of this without static variables
 	protected static boolean pitRoomNeeded = false;
-	protected static boolean weakFloorCreated = false;
+	public static boolean weakFloorCreated = false;
 
 	private static final String VERSION     = "version";
 	private static final String MAP			= "map";
@@ -177,6 +181,7 @@ public abstract class Level implements Bundlable {
 	private static final String HEAPS		= "heaps";
 	private static final String PLANTS		= "plants";
 	private static final String TRAPS       = "traps";
+	private static final String CUSTOM_TILES= "customTiles";
 	private static final String MOBS		= "mobs";
 	private static final String BLOBS		= "blobs";
 	private static final String FEELING		= "feeling";
@@ -191,30 +196,30 @@ public abstract class Level implements Bundlable {
 		mapped = new boolean[LENGTH];
 		Arrays.fill( mapped, false );
 		
-		if (!Dungeon.bossLevel()) {
+		if (!(Dungeon.bossLevel() || Dungeon.depth == 21) /*final shop floor*/) {
 			addItemToSpawn( Generator.random( Generator.Category.FOOD ) );
+
+			int bonus = RingOfWealth.getBonus(Dungeon.hero, RingOfWealth.Wealth.class);
+
 			if (Dungeon.posNeeded()) {
-				addItemToSpawn( new PotionOfStrength() );
+				if (Random.Float() > Math.pow(0.925, bonus))
+					addItemToSpawn( new PotionOfMight() );
+				else
+					addItemToSpawn( new PotionOfStrength() );
 				Dungeon.limitedDrops.strengthPotions.count++;
 			}
 			if (Dungeon.souNeeded()) {
-				addItemToSpawn( new ScrollOfUpgrade() );
+				if (Random.Float() > Math.pow(0.925, bonus))
+					addItemToSpawn( new ScrollOfMagicalInfusion() );
+				else
+					addItemToSpawn( new ScrollOfUpgrade() );
 				Dungeon.limitedDrops.upgradeScrolls.count++;
 			}
 			if (Dungeon.asNeeded()) {
+				if (Random.Float() > Math.pow(0.925, bonus))
+					addItemToSpawn( new Stylus() );
 				addItemToSpawn( new Stylus() );
 				Dungeon.limitedDrops.arcaneStyli.count++;
-			}
-
-			int bonus = 0;
-			for (Buff buff : Dungeon.hero.buffs(RingOfWealth.Wealth.class)) {
-				bonus += ((RingOfWealth.Wealth) buff).level;
-			}
-			if (Random.Float() > Math.pow(0.95, bonus)){
-				if (Random.Int(2) == 0)
-					 addItemToSpawn( new ScrollOfMagicalInfusion() );
-				else
-					addItemToSpawn( new PotionOfMight() );
 			}
 
 			DriedRose rose = Dungeon.hero.belongings.getItem( DriedRose.class );
@@ -266,6 +271,7 @@ public abstract class Level implements Bundlable {
 			blobs = new HashMap<>();
 			plants = new SparseArray<>();
 			traps = new SparseArray<>();
+			customTiles = new HashSet<>();
 			
 		} while (!build());
 		decorate();
@@ -297,6 +303,7 @@ public abstract class Level implements Bundlable {
 		blobs = new HashMap<>();
 		plants = new SparseArray<>();
 		traps = new SparseArray<>();
+		customTiles = new HashSet<>();
 		
 		map		= bundle.getIntArray( MAP );
 
@@ -344,6 +351,15 @@ public abstract class Level implements Bundlable {
 			}
 			traps.put( trap.pos, trap );
 		}
+
+		collection = bundle.getCollection( CUSTOM_TILES );
+		for (Bundlable p : collection) {
+			CustomTileVisual vis = (CustomTileVisual)p;
+			if (resizingNeeded) {
+				//TODO: add proper resizing logic here
+			}
+			customTiles.add( vis );
+		}
 		
 		collection = bundle.getCollection( MOBS );
 		for (Bundlable m : collection) {
@@ -382,6 +398,7 @@ public abstract class Level implements Bundlable {
 		bundle.put( HEAPS, heaps.values() );
 		bundle.put( PLANTS, plants.values() );
 		bundle.put( TRAPS, traps.values() );
+		bundle.put( CUSTOM_TILES, customTiles );
 		bundle.put( MOBS, mobs );
 		bundle.put( BLOBS, blobs.values() );
 		bundle.put( FEELING, feeling );
@@ -458,15 +475,21 @@ public abstract class Level implements Bundlable {
 		}
 	}
 
-	public void addVisuals( Scene scene ) {
+	public Group addVisuals() {
+		if (visuals == null || visuals.parent == null){
+			visuals = new Group();
+		} else {
+			visuals.clear();
+		}
 		for (int i=0; i < LENGTH; i++) {
 			if (pit[i]) {
-				scene.add( new WindParticle.Wind( i ) );
+				visuals.add( new WindParticle.Wind( i ) );
 				if (i >= WIDTH && water[i-WIDTH]) {
-					scene.add( new FlowParticle.Flow( i - WIDTH ) );
+					visuals.add( new FlowParticle.Flow( i - WIDTH ) );
 				}
 			}
 		}
+		return visuals;
 	}
 	
 	public int nMobs() {
@@ -496,7 +519,7 @@ public abstract class Level implements Bundlable {
 					Mob mob = Bestiary.mutable( Dungeon.depth );
 					mob.state = mob.WANDERING;
 					mob.pos = randomRespawnCell();
-					if (Dungeon.hero.isAlive() && mob.pos != -1) {
+					if (Dungeon.hero.isAlive() && mob.pos != -1 && distance(Dungeon.hero.pos, mob.pos) >= 4) {
 						GameScene.add( mob );
 						if (Statistics.amuletObtained) {
 							mob.beckon( Dungeon.hero.pos );
@@ -552,8 +575,8 @@ public abstract class Level implements Bundlable {
 
 		return null;
 	}
-	
-	private void buildFlagMaps() {
+
+	protected void buildFlagMaps() {
 		
 		for (int i=0; i < LENGTH; i++) {
 			int flags = Terrain.flags[map[i]];
@@ -580,13 +603,7 @@ public abstract class Level implements Bundlable {
 		for (int i=WIDTH; i < LENGTH - WIDTH; i++) {
 			
 			if (water[i]) {
-				int t = Terrain.WATER_TILES;
-				for (int j=0; j < NEIGHBOURS4.length; j++) {
-					if ((Terrain.flags[map[i + NEIGHBOURS4[j]]] & Terrain.UNSTITCHABLE) != 0) {
-						t += 1 << j;
-					}
-				}
-				map[i] = t;
+				map[i] = getWaterTile( i );
 			}
 			
 			if (pit[i]) {
@@ -605,8 +622,39 @@ public abstract class Level implements Bundlable {
 			}
 		}
 	}
-	
-	private void cleanWalls() {
+
+	private int getWaterTile( int pos ) {
+		int t = Terrain.WATER_TILES;
+		for (int j=0; j < NEIGHBOURS4.length; j++) {
+			if ((Terrain.flags[map[pos + NEIGHBOURS4[j]]] & Terrain.UNSTITCHABLE) != 0) {
+				t += 1 << j;
+			}
+		}
+		return t;
+	}
+
+	public void destroy( int pos ) {
+		if ((Terrain.flags[map[pos]] & Terrain.UNSTITCHABLE) == 0) {
+
+			set( pos, Terrain.EMBERS );
+
+		} else {
+			boolean flood = false;
+			for (int j=0; j < NEIGHBOURS4.length; j++) {
+				if (water[pos + NEIGHBOURS4[j]]) {
+					flood = true;
+					break;
+				}
+			}
+			if (flood) {
+				set( pos, getWaterTile( pos ) );
+			} else {
+				set( pos, Terrain.EMBERS );
+			}
+		}
+	}
+
+	protected void cleanWalls() {
 		for (int i=0; i < LENGTH; i++) {
 			
 			boolean d = false;
@@ -638,7 +686,7 @@ public abstract class Level implements Bundlable {
 	public static void set( int cell, int terrain ) {
 		Painter.set( Dungeon.level, cell, terrain );
 
-		if (terrain != Terrain.TRAP && terrain != Terrain.SECRET_TRAP){
+		if (terrain != Terrain.TRAP && terrain != Terrain.SECRET_TRAP && terrain != Terrain.INACTIVE_TRAP){
 			Dungeon.level.traps.remove( cell );
 		}
 
@@ -660,14 +708,14 @@ public abstract class Level implements Bundlable {
 			(Dungeon.isChallenged( Challenges.NO_ARMOR ) && item instanceof Armor) ||
 			(Dungeon.isChallenged( Challenges.NO_HEALING ) && item instanceof PotionOfHealing) ||
 			(Dungeon.isChallenged( Challenges.NO_HERBALISM ) && (item instanceof Plant.Seed || item instanceof Dewdrop || item instanceof SeedPouch)) ||
-			(Dungeon.isChallenged( Challenges.NO_SCROLLS ) && ((item instanceof Scroll && !(item instanceof ScrollOfUpgrade)) || item instanceof ScrollHolder)) ||
+			(Dungeon.isChallenged( Challenges.NO_SCROLLS ) && ((item instanceof Scroll && !(item instanceof ScrollOfUpgrade || item instanceof ScrollOfMagicalInfusion)) || item instanceof ScrollHolder)) ||
 			item == null) {
 
 			//create a dummy heap, give it a dummy sprite, don't add it to the game, and return it.
 			//effectively nullifies whatever the logic calling this wants to do, including dropping items.
 			Heap heap = new Heap();
 			ItemSprite sprite = heap.sprite = new ItemSprite();
-			sprite.link( heap );
+			sprite.link(heap);
 			return heap;
 
 		}
@@ -688,6 +736,7 @@ public abstract class Level implements Bundlable {
 		if (heap == null) {
 			
 			heap = new Heap();
+			heap.seen = Dungeon.visible[cell];
 			heap.pos = cell;
 			if (map[cell] == Terrain.CHASM || (Dungeon.level != null && pit[cell])) {
 				Dungeon.dropToChasm( item );
@@ -706,7 +755,7 @@ public abstract class Level implements Bundlable {
 			return drop( item, n );
 			
 		}
-		heap.drop( item );
+		heap.drop(item);
 		
 		if (Dungeon.level != null) {
 			press( cell, null );
@@ -740,10 +789,15 @@ public abstract class Level implements Bundlable {
 	}
 	
 	public void uproot( int pos ) {
-		plants.delete( pos );
+		plants.remove(pos);
 	}
 
 	public Trap setTrap( Trap trap, int pos ){
+		Trap existingTrap = traps.get(pos);
+		if (existingTrap != null){
+			traps.remove( pos );
+			if(existingTrap.sprite != null) existingTrap.sprite.kill();
+		}
 		trap.set( pos );
 		traps.put( pos, trap );
 		GameScene.add(trap);
@@ -751,7 +805,6 @@ public abstract class Level implements Bundlable {
 	}
 
 	public void disarmTrap( int pos ) {
-		traps.delete(pos);
 		set(pos, Terrain.INACTIVE_TRAP);
 		GameScene.updateMap(pos);
 	}
@@ -778,20 +831,13 @@ public abstract class Level implements Bundlable {
 			}
 			return;
 		}
-
-		TimekeepersHourglass.timeFreeze timeFreeze = null;
-
-		if (ch != null)
-			timeFreeze = ch.buff(TimekeepersHourglass.timeFreeze.class);
-
-		boolean frozen = timeFreeze != null;
 		
 		Trap trap = null;
 		
 		switch (map[cell]) {
 		
 		case Terrain.SECRET_TRAP:
-			GLog.i( TXT_HIDDEN_PLATE_CLICKS );
+			GLog.i( Messages.get(Level.class, "hidden_plate") );
 		case Terrain.TRAP:
 			trap = traps.get( cell );
 			break;
@@ -814,22 +860,26 @@ public abstract class Level implements Bundlable {
 			Door.enter( cell );
 			break;
 		}
-		
-		if (trap != null && !frozen) {
 
-			if (ch == Dungeon.hero)
-				Dungeon.hero.interrupt();
+		TimekeepersHourglass.timeFreeze timeFreeze = Dungeon.hero.buff(TimekeepersHourglass.timeFreeze.class);
 
-			trap.trigger();
+		if (trap != null) {
+			if (timeFreeze == null) {
 
-		} else if (trap != null && frozen){
+				if (ch == Dungeon.hero)
+					Dungeon.hero.interrupt();
 
-			Sample.INSTANCE.play(Assets.SND_TRAP);
+				trap.trigger();
 
-			discover(cell);
+			} else {
 
-			timeFreeze.setDelayedPress( cell );
+				Sample.INSTANCE.play(Assets.SND_TRAP);
 
+				discover(cell);
+
+				timeFreeze.setDelayedPress(cell);
+
+			}
 		}
 		
 		Plant plant = plants.get( cell );
@@ -952,6 +1002,10 @@ public abstract class Level implements Bundlable {
 				}
 			}
 		}
+
+		for (Heap heap : heaps.values())
+			if (!heap.seen && fieldOfView[heap.pos] && c == Dungeon.hero)
+				heap.seen = true;
 		
 		return fieldOfView;
 	}
@@ -990,104 +1044,104 @@ public abstract class Level implements Bundlable {
 		}
 		
 		switch (tile) {
-		case Terrain.CHASM:
-			return "Chasm";
-		case Terrain.EMPTY:
-		case Terrain.EMPTY_SP:
-		case Terrain.EMPTY_DECO:
-		case Terrain.SECRET_TRAP:
-			return "Floor";
-		case Terrain.GRASS:
-			return "Grass";
-		case Terrain.WATER:
-			return "Water";
-		case Terrain.WALL:
-		case Terrain.WALL_DECO:
-		case Terrain.SECRET_DOOR:
-			return "Wall";
-		case Terrain.DOOR:
-			return "Closed door";
-		case Terrain.OPEN_DOOR:
-			return "Open door";
-		case Terrain.ENTRANCE:
-			return "Depth entrance";
-		case Terrain.EXIT:
-			return "Depth exit";
-		case Terrain.EMBERS:
-			return "Embers";
-		case Terrain.LOCKED_DOOR:
-			return "Locked door";
-		case Terrain.PEDESTAL:
-			return "Pedestal";
-		case Terrain.BARRICADE:
-			return "Barricade";
-		case Terrain.HIGH_GRASS:
-			return "High grass";
-		case Terrain.LOCKED_EXIT:
-			return "Locked depth exit";
-		case Terrain.UNLOCKED_EXIT:
-			return "Unlocked depth exit";
-		case Terrain.SIGN:
-			return "Sign";
-		case Terrain.WELL:
-			return "Well";
-		case Terrain.EMPTY_WELL:
-			return "Empty well";
-		case Terrain.STATUE:
-		case Terrain.STATUE_SP:
-			return "Statue";
-		case Terrain.INACTIVE_TRAP:
-			return "Triggered trap";
-		case Terrain.BOOKSHELF:
-			return "Bookshelf";
-		case Terrain.ALCHEMY:
-			return "Alchemy pot";
-		default:
-			return "???";
+			case Terrain.CHASM:
+				return Messages.get(Level.class, "chasm_name");
+			case Terrain.EMPTY:
+			case Terrain.EMPTY_SP:
+			case Terrain.EMPTY_DECO:
+			case Terrain.SECRET_TRAP:
+				return Messages.get(Level.class, "floor_name");
+			case Terrain.GRASS:
+				return Messages.get(Level.class, "grass_name");
+			case Terrain.WATER:
+				return Messages.get(Level.class, "water_name");
+			case Terrain.WALL:
+			case Terrain.WALL_DECO:
+			case Terrain.SECRET_DOOR:
+				return Messages.get(Level.class, "wall_name");
+			case Terrain.DOOR:
+				return Messages.get(Level.class, "closed_door_name");
+			case Terrain.OPEN_DOOR:
+				return Messages.get(Level.class, "open_door_name");
+			case Terrain.ENTRANCE:
+				return Messages.get(Level.class, "entrace_name");
+			case Terrain.EXIT:
+				return Messages.get(Level.class, "exit_name");
+			case Terrain.EMBERS:
+				return Messages.get(Level.class, "embers_name");
+			case Terrain.LOCKED_DOOR:
+				return Messages.get(Level.class, "locked_door_name");
+			case Terrain.PEDESTAL:
+				return Messages.get(Level.class, "pedestal_name");
+			case Terrain.BARRICADE:
+				return Messages.get(Level.class, "barricade_name");
+			case Terrain.HIGH_GRASS:
+				return Messages.get(Level.class, "high_grass_name");
+			case Terrain.LOCKED_EXIT:
+				return Messages.get(Level.class, "locked_exit_name");
+			case Terrain.UNLOCKED_EXIT:
+				return Messages.get(Level.class, "unlocked_exit_name");
+			case Terrain.SIGN:
+				return Messages.get(Level.class, "sign_name");
+			case Terrain.WELL:
+				return Messages.get(Level.class, "well_name");
+			case Terrain.EMPTY_WELL:
+				return Messages.get(Level.class, "empty_well_name");
+			case Terrain.STATUE:
+			case Terrain.STATUE_SP:
+				return Messages.get(Level.class, "statue_name");
+			case Terrain.INACTIVE_TRAP:
+				return Messages.get(Level.class, "inactive_trap_name");
+			case Terrain.BOOKSHELF:
+				return Messages.get(Level.class, "bookshelf_name");
+			case Terrain.ALCHEMY:
+				return Messages.get(Level.class, "alchemy_name");
+			default:
+				return Messages.get(Level.class, "default_name");
 		}
 	}
 	
 	public String tileDesc( int tile ) {
 		
 		switch (tile) {
-		case Terrain.CHASM:
-			return "You can't see the bottom.";
-		case Terrain.WATER:
-			return "In case of burning step into the water to extinguish the fire.";
-		case Terrain.ENTRANCE:
-			return "Stairs lead up to the upper depth.";
-		case Terrain.EXIT:
-		case Terrain.UNLOCKED_EXIT:
-			return "Stairs lead down to the lower depth.";
-		case Terrain.EMBERS:
-			return "Embers cover the floor.";
-		case Terrain.HIGH_GRASS:
-			return "Dense vegetation blocks the view.";
-		case Terrain.LOCKED_DOOR:
-			return "This door is locked, you need a matching key to unlock it.";
-		case Terrain.LOCKED_EXIT:
-			return "Heavy bars block the stairs leading down.";
-		case Terrain.BARRICADE:
-			return "The wooden barricade is firmly set but has dried over the years. Might it burn?";
-		case Terrain.SIGN:
-			return "You can't read the text from here.";
-		case Terrain.INACTIVE_TRAP:
-			return "The trap has been triggered before and it's not dangerous anymore.";
-		case Terrain.STATUE:
-		case Terrain.STATUE_SP:
-			return "Someone wanted to adorn this place, but failed, obviously.";
-		case Terrain.ALCHEMY:
-			return "Drop some seeds here to cook a potion.";
-		case Terrain.EMPTY_WELL:
-			return "The well has run dry.";
-		default:
-			if (tile >= Terrain.WATER_TILES) {
-				return tileDesc( Terrain.WATER );
-			}
-			if ((Terrain.flags[tile] & Terrain.PIT) != 0) {
-				return tileDesc( Terrain.CHASM );
-			}
-			return "";
+			case Terrain.CHASM:
+				return Messages.get(Level.class, "chasm_desc");
+			case Terrain.WATER:
+				return Messages.get(Level.class, "water_desc");
+			case Terrain.ENTRANCE:
+				return Messages.get(Level.class, "entrance_desc");
+			case Terrain.EXIT:
+			case Terrain.UNLOCKED_EXIT:
+				return Messages.get(Level.class, "exit_desc");
+			case Terrain.EMBERS:
+				return Messages.get(Level.class, "embers_desc");
+			case Terrain.HIGH_GRASS:
+				return Messages.get(Level.class, "high_grass_desc");
+			case Terrain.LOCKED_DOOR:
+				return Messages.get(Level.class, "locked_door_desc");
+			case Terrain.LOCKED_EXIT:
+				return Messages.get(Level.class, "locked_exit_desc");
+			case Terrain.BARRICADE:
+				return Messages.get(Level.class, "barricade_desc");
+			case Terrain.SIGN:
+				return Messages.get(Level.class, "sign_desc");
+			case Terrain.INACTIVE_TRAP:
+				return Messages.get(Level.class, "inactive_trap_desc");
+			case Terrain.STATUE:
+			case Terrain.STATUE_SP:
+				return Messages.get(Level.class, "statue_desc");
+			case Terrain.ALCHEMY:
+				return Messages.get(Level.class, "alchemy_desc");
+			case Terrain.EMPTY_WELL:
+				return Messages.get(Level.class, "empty_well_desc");
+			default:
+				if (tile >= Terrain.WATER_TILES) {
+					return tileDesc( Terrain.WATER );
+				}
+				if ((Terrain.flags[tile] & Terrain.PIT) != 0) {
+					return tileDesc( Terrain.CHASM );
+				}
+				return Messages.get(Level.class, "default_desc");
 		}
 	}
 }

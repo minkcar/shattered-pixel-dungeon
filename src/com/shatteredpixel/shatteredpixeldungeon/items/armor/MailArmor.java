@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,11 +22,9 @@ package com.shatteredpixel.shatteredpixeldungeon.items.armor;
 
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
-
 public class MailArmor extends Armor {
 
 	{
-		name = "mail armor";
 		image = ItemSpriteSheet.ARMOR_MAIL;
 	}
 	
@@ -34,9 +32,4 @@ public class MailArmor extends Armor {
 		super( 3 );
 	}
 
-	@Override
-	public String desc() {
-		return
-			"Interlocking metal links make for a tough but flexible suit of armor.";
-	}
 }

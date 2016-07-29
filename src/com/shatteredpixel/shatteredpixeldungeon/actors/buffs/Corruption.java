@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 
@@ -33,7 +34,7 @@ public class Corruption extends Buff {
 
 	@Override
 	public boolean act() {
-		buildToDamage += target.HT/100f;
+		buildToDamage += target.HT/200f;
 
 		int damage = (int)buildToDamage;
 		buildToDamage -= damage;
@@ -59,16 +60,11 @@ public class Corruption extends Buff {
 
 	@Override
 	public String toString() {
-		return "Corrupted";
+		return Messages.get(this, "name");
 	}
 
 	@Override
 	public String desc() {
-		return "Corruption seeps into the essence of a being, twisting them against their former nature.\n" +
-				"\n" +
-				"Corrupted creatures will attack and aggravate their allies, and ignore their former enemies. " +
-				"Corruption is damaging as well, and will slowly cause its target to succumb.\n" +
-				"\n" +
-				"Corruption is permanent, its effects only end in death.";
+		return Messages.get(this, "desc");
 	}
 }

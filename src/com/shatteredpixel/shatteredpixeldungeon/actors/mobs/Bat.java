@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,21 +20,20 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import java.util.HashSet;
-
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Leech;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Vampiric;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.BatSprite;
 import com.watabou.utils.Random;
+
+import java.util.HashSet;
 
 public class Bat extends Mob {
 
 	{
-		name = "vampire bat";
 		spriteClass = BatSprite.class;
 		
 		HP = HT = 30;
@@ -52,7 +51,7 @@ public class Bat extends Mob {
 	
 	@Override
 	public int damageRoll() {
-		return Random.NormalIntRange( 6, 12 );
+		return Random.NormalIntRange( 5, 18 );
 	}
 	
 	@Override
@@ -61,13 +60,8 @@ public class Bat extends Mob {
 	}
 	
 	@Override
-	public int dr() {
-		return 4;
-	}
-	
-	@Override
-	public String defenseVerb() {
-		return "evaded";
+	public int drRoll() {
+		return Random.NormalIntRange(0, 4);
 	}
 	
 	@Override
@@ -96,16 +90,9 @@ public class Bat extends Mob {
 		return super.createLoot();
 	}
 	
-	@Override
-	public String description() {
-		return
-			"These brisk and tenacious inhabitants of cave domes may defeat much larger opponents by " +
-			"replenishing their health with each successful attack.";
-	}
-	
-	private static final HashSet<Class<?>> RESISTANCES = new HashSet<Class<?>>();
+	private static final HashSet<Class<?>> RESISTANCES = new HashSet<>();
 	static {
-		RESISTANCES.add( Leech.class );
+		RESISTANCES.add( Vampiric.class );
 	}
 	
 	@Override

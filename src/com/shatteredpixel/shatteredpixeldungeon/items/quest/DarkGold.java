@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,6 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 public class DarkGold extends Item {
 	
 	{
-		name = "dark gold ore";
 		image = ItemSpriteSheet.ORE;
 		
 		stackable = true;
@@ -41,17 +40,5 @@ public class DarkGold extends Item {
 	@Override
 	public boolean isIdentified() {
 		return true;
-	}
-	
-	@Override
-	public String info() {
-		return
-			"This metal is called dark not because of its color (it doesn't differ from the normal gold), " +
-			"but because it melts under the daylight, making it useless on the surface.";
-	}
-	
-	@Override
-	public int price() {
-		return quantity;
 	}
 }

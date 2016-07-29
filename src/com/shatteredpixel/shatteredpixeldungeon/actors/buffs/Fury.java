@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,11 +20,12 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 
 public class Fury extends Buff {
 	
-	public static float LEVEL	= 0.4f;
+	public static float LEVEL	= 0.5f;
 
 	{
 		type = buffType.POSITIVE;
@@ -48,15 +49,16 @@ public class Fury extends Buff {
 	
 	@Override
 	public String toString() {
-		return "Furious";
+		return Messages.get(this, "name");
+	}
+
+	@Override
+	public String heroMessage() {
+		return Messages.get(this, "heromsg");
 	}
 
 	@Override
 	public String desc() {
-		return "You are angry, enemies won't like you when you're angry.\n" +
-				"\n" +
-				"A great rage burns within you, increasing the damage you deal with physical attacks by 50%. \n" +
-				"\n" +
-				"This rage will last as long as you are injured below 40% health.\n";
+		return Messages.get(this, "desc");
 	}
 }

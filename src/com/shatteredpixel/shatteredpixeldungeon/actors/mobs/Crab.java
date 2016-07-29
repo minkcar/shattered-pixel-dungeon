@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,6 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Ghost;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.MysteryMeat;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CrabSprite;
 import com.watabou.utils.Random;
@@ -29,14 +28,13 @@ import com.watabou.utils.Random;
 public class Crab extends Mob {
 
 	{
-		name = "sewer crab";
 		spriteClass = CrabSprite.class;
 		
 		HP = HT = 15;
 		defenseSkill = 5;
 		baseSpeed = 2f;
 		
-		EXP = 3;
+		EXP = 4;
 		maxLvl = 9;
 		
 		loot = new MysteryMeat();
@@ -45,7 +43,7 @@ public class Crab extends Mob {
 	
 	@Override
 	public int damageRoll() {
-		return Random.NormalIntRange( 3, 6 );
+		return Random.NormalIntRange( 1, 8 );
 	}
 	
 	@Override
@@ -54,20 +52,7 @@ public class Crab extends Mob {
 	}
 	
 	@Override
-	public int dr() {
-		return 4;
-	}
-	
-	@Override
-	public String defenseVerb() {
-		return "parried";
-	}
-	
-	@Override
-	public String description() {
-		return
-			"These huge crabs are at the top of the food chain in the sewers. " +
-			"They are extremely fast and their thick carapace can withstand " +
-			"heavy blows.";
+	public int drRoll() {
+		return Random.NormalIntRange(0, 4);
 	}
 }

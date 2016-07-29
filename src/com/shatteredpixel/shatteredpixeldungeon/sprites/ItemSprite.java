@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,12 +21,6 @@
 package com.shatteredpixel.shatteredpixeldungeon.sprites;
 
 import android.graphics.Bitmap;
-
-import com.watabou.gltextures.TextureCache;
-import com.watabou.noosa.Game;
-import com.watabou.noosa.MovieClip;
-import com.watabou.noosa.TextureFilm;
-import com.watabou.noosa.audio.Sample;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.DungeonTilemap;
@@ -38,6 +32,11 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.watabou.gltextures.TextureCache;
+import com.watabou.noosa.Game;
+import com.watabou.noosa.MovieClip;
+import com.watabou.noosa.TextureFilm;
+import com.watabou.noosa.audio.Sample;
 import com.watabou.noosa.particles.Emitter;
 import com.watabou.utils.PointF;
 import com.watabou.utils.Random;
@@ -62,7 +61,7 @@ public class ItemSprite extends MovieClip {
 	private float dropInterval;
 	
 	public ItemSprite() {
-		this( ItemSpriteSheet.SMTH, null );
+		this( ItemSpriteSheet.SOMETHING, null );
 	}
 	
 	public ItemSprite( Item item ) {
@@ -139,6 +138,11 @@ public class ItemSprite extends MovieClip {
 
 		if (heap.isEmpty()) {
 			return;
+		} else if (heap.size() == 1){
+			// normally this would happen for any heap, however this is not applied to heaps greater than 1 in size
+			// in order to preserve an amusing visual bug/feature that used to trigger for heaps with size > 1
+			// where as long as the player continually taps, the heap sails up into the air.
+			place(heap.pos);
 		}
 			
 		dropInterval = DROP_INTERVAL;
@@ -170,7 +174,6 @@ public class ItemSprite extends MovieClip {
 
 	public ItemSprite view(Item item){
 		view(item.image(), item.glowing());
-		if (this.emitter != null) this.emitter.killAndErase();
 		Emitter emitter = item.emitter();
 		if (emitter != null && parent != null) {
 			emitter.pos( this );
@@ -181,7 +184,7 @@ public class ItemSprite extends MovieClip {
 	}
 	
 	public ItemSprite view( int image, Glowing glowing ) {
-		if (this.emitter != null) this.emitter.on = false;
+		if (this.emitter != null) this.emitter.killAndErase();
 		emitter = null;
 		frame( film.get( image ) );
 		if ((this.glowing = glowing) == null) {
@@ -201,7 +204,7 @@ public class ItemSprite extends MovieClip {
 	public void update() {
 		super.update();
 
-		visible = (heap == null || Dungeon.visible[heap.pos]);
+		visible = (heap == null || heap.seen);
 
 		if (dropInterval > 0 && (dropInterval -= Game.elapsed) <= 0) {
 			
@@ -257,8 +260,7 @@ public class ItemSprite extends MovieClip {
 	
 	public static class Glowing {
 		
-		public static final Glowing WHITE = new Glowing( 0xFFFFFF, 0.6f );
-		
+		public int color;
 		public float red;
 		public float green;
 		public float blue;
@@ -269,6 +271,9 @@ public class ItemSprite extends MovieClip {
 		}
 		
 		public Glowing( int color, float period ) {
+
+			this.color = color;
+
 			red = (color >> 16) / 255f;
 			green = ((color >> 8) & 0xFF) / 255f;
 			blue = (color & 0xFF) / 255f;

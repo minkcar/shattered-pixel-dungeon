@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,16 +25,16 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 public class Mace extends MeleeWeapon {
 
 	{
-		name = "mace";
 		image = ItemSpriteSheet.MACE;
+
+		tier = 3;
+		ACC = 1.2f; //20% boost to accuracy
 	}
-	
-	public Mace() {
-		super( 3, 1f, 0.8f );
-	}
-	
+
 	@Override
-	public String desc() {
-		return "The iron head of this weapon inflicts substantial damage.";
+	public int max(int lvl) {
+		return  4*(tier+1) +    //16 base, down from 20
+				lvl*(tier+1);   //scaling unchanged
 	}
+
 }

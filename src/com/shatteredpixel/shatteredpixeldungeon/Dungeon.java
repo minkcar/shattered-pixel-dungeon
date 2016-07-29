@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,7 +36,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CavesBossLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CavesLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CityBossLevel;
@@ -52,11 +51,11 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.PrisonLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.SewerBossLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.SewerLevel;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.StartScene;
 import com.shatteredpixel.shatteredpixeldungeon.ui.QuickSlotButton;
 import com.shatteredpixel.shatteredpixeldungeon.utils.BArray;
-import com.shatteredpixel.shatteredpixeldungeon.utils.Utils;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndResurrect;
 import com.watabou.noosa.Game;
 import com.watabou.utils.Bundlable;
@@ -78,13 +77,14 @@ public class Dungeon {
 
 	//enum of items which have limited spawns, records how many have spawned
 	//could all be their own separate numbers, but this allows iterating, much nicer for bundling/initializing.
+	//TODO: this is fairly brittle when it comes to bundling, should look into a more flexible solution.
 	public static enum limitedDrops{
 		//limited world drops
 		strengthPotions,
 		upgradeScrolls,
 		arcaneStyli,
 
-		//all unlimited health potion sources
+		//all unlimited health potion sources (except guards, which are at the bottom.
 		swarmHP,
 		batHP,
 		warlockHP,
@@ -101,7 +101,9 @@ public class Dungeon {
 		seedBag,
 		scrollBag,
 		potionBag,
-		wandBag;
+		wandBag,
+
+		guardHP;
 
 		public int count = 0;
 
@@ -123,8 +125,6 @@ public class Dungeon {
 	
 	public static int depth;
 	public static int gold;
-	// Reason of death
-	public static String resultDescription;
 	
 	public static HashSet<Integer> chapters;
 	
@@ -139,8 +139,6 @@ public class Dungeon {
 
 		version = Game.versionCode;
 		challenges = ShatteredPixelDungeon.challenges();
-
-		Generator.initArtifacts();
 
 		Actor.clear();
 		Actor.resetNextID();
@@ -175,7 +173,8 @@ public class Dungeon {
 		Imp.Quest.reset();
 		
 		Room.shuffleTypes();
-		
+
+		Generator.initArtifacts();
 		hero = new Hero();
 		hero.live();
 		
@@ -307,15 +306,6 @@ public class Dungeon {
 		
 		Light light = hero.buff( Light.class );
 		hero.viewDistance = light == null ? level.viewDistance : Math.max( Light.DISTANCE, level.viewDistance );
-
-		//logic for pre 0.3.0 saves, need to give mages a staff.
-		if (Dungeon.version <= 38 && Dungeon.hero.heroClass == HeroClass.MAGE){
-			MagesStaff staff = new MagesStaff();
-			staff.identify();
-			if (!staff.collect(Dungeon.hero.belongings.backpack)){
-				Dungeon.level.drop(staff, Dungeon.hero.pos);
-			}
-		}
 		
 		observe();
 		try {
@@ -336,30 +326,39 @@ public class Dungeon {
 	}
 
 	public static boolean posNeeded() {
-		int[] quota = {4, 2, 9, 4, 14, 6, 19, 8, 24, 9};
-		return chance( quota, limitedDrops.strengthPotions.count );
+		//2 POS each floor set
+		int posLeftThisSet = 2 - (limitedDrops.strengthPotions.count - (depth / 5) * 2);
+		if (posLeftThisSet <= 0) return false;
+
+		int floorThisSet = (depth % 5);
+
+		//pos drops every two floors, (numbers 1-2, and 3-4) with a 50% chance for the earlier one each time.
+		int targetPOSLeft = 2 - floorThisSet/2;
+		if (floorThisSet % 2 == 1 && Random.Int(2) == 0) targetPOSLeft --;
+
+		if (targetPOSLeft < posLeftThisSet) return true;
+		else return false;
+
 	}
 	
 	public static boolean souNeeded() {
-		int[] quota = {5, 3, 10, 6, 15, 9, 20, 12, 25, 13};
-		return chance( quota, limitedDrops.upgradeScrolls.count );
-	}
-	
-	private static boolean chance( int[] quota, int number ) {
-		
-		for (int i=0; i < quota.length; i += 2) {
-			int qDepth = quota[i];
-			if (depth <= qDepth) {
-				int qNumber = quota[i + 1];
-				return Random.Float() < (float)(qNumber - number) / (qDepth - depth + 1);
-			}
-		}
-		
-		return false;
+		//3 SOU each floor set
+		int souLeftThisSet = 3 - (limitedDrops.upgradeScrolls.count - (depth / 5) * 3);
+		if (souLeftThisSet <= 0) return false;
+
+		int floorThisSet = (depth % 5);
+		//chance is floors left / scrolls left
+		return Random.Int(5 - floorThisSet) < souLeftThisSet;
 	}
 	
 	public static boolean asNeeded() {
-		return Random.Int( 12 * (1 + limitedDrops.arcaneStyli.count) ) < depth;
+		//1 AS each floor set
+		int asLeftThisSet = 1 - (limitedDrops.arcaneStyli.count - (depth / 5));
+		if (asLeftThisSet <= 0) return false;
+
+		int floorThisSet = (depth % 5);
+		//chance is floors left / scrolls left
+		return Random.Int(5 - floorThisSet) < asLeftThisSet;
 	}
 	
 	private static final String RG_GAME_FILE	= "game.dat";
@@ -387,11 +386,6 @@ public class Dungeon {
 	private static final String CHAPTERS	= "chapters";
 	private static final String QUESTS		= "quests";
 	private static final String BADGES		= "badges";
-
-	//TODO: to support pre-0.2.3 saves, remove when needed
-	private static final String POS			= "potionsOfStrength";
-	private static final String SOU			= "scrollsOfEnhancement";
-	private static final String AS			= "arcaneStyli";
 	
 	public static String gameFile( HeroClass cl ) {
 		switch (cl) {
@@ -488,7 +482,7 @@ public class Dungeon {
 		bundle.put( LEVEL, level );
 		
 		OutputStream output = Game.instance.openFileOutput(
-			Utils.format( depthFile( hero.heroClass ), depth ), Game.MODE_PRIVATE );
+			Messages.format( depthFile( hero.heroClass ), depth ), Game.MODE_PRIVATE );
 		Bundle.write( bundle, output );
 		output.close();
 	}
@@ -549,21 +543,10 @@ public class Dungeon {
 		if (fullLoad) {
 			transmutation = bundle.getInt( WT );
 
-			//TODO: adjust this when dropping support for pre-0.2.3 saves
-			if (bundle.contains( LIMDROPS )) {
-				int[] dropValues = bundle.getIntArray(LIMDROPS);
-				for (limitedDrops value : limitedDrops.values())
-					value.count = value.ordinal() < dropValues.length ?
-							dropValues[value.ordinal()] : 0;
-			} else {
-				for (limitedDrops value : limitedDrops.values())
-					value.count = 0;
-				limitedDrops.strengthPotions.count = bundle.getInt(POS);
-				limitedDrops.upgradeScrolls.count = bundle.getInt(SOU);
-				limitedDrops.arcaneStyli.count = bundle.getInt(AS);
-			}
-			//for pre-0.2.4 saves
-			if (bundle.getBoolean(DV)) limitedDrops.dewVial.drop();
+			int[] dropValues = bundle.getIntArray(LIMDROPS);
+			for (limitedDrops value : limitedDrops.values())
+				value.count = value.ordinal() < dropValues.length ?
+						dropValues[value.ordinal()] : 0;
 
 			chapters = new HashSet<Integer>();
 			int ids[] = bundle.getIntArray( CHAPTERS );
@@ -616,14 +599,6 @@ public class Dungeon {
 				droppedItems.put( i, dropped );
 			}
 		}
-
-		//logic for pre 0.2.4 bags, remove when no longer supporting those saves.
-		if (version <= 32){
-			int deepest = Statistics.deepestFloor;
-			if (deepest > 15) limitedDrops.wandBag.count = 1;
-			if (deepest > 10) limitedDrops.scrollBag.count = 1;
-			if (deepest > 5)  limitedDrops.seedBag.count = 1;
-		}
 	}
 	
 	public static Level loadLevel( HeroClass cl ) throws IOException {
@@ -631,7 +606,7 @@ public class Dungeon {
 		Dungeon.level = null;
 		Actor.clear();
 		
-		InputStream input = Game.instance.openFileInput( Utils.format( depthFile( cl ), depth ) ) ;
+		InputStream input = Game.instance.openFileInput( Messages.format( depthFile( cl ), depth ) ) ;
 		Bundle bundle = Bundle.read( input );
 		input.close();
 		
@@ -644,7 +619,7 @@ public class Dungeon {
 		
 		if (deleteLevels) {
 			int depth = 1;
-			while (Game.instance.deleteFile( Utils.format( depthFile( cl ), depth ) )) {
+			while (Game.instance.deleteFile( Messages.format( depthFile( cl ), depth ) )) {
 				depth++;
 			}
 		}
@@ -670,14 +645,13 @@ public class Dungeon {
 		Hero.preview( info, bundle.getBundle( HERO ) );
 	}
 	
-	public static void fail( String desc ) {
-		resultDescription = desc;
+	public static void fail( Class cause ) {
 		if (hero.belongings.getItem( Ankh.class ) == null) {
-			Rankings.INSTANCE.submit( false );
+			Rankings.INSTANCE.submit( false, cause );
 		}
 	}
 	
-	public static void win( String desc ) {
+	public static void win( Class cause ) {
 
 		hero.belongings.identify();
 
@@ -685,8 +659,7 @@ public class Dungeon {
 			Badges.validateChampion();
 		}
 
-		resultDescription = desc;
-		Rankings.INSTANCE.submit( true );
+		Rankings.INSTANCE.submit( true, cause );
 	}
 	
 	public static void observe() {

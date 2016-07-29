@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015 Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,8 +20,6 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import java.util.HashSet;
-
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -32,13 +30,16 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.BeeSprite;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
+import java.util.HashSet;
+
 public class Bee extends Mob {
 	
 	{
-		name = "golden bee";
 		spriteClass = BeeSprite.class;
 		
 		viewDistance = 4;
+
+		EXP = 0;
 		
 		flying = true;
 		state = WANDERING;
@@ -118,10 +119,13 @@ public class Bee extends Mob {
 		else {
 
 			//if already targeting something, and that thing is still alive and near the pot, keeping targeting it.
-			if (enemy != null && enemy.isAlive() && Level.distance(enemy.pos, potPos) <= 3) return enemy;
+			if (enemy != null && enemy.isAlive() && Dungeon.level.mobs.contains(enemy)
+					&& Level.fieldOfView[enemy.pos] && enemy.invisible == 0
+					&& Level.distance(enemy.pos, potPos) <= 3)
+				return enemy;
 
 			//find all mobs near the pot
-			HashSet<Char> enemies = new HashSet<Char>();
+			HashSet<Char> enemies = new HashSet<>();
 			for (Mob mob : Dungeon.level.mobs)
 				if (!(mob instanceof Bee) && Level.distance(mob.pos, potPos) <= 3 && (mob.hostile || mob.ally))
 					enemies.add(mob);
@@ -140,15 +144,8 @@ public class Bee extends Mob {
 			this.target = target = potPos;
 		return super.getCloser( target );
 	}
-
-	@Override
-	public String description() {
-		return
-			"Despite their small size, golden bees tend " +
-			"to protect their home fiercely. This one is very mad, better keep your distance.";
-	}
 	
-	private static final HashSet<Class<?>> IMMUNITIES = new HashSet<Class<?>>();
+	private static final HashSet<Class<?>> IMMUNITIES = new HashSet<>();
 	static {
 		IMMUNITIES.add( Poison.class );
 		IMMUNITIES.add( Amok.class );

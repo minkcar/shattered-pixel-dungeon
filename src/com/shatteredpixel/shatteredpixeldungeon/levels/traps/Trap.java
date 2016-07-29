@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,9 +22,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.traps;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
-import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
-import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.TrapSprite;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.noosa.tweeners.AlphaTweener;
@@ -33,13 +31,16 @@ import com.watabou.utils.Bundle;
 
 public abstract class Trap implements Bundlable {
 
-	public String name;
+	public String name = Messages.get(this, "name");
 
-	public int image;
+	public int color;
+	public int shape;
+
 	public int pos;
 
 	public TrapSprite sprite;
 	public boolean visible;
+	public boolean active = true;
 
 	public Trap set(int pos){
 		this.pos = pos;
@@ -48,7 +49,7 @@ public abstract class Trap implements Bundlable {
 
 	public Trap reveal() {
 		visible = true;
-		if (sprite != null) {
+		if (sprite != null && sprite.visible == false) {
 			sprite.visible = true;
 			sprite.alpha( 0 );
 			sprite.parent.add( new AlphaTweener( sprite, 1, 0.6f));
@@ -64,36 +65,47 @@ public abstract class Trap implements Bundlable {
 	}
 
 	public void trigger() {
-		if (Dungeon.visible[pos]){
-			Sample.INSTANCE.play(Assets.SND_TRAP);
+		if (active) {
+			if (Dungeon.visible[pos]) {
+				Sample.INSTANCE.play(Assets.SND_TRAP);
+			}
+			disarm();
+			reveal();
+			activate();
 		}
-		disarm();
-		activate();
 	}
 
 	public abstract void activate();
 
 	protected void disarm(){
 		Dungeon.level.disarmTrap(pos);
-		if (sprite != null) sprite.kill();
+		active = false;
+		if (sprite != null) {
+			sprite.reset( this );
+		}
 	}
 
 	private static final String POS	= "pos";
 	private static final String VISIBLE	= "visible";
+	private static final String ACTIVE = "active";
 
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
 		pos = bundle.getInt( POS );
 		visible = bundle.getBoolean( VISIBLE );
+		if (bundle.contains(ACTIVE)){
+			active = bundle.getBoolean(ACTIVE);
+		}
 	}
 
 	@Override
 	public void storeInBundle( Bundle bundle ) {
 		bundle.put( POS, pos );
 		bundle.put( VISIBLE, visible );
+		bundle.put( ACTIVE, active );
 	}
 
 	public String desc() {
-		return "Stepping onto a hidden pressure plate will activate the trap.";
+		return Messages.get(this, "desc");
 	}
 }

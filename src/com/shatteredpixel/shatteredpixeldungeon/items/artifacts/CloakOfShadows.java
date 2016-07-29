@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,10 +22,11 @@ package com.shatteredpixel.shatteredpixeldungeon.items.artifacts;
 
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LockedFloor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
@@ -39,16 +40,14 @@ import java.util.ArrayList;
 public class CloakOfShadows extends Artifact {
 
 	{
-		name = "Cloak of Shadows";
 		image = ItemSpriteSheet.ARTIFACT_CLOAK;
 
-		level = 0;
 		exp = 0;
-		levelCap = 15;
+		levelCap = 14;
 
-		charge = level+5;
+		charge = level()+6;
 		partialCharge = 0;
-		chargeCap = level+5;
+		chargeCap = level()+6;
 
 		cooldown = 0;
 
@@ -72,12 +71,15 @@ public class CloakOfShadows extends Artifact {
 
 	@Override
 	public void execute( Hero hero, String action ) {
+
+		super.execute(hero, action);
+
 		if (action.equals( AC_STEALTH )) {
 
 			if (!stealthed){
-				if (!isEquipped(hero)) GLog.i("You need to equip your cloak to do that.");
-				else if (cooldown > 0) GLog.i("Your cloak needs " + cooldown + " more rounds to re-energize.");
-				else if (charge <= 1)  GLog.i("Your cloak hasn't recharged enough to be usable yet.");
+				if (!isEquipped(hero)) GLog.i( Messages.get(Artifact.class, "need_to_equip") );
+				else if (cooldown > 0) GLog.i( Messages.get(this, "cooldown", cooldown) );
+				else if (charge <= 1)  GLog.i( Messages.get(this, "no_charge") );
 				else {
 					stealthed = true;
 					hero.spend( 1f );
@@ -91,18 +93,16 @@ public class CloakOfShadows extends Artifact {
 						hero.sprite.alpha(0.4f);
 					}
 					hero.sprite.operate(hero.pos);
-					GLog.i("Your cloak blends you into the shadows.");
 				}
 			} else {
 				stealthed = false;
 				activeBuff.detach();
 				activeBuff = null;
+				hero.spend( 1f );
 				hero.sprite.operate( hero.pos );
-				GLog.i("You return from underneath your cloak.");
 			}
 
-		} else
-			super.execute(hero, action);
+		}
 	}
 
 	@Override
@@ -139,28 +139,6 @@ public class CloakOfShadows extends Artifact {
 		return super.upgrade();
 	}
 
-	@Override
-	public String desc() {
-		String desc = "This light silken cloak shimmers in and out of your vision as it sways in the air. When worn, " +
-				"it can be used to hide your presence for a short time.\n\n";
-
-		if (level < 5)
-		 desc += "The cloak's magic has faded and it is not very powerful, perhaps it will regain strength through use.";
-		else if (level < 10)
-			desc += "The cloak's power has begun to return.";
-		else if (level < 15)
-			desc += "The cloak has almost returned to full strength.";
-		else
-			desc += "The cloak is at full potential and will work for extended durations.";
-
-
-		if ( isEquipped (Dungeon.hero) )
-			desc += "\n\nThe cloak rests around your shoulders.";
-
-
-		return desc;
-	}
-
 	private static final String STEALTHED = "stealthed";
 	private static final String COOLDOWN = "cooldown";
 
@@ -176,14 +154,26 @@ public class CloakOfShadows extends Artifact {
 		super.restoreFromBundle(bundle);
 		stealthed = bundle.getBoolean( STEALTHED );
 		cooldown = bundle.getInt( COOLDOWN );
+
+		//for pre-0.4.1 saves which may have over-levelled cloaks
+		if (level() == 15){
+			level(14);
+			chargeCap = 20;
+		}
+	}
+
+	@Override
+	public int price() {
+		return 0;
 	}
 
 	public class cloakRecharge extends ArtifactBuff{
 		@Override
 		public boolean act() {
 			if (charge < chargeCap) {
-				if (!stealthed)
-					partialCharge += (1f / (60 - (chargeCap-charge)*2));
+				LockedFloor lock = target.buff(LockedFloor.class);
+				if (!stealthed && (lock == null || lock.regenOn()))
+					partialCharge += (1f / (50 - (chargeCap-charge)));
 
 				if (partialCharge >= 1) {
 					charge++;
@@ -209,6 +199,8 @@ public class CloakOfShadows extends Artifact {
 	}
 
 	public class cloakStealth extends ArtifactBuff{
+		int turnsToCost = 0;
+
 		@Override
 		public int icon() {
 			return BuffIndicator.INVISIBLE;
@@ -226,26 +218,43 @@ public class CloakOfShadows extends Artifact {
 
 		@Override
 		public boolean act(){
-			charge--;
+			if (turnsToCost == 0) charge--;
 			if (charge <= 0) {
 				detach();
-				GLog.w("Your cloak has run out of energy.");
+				GLog.w( Messages.get(this, "no_charge") );
 				((Hero)target).interrupt();
 			}
 
-			exp += 10 + ((Hero)target).lvl;
+			if (turnsToCost == 0) exp += 10 + ((Hero)target).lvl;
 
-			if (exp >= (level+1)*50 && level < levelCap) {
+			if (exp >= (level()+1)*40 && level() < levelCap) {
 				upgrade();
-				exp -= level*50;
-				GLog.p("Your cloak grows stronger!");
+				exp -= level()*40;
+				GLog.p( Messages.get(this, "levelup") );
 			}
 
+			if (turnsToCost == 0) turnsToCost = 2;
+			else    turnsToCost--;
 			updateQuickslot();
 
 			spend( TICK );
 
 			return true;
+		}
+
+		public void dispel(){
+			charge --;
+
+			exp += 10 + ((Hero)target).lvl;
+
+			if (exp >= (level()+1)*40 && level() < levelCap) {
+				upgrade();
+				exp -= level()*40;
+				GLog.p( Messages.get(this, "levelup") );
+			}
+
+			updateQuickslot();
+			detach();
 		}
 
 		@Override
@@ -256,17 +265,12 @@ public class CloakOfShadows extends Artifact {
 
 		@Override
 		public String toString() {
-			return "Cloaked";
+			return Messages.get(this, "name");
 		}
 
 		@Override
 		public String desc() {
-			return "Your cloak of shadows is granting you invisibility while you are shrouded by it.\n" +
-					"\n" +
-					"While you are invisible enemies are unable to attack or follow you. " +
-					"Most physical attacks and magical effects (such as scrolls and wands) will immediately cancel invisibility.\n" +
-					"\n" +
-					"You will remain cloaked until it is cancelled or your cloak runs out of charge.";
+			return Messages.get(this, "desc");
 		}
 
 		@Override
@@ -274,7 +278,7 @@ public class CloakOfShadows extends Artifact {
 			if (target.invisible > 0)
 				target.invisible--;
 			stealthed = false;
-			cooldown = 10 - (level / 3);
+			cooldown = 6 - (level() / 4);
 
 			updateQuickslot();
 			super.detach();

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,26 +20,27 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 
+import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Regrowth;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.effects.MagicMissile;
 import com.shatteredpixel.shatteredpixeldungeon.items.Dewdrop;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.plants.BlandfruitBush;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Plant;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Starflower;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Sungrass;
+import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.watabou.noosa.audio.Sample;
-import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
-import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Regrowth;
-import com.shatteredpixel.shatteredpixeldungeon.effects.MagicMissile;
-import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
-import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
-import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
-import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.watabou.utils.Callback;
 import com.watabou.utils.ColorMath;
 import com.watabou.utils.Random;
@@ -51,7 +52,6 @@ import java.util.Iterator;
 public class WandOfRegrowth extends Wand {
 
 	{
-		name = "Wand of Regrowth";
 		image = ItemSpriteSheet.WAND_REGROWTH;
 
 		collisionProperties = Ballistica.STOP_TERRAIN;
@@ -81,7 +81,7 @@ public class WandOfRegrowth extends Wand {
 		float numPlants, numDews, numPods, numStars;
 
 		int chrgUsed = chargesPerCast();
-		//numbers greater than n*100% means n garunteed plants, e.g. 210% = 2 plants w/10% chance for 3 plants.
+		//numbers greater than n*100% means n guaranteed plants, e.g. 210% = 2 plants w/10% chance for 3 plants.
 		numPlants = 0.2f + chrgUsed*chrgUsed*0.020f; //scales from 22% to 220%
 		numDews = 0.05f + chrgUsed*chrgUsed*0.016f; //scales from 6.6% to 165%
 		numPods = 0.02f + chrgUsed*chrgUsed*0.013f; //scales from 3.3% to 135%
@@ -94,6 +94,11 @@ public class WandOfRegrowth extends Wand {
 					c == Terrain.EMBERS ||
 					c == Terrain.EMPTY_DECO) {
 				Level.set( i, Terrain.GRASS );
+			}
+
+			Char ch = Actor.findChar(i);
+			if (ch != null){
+				processSoulMark(ch, chargesPerCast());
 			}
 
 			GameScene.add( Blob.seed( i, 10, Regrowth.class ) );
@@ -160,9 +165,9 @@ public class WandOfRegrowth extends Wand {
 
 	@Override
 	public void onHit(MagesStaff staff, Char attacker, Char defender, int damage) {
-		//like vampiric enchantment, except with herbal healing buff
+		//like pre-nerf vampiric enchantment, except with herbal healing buff
 
-		int level = Math.max( 0, 0/*staff level*/ );
+		int level = Math.max( 0, staff.level() );
 
 		// lvl 0 - 33%
 		// lvl 1 - 43%
@@ -237,24 +242,10 @@ public class WandOfRegrowth extends Wand {
 		particle.y += dst;
 	}
 
-	@Override
-	public String desc() {
-		return
-				"This wand is made from a thin shaft of expertly carved wood. " +
-				"Somehow it is still alive and vibrant, bright green like a young tree's core.\n" +
-				"\n" +
-				"When used, this wand will consume all its charges to blast magical regrowth energy outward " +
-				"in a cone. This magic will cause grass, roots, and rare plants to spring to life.\n" +
-				"\n" +
-				"\"When life ceases new life always begins to grow... The eternal cycle always remains!\"";
-	}
-
-
 	public static class Dewcatcher extends Plant{
 
 		{
 			image = 12;
-			plantName = "Dewcatcher";
 		}
 
 		@Override
@@ -277,12 +268,6 @@ public class WandOfRegrowth extends Wand {
 
 		}
 
-		@Override
-		public String desc() {
-			return "Dewcatchers camouflage as grass to avoid attention, " +
-					"but their bulges of collected dew give them away.";
-		}
-
 		//seed is never dropped, only care about plant class
 		public static class Seed extends Plant.Seed {
 			{
@@ -295,7 +280,6 @@ public class WandOfRegrowth extends Wand {
 
 		{
 			image = 13;
-			plantName = "Seed Pod";
 		}
 
 		@Override
@@ -316,12 +300,6 @@ public class WandOfRegrowth extends Wand {
 				candidates.remove(c);
 			}
 
-		}
-
-		@Override
-		public String desc() {
-			return "Seed Pods look pretty, but the seeds they carry are actually " +
-					"stolen from other plants they kill with their roots.";
 		}
 
 		//seed is never dropped, only care about plant class

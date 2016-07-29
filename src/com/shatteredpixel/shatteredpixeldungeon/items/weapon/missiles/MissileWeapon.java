@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,8 +20,6 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles;
 
-import java.util.ArrayList;
-
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -32,32 +30,38 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSharpshooting;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
-import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.windows.WndOptions;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Projecting;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.watabou.utils.Random;
 
-public class MissileWeapon extends Weapon {
+import java.util.ArrayList;
 
-	private static final String TXT_MISSILES	= "Missile weapon";
-	private static final String TXT_YES			= "Yes, I know what I'm doing";
-	private static final String TXT_NO			= "No, I changed my mind";
-	private static final String TXT_R_U_SURE	=
-		"Do you really want to equip it as a melee weapon?";
-	
+abstract public class MissileWeapon extends Weapon {
+
 	{
 		stackable = true;
 		levelKnown = true;
+
 		defaultAction = AC_THROW;
+		usesTargeting = true;
 	}
 	
 	@Override
 	public ArrayList<String> actions( Hero hero ) {
 		ArrayList<String> actions = super.actions( hero );
-		if (hero.heroClass != HeroClass.HUNTRESS && hero.heroClass != HeroClass.ROGUE) {
-			actions.remove( AC_EQUIP );
-			actions.remove( AC_UNEQUIP );
-		}
+		actions.remove( AC_EQUIP );
 		return actions;
+	}
+
+	@Override
+	public int throwPos(Hero user, int dst) {
+		if (hasEnchant(Projecting.class)
+				&& !Level.solid[dst] && Level.distance(user.pos, dst) <= 4){
+			return dst;
+		} else {
+			return super.throwPos(user, dst);
+		}
 	}
 
 	@Override
@@ -72,25 +76,25 @@ public class MissileWeapon extends Weapon {
 			if (!curUser.shoot( enemy, this )) {
 				miss( cell );
 			} else if (!(this instanceof Boomerang)){
-				int bonus = 0;
 
-				for (Buff buff : curUser.buffs(RingOfSharpshooting.Aim.class))
-					bonus += ((RingOfSharpshooting.Aim)buff).level;
+				int bonus = RingOfSharpshooting.getBonus(curUser, RingOfSharpshooting.Aim.class);
 
 				if (curUser.heroClass == HeroClass.HUNTRESS && enemy.buff(PinCushion.class) == null)
 					bonus += 3;
 
-				if (Random.Float() > Math.pow(0.7, bonus))
-					Buff.affect(enemy, PinCushion.class).stick(this);
+				if (Random.Float() > Math.pow(0.7, bonus)){
+					if (enemy.isAlive())
+						Buff.affect(enemy, PinCushion.class).stick(this);
+					else
+						Dungeon.level.drop( this, enemy.pos).sprite.drop();
+				}
+
 			}
 		}
 	}
 	
 	protected void miss( int cell ) {
-		int bonus = 0;
-		for (Buff buff : curUser.buffs(RingOfSharpshooting.Aim.class)) {
-			bonus += ((RingOfSharpshooting.Aim)buff).level;
-		}
+		int bonus = RingOfSharpshooting.getBonus(curUser, RingOfSharpshooting.Aim.class);
 
 		//degraded ring of sharpshooting will even make missed shots break.
 		if (Random.Float() < Math.pow(0.6, -bonus))
@@ -98,9 +102,7 @@ public class MissileWeapon extends Weapon {
 	}
 	
 	@Override
-	public void proc( Char attacker, Char defender, int damage ) {
-		
-		super.proc( attacker, defender, damage );
+	public int proc( Char attacker, Char defender, int damage ) {
 		
 		Hero hero = (Hero)attacker;
 		if (hero.rangedWeapon == null && stackable) {
@@ -110,22 +112,9 @@ public class MissileWeapon extends Weapon {
 				detach( null );
 			}
 		}
-	}
-	
-	@Override
-	public boolean doEquip( final Hero hero ) {
-		GameScene.show(
-			new WndOptions( TXT_MISSILES, TXT_R_U_SURE, TXT_YES, TXT_NO ) {
-				@Override
-				protected void onSelect(int index) {
-					if (index == 0) {
-						MissileWeapon.super.doEquip( hero );
-					}
-				};
-			}
-		);
-		
-		return false;
+
+		return super.proc( attacker, defender, damage );
+
 	}
 	
 	@Override
@@ -145,30 +134,30 @@ public class MissileWeapon extends Weapon {
 	
 	@Override
 	public String info() {
+
+		String info = desc();
 		
-		StringBuilder info = new StringBuilder( desc() );
-		
-		info.append( "\n\nAverage damage of this weapon equals to " + (MIN + (MAX - MIN) / 2) + " points per hit. " );
-		
-		if (Dungeon.hero.belongings.backpack.items.contains( this )) {
-			if (STR > Dungeon.hero.STR()) {
-				info.append(
-					"\n\nBecause of your inadequate strength the accuracy and speed " +
-					"of your attack with this " + name + " is decreased." );
-			}
-			if (STR < Dungeon.hero.STR() && Dungeon.hero.heroClass == HeroClass.HUNTRESS) {
-				info.append(
-					"\n\nBecause of your excess strength the damage " +
-					"of your attack with this " + name + " is increased." );
-			}
+		info += "\n\n" + Messages.get( MissileWeapon.class, "stats", imbue.damageFactor(min()), imbue.damageFactor(max()), STRReq());
+
+		if (STRReq() > Dungeon.hero.STR()) {
+			info += " " + Messages.get(Weapon.class, "too_heavy");
+		} else if (Dungeon.hero.heroClass == HeroClass.HUNTRESS && Dungeon.hero.STR() > STRReq()){
+			info += " " + Messages.get(Weapon.class, "excess_str", Dungeon.hero.STR() - STRReq());
 		}
 
-		info.append( "\n\nAs this weapon is designed to be used at a distance, it is much less accurate if used at melee range.");
-		
-		if (isEquipped( Dungeon.hero )) {
-			info.append( "\n\nYou hold the " + name + " at the ready." );
+		if (enchantment != null && (cursedKnown || !enchantment.curse())){
+			info += "\n\n" + Messages.get(Weapon.class, "enchanted", enchantment.name());
+			info += " " + Messages.get(enchantment, "desc");
 		}
+
+		if (cursed && isEquipped( Dungeon.hero )) {
+			info += "\n\n" + Messages.get(Weapon.class, "cursed_worn");
+		} else if (cursedKnown && cursed) {
+			info += "\n\n" + Messages.get(Weapon.class, "cursed");
+		}
+
+		info += "\n\n" + Messages.get(MissileWeapon.class, "distance");
 		
-		return info.toString();
+		return info;
 	}
 }

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,17 +25,12 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ElmoParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ImpSprite;
-import com.shatteredpixel.shatteredpixeldungeon.utils.Utils;
 
 public class ImpShopkeeper extends Shopkeeper {
 
-	private static final String TXT_GREETINGS = "Hello, %s!";
-	public static final String TXT_THIEF = "I thought I could trust you!";
-
-	
 	{
-		name = "ambitious imp";
 		spriteClass = ImpSprite.class;
 	}
 	
@@ -45,7 +40,7 @@ public class ImpShopkeeper extends Shopkeeper {
 	protected boolean act() {
 
 		if (!seenBefore && Dungeon.visible[pos]) {
-			yell( Utils.format( TXT_GREETINGS, Dungeon.hero.givenName() ) );
+			yell( Messages.get(this, "greetings", Dungeon.hero.givenName() ) );
 			seenBefore = true;
 		}
 		
@@ -65,12 +60,5 @@ public class ImpShopkeeper extends Shopkeeper {
 		
 		sprite.emitter().burst( Speck.factory( Speck.WOOL ), 15 );
 		sprite.killAndErase();
-	}
-	
-	@Override
-	public String description() {
-		return
-			"Imps are lesser demons. They are notable for neither their strength nor their magic talent. " +
-			"But they are quite smart and sociable, and many of imps prefer to live and do business among non-demons.";
 	}
 }

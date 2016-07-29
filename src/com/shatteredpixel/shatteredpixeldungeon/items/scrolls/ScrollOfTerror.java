@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items.scrolls;
 
-import com.watabou.noosa.audio.Sample;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
@@ -29,15 +28,16 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Terror;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Flare;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
+import com.watabou.noosa.audio.Sample;
 
 public class ScrollOfTerror extends Scroll {
 
 	{
-		name = "Scroll of Terror";
-		initials = "Te";
+		initials = 10;
 	}
-	
+
 	@Override
 	protected void doRead() {
 		
@@ -51,35 +51,30 @@ public class ScrollOfTerror extends Scroll {
 			if (Level.fieldOfView[mob.pos]) {
 				Buff.affect( mob, Terror.class, Terror.DURATION ).object = curUser.id();
 
-				count++;
-				affected = mob;
+				if (mob.buff(Terror.class) != null){
+					count++;
+					affected = mob;
+				}
 			}
 		}
 		
 		switch (count) {
 		case 0:
-			GLog.i( "The scroll emits a brilliant flash of red light" );
+			GLog.i( Messages.get(this, "none") );
 			break;
 		case 1:
-			GLog.i( "The scroll emits a brilliant flash of red light and the " + affected.name + " flees!" );
+			GLog.i( Messages.get(this, "one", affected.name) );
 			break;
 		default:
-			GLog.i( "The scroll emits a brilliant flash of red light and the monsters flee!" );
+			GLog.i( Messages.get(this, "many") );
 		}
 		setKnown();
-		
-		curUser.spendAndNext( TIME_TO_READ );
+
+		readAnimation();
 	}
-	
-	@Override
-	public String desc() {
-		return
-			"A flash of red light will overwhelm all creatures in your field of view with terror, " +
-			"and they will turn and flee. Attacking a fleeing enemy will dispel the effect.";
-	}
-	
+
 	@Override
 	public int price() {
-		return isKnown() ? 50 * quantity : super.price();
+		return isKnown() ? 30 * quantity : super.price();
 	}
 }

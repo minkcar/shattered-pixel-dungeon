@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 
 public class Barkskin extends Buff {
@@ -61,16 +62,11 @@ public class Barkskin extends Buff {
 	
 	@Override
 	public String toString() {
-		return "Barkskin";
+		return Messages.get(this, "name");
 	}
 
 	@Override
 	public String desc() {
-		return "Your skin is hardened, it feels rough and solid like bark.\n" +
-				"\n" +
-				"The hardened skin increases your effective armor, allowing you to better defend against physical attack. " +
-				"The armor bonus will decrease by one point each turn until it expires.\n" +
-				"\n" +
-				"Your armor is currently increased by " + level +".";
+		return Messages.get(this, "desc", level);
 	}
 }

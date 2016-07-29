@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,22 +22,9 @@ package com.shatteredpixel.shatteredpixeldungeon.items.rings;
 
 public class RingOfFuror extends Ring {
 
-	{
-		name = "Ring of Furor";
-	}
-
 	@Override
 	protected RingBuff buff( ) {
 		return new Furor();
-	}
-
-	@Override
-	public String desc() {
-		return isKnown() ?
-				"This ring grants the wearer an inner fury, allowing them to attack more rapidly. " +
-				"This fury works best in large bursts, so slow weapons benefit far more than fast ones. " +
-				"A degraded ring will instead slow the wearer's speed of attack." :
-				super.desc();
 	}
 
 	public class Furor extends RingBuff {

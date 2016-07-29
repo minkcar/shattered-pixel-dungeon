@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,30 +20,29 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon;
 
-import java.util.ArrayList;
-
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.watabou.utils.Bundlable;
 import com.watabou.utils.Bundle;
 
+import java.util.ArrayList;
+
 public class Journal {
 
-	public static enum Feature {
-		WELL_OF_HEALTH			( "Well of Health" ),
-		WELL_OF_AWARENESS		( "Well of Awareness" ),
-		WELL_OF_TRANSMUTATION	( "Well of Transmutation" ),
-		ALCHEMY					( "Alchemy pot" ),
-		GARDEN					( "Garden" ),
-		STATUE					( "Animated statue" ),
+	public enum Feature {
+		WELL_OF_HEALTH,
+		WELL_OF_AWARENESS,
+		WELL_OF_TRANSMUTATION,
+		ALCHEMY,
+		GARDEN,
+		STATUE,
 		
-		GHOST					( "Sad ghost" ),
-		WANDMAKER				( "Old wandmaker" ),
-		TROLL					( "Troll blacksmith" ),
-		IMP						( "Ambitious imp" );
-		
-		public String desc;
-		
-		private Feature( String desc ) {
-			this.desc = desc;
+		GHOST,
+		WANDMAKER,
+		TROLL,
+		IMP;
+
+		public String desc() {
+			return Messages.get(this, name());
 		}
 	};
 	

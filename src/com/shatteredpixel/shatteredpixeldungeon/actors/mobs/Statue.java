@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,42 +20,42 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import java.util.HashSet;
-
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Journal;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.ToxicGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
-import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfPsionicBlast;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon.Enchantment;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Death;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Leech;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Grim;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Vampiric;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.StatueSprite;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
+import java.util.HashSet;
+
 public class Statue extends Mob {
 	
 	{
-		name = "animated statue";
 		spriteClass = StatueSprite.class;
 
 		EXP = 0;
 		state = PASSIVE;
 	}
 	
-	private Weapon weapon;
+	protected Weapon weapon;
 	
 	public Statue() {
 		super();
 		
 		do {
 			weapon = (Weapon)Generator.random( Generator.Category.WEAPON );
-		} while (!(weapon instanceof MeleeWeapon) || weapon.level < 0);
+		} while (!(weapon instanceof MeleeWeapon) || weapon.cursed);
 		
 		weapon.identify();
 		weapon.enchant( Enchantment.random() );
@@ -88,22 +88,27 @@ public class Statue extends Mob {
 	
 	@Override
 	public int damageRoll() {
-		return Random.NormalIntRange( weapon.MIN, weapon.MAX );
+		return Random.NormalIntRange( weapon.min(), weapon.max() );
 	}
 	
 	@Override
 	public int attackSkill( Char target ) {
-		return (int)((9 + Dungeon.depth) * weapon.ACU);
+		return (int)((9 + Dungeon.depth) * weapon.ACC);
 	}
 	
 	@Override
 	protected float attackDelay() {
 		return weapon.DLY;
 	}
-	
+
 	@Override
-	public int dr() {
-		return Dungeon.depth;
+	protected boolean canAttack(Char enemy) {
+		return Level.distance( pos, enemy.pos ) <= weapon.RCH;
+	}
+
+	@Override
+	public int drRoll() {
+		return Random.NormalIntRange(0, Dungeon.depth + weapon.defenseFactor(null));
 	}
 	
 	@Override
@@ -118,8 +123,7 @@ public class Statue extends Mob {
 	
 	@Override
 	public int attackProc( Char enemy, int damage ) {
-		weapon.proc( this, enemy, damage );
-		return damage;
+		return weapon.proc( this, enemy, damage );
 	}
 	
 	@Override
@@ -147,18 +151,16 @@ public class Statue extends Mob {
 
 	@Override
 	public String description() {
-		return
-			"You would think that it's just another one of this dungeon's ugly statues, but its red glowing eyes give it away." +
-			"\n\nWhile the statue itself is made of stone, the _" + weapon.name() + "_, it's wielding, looks real.";
+		return Messages.get(this, "desc", weapon.name());
 	}
 	
-	private static final HashSet<Class<?>> RESISTANCES = new HashSet<Class<?>>();
-	private static final HashSet<Class<?>> IMMUNITIES = new HashSet<Class<?>>();
+	private static final HashSet<Class<?>> RESISTANCES = new HashSet<>();
+	private static final HashSet<Class<?>> IMMUNITIES = new HashSet<>();
 	static {
 		RESISTANCES.add( ToxicGas.class );
 		RESISTANCES.add( Poison.class );
-		RESISTANCES.add( Death.class );
-		IMMUNITIES.add( Leech.class );
+		RESISTANCES.add( Grim.class );
+		IMMUNITIES.add( Vampiric.class );
 	}
 	
 	@Override

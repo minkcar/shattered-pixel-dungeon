@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,22 +22,9 @@ package com.shatteredpixel.shatteredpixeldungeon.items.rings;
 
 public class RingOfWealth extends Ring {
 
-	{
-		name = "Ring of Wealth";
-	}
-
 	@Override
 	protected RingBuff buff( ) {
 		return new Wealth();
-	}
-
-	@Override
-	public String desc() {
-		return isKnown() ?
-				"It's not clear what this ring does exactly, good luck may influence " +
-				"the life an an adventurer in many subtle ways. " +
-				"Naturally a degraded ring would give bad luck." :
-				super.desc();
 	}
 
 	public class Wealth extends RingBuff {

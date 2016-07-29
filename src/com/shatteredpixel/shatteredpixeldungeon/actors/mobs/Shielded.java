@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,24 +22,19 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ShieldedSprite;
+import com.watabou.utils.Random;
 
 public class Shielded extends Brute {
 
 	{
-		name = "shielded brute";
 		spriteClass = ShieldedSprite.class;
 		
 		defenseSkill = 20;
 	}
 	
 	@Override
-	public int dr() {
-		return 10;
-	}
-	
-	@Override
-	public String defenseVerb() {
-		return "blocked";
+	public int drRoll() {
+		return Random.NormalIntRange(0, 10);
 	}
 	
 	@Override

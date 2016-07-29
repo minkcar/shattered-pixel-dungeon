@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,13 +20,14 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items.keys;
 
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public class SkeletonKey extends Key {
 	
 	{
-		name = "skeleton key";
 		image = ItemSpriteSheet.SKELETON_KEY;
 		stackable = false;
 	}
@@ -39,15 +40,16 @@ public class SkeletonKey extends Key {
 		super();
 		this.depth = depth;
 	}
+
+	@Override
+	public boolean doPickUp(Hero hero) {
+		Dungeon.hero.belongings.specialKeys[depth]++;
+		return super.doPickUp(hero);
+	}
 	
 	@Override
 	public boolean isSimilar( Item item ) {
 		return false;
 	}
-	
-	@Override
-	public String info() {
-		return
-			"This key looks serious: its head is shaped like a skull. Probably it can open some serious door.";
-	}
+
 }

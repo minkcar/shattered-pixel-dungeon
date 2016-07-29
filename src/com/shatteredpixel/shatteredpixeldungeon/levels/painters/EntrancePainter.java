@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,8 +34,10 @@ public class EntrancePainter extends Painter {
 		for (Room.Door door : room.connected.values()) {
 			door.set( Room.Door.Type.REGULAR );
 		}
-		
-		level.entrance = room.random( 1 );
+
+		do {
+			level.entrance = room.random(1);
+		} while (level.findMob(level.entrance) != null);
 		set( level, level.entrance, Terrain.ENTRANCE );
 	}
 	

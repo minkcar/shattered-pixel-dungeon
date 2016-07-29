@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,32 +20,38 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 
-import java.util.ArrayList;
-
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.DungeonTilemap;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Beam;
+import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.PurpleParticle;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Death;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
-import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.watabou.utils.Callback;
 import com.watabou.utils.Random;
 
-public class WandOfDisintegration extends Wand {
+import java.util.ArrayList;
+
+public class WandOfDisintegration extends DamageWand {
 
 	{
-		name = "Wand of Disintegration";
 		image = ItemSpriteSheet.WAND_DISINTEGRATION;
 
 		collisionProperties = Ballistica.WONT_STOP;
+	}
+
+
+	public int min(int lvl){
+		return 2+lvl;
+	}
+
+	public int max(int lvl){
+		return 8+4*lvl;
 	}
 	
 	@Override
@@ -57,7 +63,7 @@ public class WandOfDisintegration extends Wand {
 		
 		int maxDistance = Math.min(distance(), beam.dist);
 		
-		ArrayList<Char> chars = new ArrayList<Char>();
+		ArrayList<Char> chars = new ArrayList<>();
 
 		int terrainPassed = 2, terrainBonus = 0;
 		for (int c : beam.subPath(1, maxDistance)) {
@@ -74,14 +80,14 @@ public class WandOfDisintegration extends Wand {
 			}
 
 			if (Level.flamable[c]) {
-				
-				Level.set( c, Terrain.EMBERS );
+
+				Dungeon.level.destroy( c );
 				GameScene.updateMap( c );
 				terrainAffected = true;
 				
 			}
 
-			if (!Level.passable[c])
+			if (Level.solid[c])
 				terrainPassed++;
 			
 			CellEmitter.center( c ).burst( PurpleParticle.BURST, Random.IntRange( 1, 2 ) );
@@ -91,11 +97,10 @@ public class WandOfDisintegration extends Wand {
 			Dungeon.observe();
 		}
 		
-		int lvl = level + chars.size() + terrainBonus;
-		int dmgMin = lvl;
-		int dmgMax = (int) (8 + lvl * lvl / 3f);
+		int lvl = level + (chars.size()-1) + terrainBonus;
 		for (Char ch : chars) {
-			ch.damage( Random.NormalIntRange( dmgMin, dmgMax ), this );
+			processSoulMark(ch, chargesPerCast());
+			ch.damage( damageRoll(lvl), this );
 			ch.sprite.centerEmitter().burst( PurpleParticle.BURST, Random.IntRange( 1, 2 ) );
 			ch.sprite.flash();
 		}
@@ -103,9 +108,7 @@ public class WandOfDisintegration extends Wand {
 
 	@Override
 	public void onHit(MagesStaff staff, Char attacker, Char defender, int damage) {
-		//less likely Grim proc
-		if (Random.Int(3) == 0)
-			new Death().proc( staff, attacker, defender, damage);
+		//no direct effect, see magesStaff.reachfactor
 	}
 
 	private int distance() {
@@ -130,12 +133,4 @@ public class WandOfDisintegration extends Wand {
 		particle.shuffleXY(2f);
 	}
 
-	@Override
-	public String desc() {
-		return
-			"This wand is made from a solid smooth chunk of obsidian, with a deep purple light running up its side, " +
-			"ending at the tip. It glows with destructive energy, waiting to shoot forward.\n\n" +
-			"This wand shoots a beam that pierces any obstacle, and will go farther the more it is upgraded.\n\n" +
-			"This wand deals bonus damage the more enemies and terrain it penetrates.";
-	}
 }

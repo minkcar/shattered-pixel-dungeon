@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -49,8 +49,9 @@ public class ResumeIndicator extends Tag {
 	protected void layout() {
 		super.layout();
 
-		icon.x = PixelScene.align( PixelScene.uiCamera, x+1 + (width - icon.width) / 2 );
-		icon.y = PixelScene.align( PixelScene.uiCamera, y + (height - icon.height) / 2 );
+		icon.x = x+1 + (width - icon.width) / 2f;
+		icon.y = y + (height - icon.height) / 2f;
+		PixelScene.align(icon);
 	}
 
 	@Override

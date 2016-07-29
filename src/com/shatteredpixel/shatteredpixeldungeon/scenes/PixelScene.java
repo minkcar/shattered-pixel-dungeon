@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,11 +20,13 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.scenes;
 
-import javax.microedition.khronos.opengles.GL10;
-
 import android.opengl.GLES20;
-
+import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
+import com.shatteredpixel.shatteredpixeldungeon.effects.BadgeBanner;
+import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextMultiline;
+import com.watabou.glwrap.Texture;
 import com.watabou.input.Touchscreen;
 import com.watabou.noosa.BitmapText;
 import com.watabou.noosa.BitmapText.Font;
@@ -32,40 +34,42 @@ import com.watabou.noosa.BitmapTextMultiline;
 import com.watabou.noosa.Camera;
 import com.watabou.noosa.ColorBlock;
 import com.watabou.noosa.Game;
+import com.watabou.noosa.RenderedText;
 import com.watabou.noosa.Scene;
 import com.watabou.noosa.Visual;
-import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.Badges;
-import com.shatteredpixel.shatteredpixeldungeon.effects.BadgeBanner;
+import com.watabou.noosa.ui.Component;
 import com.watabou.utils.BitmapCache;
+
+import javax.microedition.khronos.opengles.GL10;
 
 public class PixelScene extends Scene {
 
 	// Minimum virtual display size for portrait orientation
-	public static final float MIN_WIDTH_P        = 128;
-	public static final float MIN_HEIGHT_P        = 224;
+	public static final float MIN_WIDTH_P        = 135;
+	public static final float MIN_HEIGHT_P        = 225;
 
 	// Minimum virtual display size for landscape orientation
-	public static final float MIN_WIDTH_L        = 224;
+	public static final float MIN_WIDTH_L        = 240;
 	public static final float MIN_HEIGHT_L        = 160;
 
-	public static float defaultZoom = 0;
+	public static int defaultZoom = 0;
+	public static int maxDefaultZoom = 0;
 	public static float minZoom;
 	public static float maxZoom;
-	
+
 	public static Camera uiCamera;
-	
+
+	//stylized pixel font
+	public static BitmapText.Font pixelFont;
+	//These represent various mipmaps of the same font
 	public static BitmapText.Font font1x;
-	public static BitmapText.Font font15x;
 	public static BitmapText.Font font2x;
-	public static BitmapText.Font font25x;
-	public static BitmapText.Font font3x;
-	
+
 	@Override
 	public void create() {
-		
+
 		super.create();
-		
+
 		GameScene.scene = null;
 
 		float minWidth, minHeight;
@@ -77,75 +81,61 @@ public class PixelScene extends Scene {
 			minHeight = MIN_HEIGHT_P;
 		}
 
-		defaultZoom = (int)Math.ceil( Game.density * 2.5 );
-		while ((
-			Game.width / defaultZoom < minWidth ||
-			Game.height / defaultZoom < minHeight
+		maxDefaultZoom = (int)Math.min(Game.width/minWidth, Game.height/minHeight);
+		defaultZoom = ShatteredPixelDungeon.scale();
+
+		if (defaultZoom < Math.ceil( Game.density * 2 ) || defaultZoom > maxDefaultZoom){
+			defaultZoom = (int)Math.ceil( Game.density * 2.5 );
+			while ((
+				Game.width / defaultZoom < minWidth ||
+				Game.height / defaultZoom < minHeight
 			) && defaultZoom > 1) {
-			
-			defaultZoom--;
-		}
-			
-		if (ShatteredPixelDungeon.scaleUp()) {
-			while (
-				Game.width / (defaultZoom + 1) >= minWidth &&
-				Game.height / (defaultZoom + 1) >= minHeight) {
-					defaultZoom++;
+				defaultZoom--;
 			}
 		}
+
 		minZoom = 1;
 		maxZoom = defaultZoom * 2;
-			
-		
+
 		Camera.reset( new PixelCamera( defaultZoom ) );
-		
+
 		float uiZoom = defaultZoom;
 		uiCamera = Camera.createFullscreen( uiZoom );
 		Camera.add( uiCamera );
-		
-		if (font1x == null) {
-			
+
+		if (pixelFont == null) {
+
 			// 3x5 (6)
-			font1x = Font.colorMarked(
-				BitmapCache.get( Assets.FONTS1X ), 0x00000000, BitmapText.Font.LATIN_FULL );
-			font1x.baseLine = 6;
-			font1x.tracking = -1;
-			
-			// 5x8 (10)
-			font15x = Font.colorMarked(
-					BitmapCache.get( Assets.FONTS15X ), 12, 0x00000000, BitmapText.Font.LATIN_FULL );
-			font15x.baseLine = 9;
-			font15x.tracking = -1;
-			
-			// 6x10 (12)
-			font2x = Font.colorMarked(
-				BitmapCache.get( Assets.FONTS2X ), 14, 0x00000000, BitmapText.Font.LATIN_FULL );
-			font2x.baseLine = 11;
-			font2x.tracking = -1;
-			
-			// 7x12 (15)
-			font25x = Font.colorMarked(
-				BitmapCache.get( Assets.FONTS25X ), 17, 0x00000000, BitmapText.Font.LATIN_FULL );
-			font25x.baseLine = 13;
-			font25x.tracking = -1;
-			
+			pixelFont = Font.colorMarked(
+				BitmapCache.get( Assets.PIXELFONT), 0x00000000, BitmapText.Font.LATIN_FULL );
+			pixelFont.baseLine = 6;
+			pixelFont.tracking = -1;
+
 			// 9x15 (18)
-			font3x = Font.colorMarked(
-				BitmapCache.get( Assets.FONTS3X ), 22, 0x00000000, BitmapText.Font.LATIN_FULL );
-			font3x.baseLine = 17;
-			font3x.tracking = -2;
+			font1x = Font.colorMarked(
+					BitmapCache.get( Assets.FONT1X), 22, 0x00000000, BitmapText.Font.LATIN_FULL );
+			font1x.baseLine = 17;
+			font1x.tracking = -2;
+			font1x.texture.filter(Texture.LINEAR, Texture.LINEAR);
+
+			//font1x double scaled
+			font2x = Font.colorMarked(
+					BitmapCache.get( Assets.FONT2X), 44, 0x00000000, BitmapText.Font.LATIN_FULL );
+			font2x.baseLine = 38;
+			font2x.tracking = -4;
+			font2x.texture.filter(Texture.LINEAR, Texture.NEAREST);
 		}
 	}
-	
+
 	@Override
 	public void destroy() {
 		super.destroy();
 		Touchscreen.event.removeAll();
 	}
-	
+
 	public static BitmapText.Font font;
 	public static float scale;
-	
+
 	public static void chooseFont( float size ) {
 		chooseFont( size, defaultZoom );
 	}
@@ -154,57 +144,21 @@ public class PixelScene extends Scene {
 
 		float pt = size * zoom;
 
-		if (pt >= 19) {
-			
-			scale = pt / 19;
-			if (1.5 <= scale && scale < 2) {
-				font = font25x;
-				scale = (int)(pt / 14);
-			} else {
-				font = font3x;
-				scale = (int)scale;
-			}
-			
-		} else if (pt >= 14) {
-			
-			scale = pt / 14;
-			if (1.8 <= scale && scale < 2) {
-				font = font2x;
-				scale = (int)(pt / 12);
-			} else {
-				font = font25x;
-				scale = (int)scale;
-			}
-			
+		if (pt >= 25) {
+
+			font = font2x;
+			scale = pt / 38f;
+
 		} else if (pt >= 12) {
-			
-			scale = pt / 12;
-			if (1.7 <= scale && scale < 2) {
-				font = font15x;
-				scale = (int)(pt / 10);
-			} else {
-				font = font2x;
-				scale = (int)scale;
-			}
-			
-		} else if (pt >= 10) {
-			
-			scale = pt / 10;
-			if (1.4 <= scale && scale < 2) {
-				font = font1x;
-				scale = (int)(pt / 7);
-			} else {
-				font = font15x;
-				scale = (int)scale;
-			}
-			
-		} else {
-			
+
 			font = font1x;
-			scale = Math.max( 1, (int)(pt / 7) );
-			
+			scale = pt / 19f;
+
+		} else {
+			font = pixelFont;
+			scale = 1f;
 		}
-		
+
 		scale /= zoom;
 	}
 	
@@ -235,20 +189,47 @@ public class PixelScene extends Scene {
 		
 		return result;
 	}
-	
-	public static float align( Camera camera, float pos ) {
-		return ((int)(pos * camera.zoom)) / camera.zoom;
+
+	public static RenderedText renderText( int size ) {
+		return renderText("", size);
 	}
 
-	// This one should be used for UI elements
-	public static float align( float pos ) {
-		return ((int)(pos * defaultZoom)) / defaultZoom;
+	public static RenderedText renderText( String text, int size ) {
+		RenderedText result = new RenderedText( text, size*defaultZoom);
+		result.scale.set(1/(float)defaultZoom);
+		return result;
 	}
-	
+
+	public static RenderedTextMultiline renderMultiline( int size ){
+		return renderMultiline("", size);
+	}
+
+	public static RenderedTextMultiline renderMultiline( String text, int size ){
+		RenderedTextMultiline result = new RenderedTextMultiline( text, size*defaultZoom);
+		result.zoom(1/(float)defaultZoom);
+		return result;
+	}
+
+	/**
+	 * These methods align UI elements to device pixels.
+	 * e.g. if we have a scale of 3x then valid positions are #.0, #.33, #.67
+	 */
+
+	public static float align( float pos ) {
+		return Math.round(pos * defaultZoom) / (float)defaultZoom;
+	}
+
+	public static float align( Camera camera, float pos ) {
+		return Math.round(pos * camera.zoom) / camera.zoom;
+	}
+
 	public static void align( Visual v ) {
-		Camera c = v.camera();
-		v.x = align( c, v.x );
-		v.y = align( c, v.y );
+		v.x = align( v.x );
+		v.y = align( v.y );
+	}
+
+	public static void align( Component c ){
+		c.setPos(align(c.left()), align(c.top()));
 	}
 
 	public static boolean noFade = false;

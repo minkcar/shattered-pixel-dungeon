@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,11 +20,6 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-
-import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportation;
-import com.watabou.noosa.audio.Sample;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -34,11 +29,16 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Light;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Sleep;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfLullaby;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Leech;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportation;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Vampiric;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.SuccubusSprite;
+import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Random;
+
+import java.util.ArrayList;
+import java.util.HashSet;
 
 public class Succubus extends Mob {
 	
@@ -47,7 +47,6 @@ public class Succubus extends Mob {
 	private int delay = 0;
 	
 	{
-		name = "succubus";
 		spriteClass = SuccubusSprite.class;
 		
 		HP = HT = 80;
@@ -59,11 +58,13 @@ public class Succubus extends Mob {
 		
 		loot = new ScrollOfLullaby();
 		lootChance = 0.05f;
+
+		properties.add(Property.DEMONIC);
 	}
 	
 	@Override
 	public int damageRoll() {
-		return Random.NormalIntRange( 15, 25 );
+		return Random.NormalIntRange( 22, 30 );
 	}
 	
 	@Override
@@ -104,7 +105,7 @@ public class Succubus extends Mob {
 			cell = route.path.get(route.dist-1);
 
 		if (Level.avoid[ cell ]){
-			ArrayList<Integer> candidates = new ArrayList<Integer>();
+			ArrayList<Integer> candidates = new ArrayList<>();
 			for (int n : Level.NEIGHBOURS8) {
 				cell = route.collisionPos + n;
 				if (Level.passable[cell] && Actor.findChar( cell ) == null) {
@@ -130,20 +131,13 @@ public class Succubus extends Mob {
 	}
 	
 	@Override
-	public int dr() {
-		return 10;
+	public int drRoll() {
+		return Random.NormalIntRange(0, 10);
 	}
 	
-	@Override
-	public String description() {
-		return
-			"The succubi are demons that look like seductive (in a slightly gothic way) girls. Using its magic, the succubus " +
-			"can charm a hero, who will become unable to attack anything until the charm wears off.";
-	}
-	
-	private static final HashSet<Class<?>> RESISTANCES = new HashSet<Class<?>>();
+	private static final HashSet<Class<?>> RESISTANCES = new HashSet<>();
 	static {
-		RESISTANCES.add( Leech.class );
+		RESISTANCES.add( Vampiric.class );
 	}
 	
 	@Override
@@ -151,7 +145,7 @@ public class Succubus extends Mob {
 		return RESISTANCES;
 	}
 	
-	private static final HashSet<Class<?>> IMMUNITIES = new HashSet<Class<?>>();
+	private static final HashSet<Class<?>> IMMUNITIES = new HashSet<>();
 	static {
 		IMMUNITIES.add( Sleep.class );
 	}

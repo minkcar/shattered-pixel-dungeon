@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,14 +20,16 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.levels;
 
-import java.util.Arrays;
-
-import com.watabou.noosa.Scene;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.items.Amulet;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.watabou.noosa.Group;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
+
+import java.util.Arrays;
 
 public class LastLevel extends Level {
 
@@ -119,6 +121,10 @@ public class LastLevel extends Level {
 	protected void createMobs() {
 	}
 
+	public Actor respawner() {
+		return null;
+	}
+
 	@Override
 	protected void createItems() {
 		drop( new Amulet(), pedestal );
@@ -126,43 +132,50 @@ public class LastLevel extends Level {
 
 	@Override
 	public int randomRespawnCell() {
-		return -1;
+		int cell = entrance + NEIGHBOURS8[Random.Int(8)];
+		while (!passable[cell]){
+			cell = entrance + NEIGHBOURS8[Random.Int(8)];
+		}
+		return cell;
 	}
 
 	@Override
 	public String tileName( int tile ) {
 		switch (tile) {
-		case Terrain.WATER:
-			return "Cold lava";
-		case Terrain.GRASS:
-			return "Embermoss";
-		case Terrain.HIGH_GRASS:
-			return "Emberfungi";
-		case Terrain.STATUE:
-		case Terrain.STATUE_SP:
-			return "Pillar";
-		default:
-			return super.tileName( tile );
+			case Terrain.WATER:
+				return Messages.get(HallsLevel.class, "water_name");
+			case Terrain.GRASS:
+				return Messages.get(HallsLevel.class, "grass_name");
+			case Terrain.HIGH_GRASS:
+				return Messages.get(HallsLevel.class, "high_grass_name");
+			case Terrain.STATUE:
+			case Terrain.STATUE_SP:
+				return Messages.get(HallsLevel.class, "statue_name");
+			default:
+				return super.tileName( tile );
 		}
 	}
 
 	@Override
 	public String tileDesc(int tile) {
 		switch (tile) {
-		case Terrain.WATER:
-			return "It looks like lava, but it's cold and probably safe to touch.";
-		case Terrain.STATUE:
-		case Terrain.STATUE_SP:
-			return "The pillar is made of real humanoid skulls. Awesome.";
-		default:
-			return super.tileDesc( tile );
+			case Terrain.WATER:
+				return Messages.get(HallsLevel.class, "water_desc");
+			case Terrain.STATUE:
+			case Terrain.STATUE_SP:
+				return Messages.get(HallsLevel.class, "statue_desc");
+			case Terrain.BOOKSHELF:
+				return Messages.get(HallsLevel.class, "bookshelf_desc");
+			default:
+				return super.tileDesc( tile );
 		}
 	}
 
 	@Override
-	public void addVisuals( Scene scene ) {
-		super.addVisuals( scene );
-		HallsLevel.addVisuals( this, scene );
+	public Group addVisuals () {
+		super.addVisuals();
+		HallsLevel.addHallsVisuals(this, visuals);
+		return visuals;
 	}
 
 	@Override

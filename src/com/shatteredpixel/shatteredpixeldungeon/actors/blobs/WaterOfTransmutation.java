@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.blobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Journal;
 import com.shatteredpixel.shatteredpixeldungeon.Journal.Feature;
 import com.shatteredpixel.shatteredpixeldungeon.effects.BlobEmitter;
@@ -33,18 +34,35 @@ import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfMight;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfStrength;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
-import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfUpgrade;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMagicalInfusion;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfUpgrade;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.*;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.BattleAxe;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Dagger;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Glaive;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Knuckles;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Longsword;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Mace;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Quarterstaff;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Spear;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Sword;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.WarHammer;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Plant;
+import com.watabou.utils.Random;
 
 public class WaterOfTransmutation extends WellWater {
 	
 	@Override
 	protected Item affectItem( Item item ) {
 		
-		if (item instanceof MeleeWeapon) {
+		if (item instanceof MagesStaff) {
+			item = changeStaff( (MagesStaff)item );
+		} else if (item instanceof MeleeWeapon) {
 			item = changeWeapon( (MeleeWeapon)item );
 		} else if (item instanceof Scroll) {
 			item = changeScroll( (Scroll)item );
@@ -75,59 +93,52 @@ public class WaterOfTransmutation extends WellWater {
 		super.use( emitter );
 		emitter.start( Speck.factory( Speck.CHANGE ), 0.2f, 0 );
 	}
-	
-	private MeleeWeapon changeWeapon( MeleeWeapon w ) {
-		
-		MeleeWeapon n = null;
-		
-		if (w instanceof Knuckles) {
-			n = new Dagger();
-		} else if (w instanceof Dagger) {
-			n = new Knuckles();
-		}
-		
-		else if (w instanceof Spear) {
-			n = new Quarterstaff();
-		} else if (w instanceof Quarterstaff) {
-			n = new Spear();
-		}
-		
-		else if (w instanceof Sword) {
-			n = new Mace();
-		} else if (w instanceof Mace) {
-			n = new Sword();
-		}
-		
-		else if (w instanceof Longsword) {
-			n = new BattleAxe();
-		} else if (w instanceof BattleAxe) {
-			n = new Longsword();
-		}
-		
-		else if (w instanceof Glaive) {
-			n = new WarHammer();
-		} else if (w instanceof WarHammer) {
-			n = new Glaive();
-		}
-		
-		if (n != null) {
-			
-			int level = w.level;
-			if (level > 0) {
-				n.upgrade( level );
-			} else if (level < 0) {
-				n.degrade( -level );
-			}
 
-			n.enchantment = w.enchantment;
-			n.levelKnown = w.levelKnown;
-			n.cursedKnown = w.cursedKnown;
-			n.cursed = w.cursed;
-			
-			return n;
-		} else {
+	private MagesStaff changeStaff( MagesStaff staff ){
+		Class<?extends Wand> wandClass = staff.wandClass();
+
+		if (wandClass == null){
 			return null;
+		} else {
+			Wand n;
+			do {
+				n = (Wand)Generator.random(Category.WAND);
+			} while (n.getClass() == wandClass);
+			n.level(0);
+			staff.imbueWand(n, null);
 		}
+
+		return staff;
+	}
+	
+	private Weapon changeWeapon( MeleeWeapon w ) {
+		
+		Weapon n;
+		Category c = Generator.wepTiers[w.tier-1];
+
+		do {
+			try {
+				n = (Weapon)c.classes[Random.chances(c.probs)].newInstance();
+			} catch (Exception e) {
+				return null;
+			}
+		} while (!(n instanceof MeleeWeapon) || n.getClass() == w.getClass());
+
+		int level = w.level();
+		if (level > 0) {
+			n.upgrade( level );
+		} else if (level < 0) {
+			n.degrade( -level );
+		}
+
+		n.enchantment = w.enchantment;
+		n.levelKnown = w.levelKnown;
+		n.cursedKnown = w.cursedKnown;
+		n.cursed = w.cursed;
+		n.imbue = w.imbue;
+
+		return n;
+
 	}
 	
 	private Ring changeRing( Ring r ) {
@@ -136,9 +147,9 @@ public class WaterOfTransmutation extends WellWater {
 			n = (Ring)Generator.random( Category.RING );
 		} while (n.getClass() == r.getClass());
 		
-		n.level = 0;
+		n.level(0);
 		
-		int level = r.level;
+		int level = r.level();
 		if (level > 0) {
 			n.upgrade( level );
 		} else if (level < 0) {
@@ -172,9 +183,8 @@ public class WaterOfTransmutation extends WellWater {
 			n = (Wand)Generator.random( Category.WAND );
 		} while (n.getClass() == w.getClass());
 		
-		n.level = 0;
-		n.updateLevel();
-		n.upgrade( w.level );
+		n.level( 0 );
+		n.upgrade( w.level() );
 		
 		n.levelKnown = w.levelKnown;
 		n.cursedKnown = w.cursedKnown;
@@ -234,8 +244,6 @@ public class WaterOfTransmutation extends WellWater {
 	
 	@Override
 	public String tileDesc() {
-		return
-			"Power of change radiates from the water of this well. " +
-			"Throw an item into the well to turn it into something else.";
+		return Messages.get(this, "desc");
 	}
 }

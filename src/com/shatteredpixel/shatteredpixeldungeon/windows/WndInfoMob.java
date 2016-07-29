@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,14 +20,14 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.windows;
 
-import com.watabou.noosa.BitmapText;
-import com.watabou.noosa.ui.Component;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.ui.HealthBar;
-import com.shatteredpixel.shatteredpixeldungeon.utils.Utils;
+import com.watabou.noosa.RenderedText;
+import com.watabou.noosa.ui.Component;
 
 public class WndInfoMob extends WndTitledMessage {
 	
@@ -41,7 +41,7 @@ public class WndInfoMob extends WndTitledMessage {
 		
 		StringBuilder builder = new StringBuilder( mob.description() );
 
-		builder.append( "\n\n" + mob.state.status() + "." );
+		builder.append( "\n\n" + mob.state.status() );
 		
 		return builder.toString();
 	}
@@ -51,22 +51,21 @@ public class WndInfoMob extends WndTitledMessage {
 		private static final int GAP	= 2;
 		
 		private CharSprite image;
-		private BitmapText name;
+		private RenderedText name;
 		private HealthBar health;
 		private BuffIndicator buffs;
 		
 		public MobTitle( Mob mob ) {
 			
-			name = PixelScene.createText( Utils.capitalize( mob.name ), 9 );
+			name = PixelScene.renderText( Messages.titleCase( mob.name ), 9 );
 			name.hardlight( TITLE_COLOR );
-			name.measure();
 			add( name );
 			
 			image = mob.sprite();
 			add( image );
 
 			health = new HealthBar();
-			health.level((float) mob.HP / mob.HT);
+			health.level(mob);
 			add( health );
 
 			buffs = new BuffIndicator( mob );

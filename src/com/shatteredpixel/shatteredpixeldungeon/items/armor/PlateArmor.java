@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,22 +22,14 @@ package com.shatteredpixel.shatteredpixeldungeon.items.armor;
 
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
-
 public class PlateArmor extends Armor {
 
 	{
-		name = "plate armor";
 		image = ItemSpriteSheet.ARMOR_PLATE;
 	}
 	
 	public PlateArmor() {
 		super( 5 );
 	}
-	
-	@Override
-	public String desc() {
-		return
-			"Enormous plates of metal are joined together into a suit that provides " +
-			"unmatched protection to any adventurer strong enough to bear its staggering weight.";
-	}
+
 }

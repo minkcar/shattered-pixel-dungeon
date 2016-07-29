@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,8 +20,6 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items.rings;
 
-import java.util.HashSet;
-
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.ToxicGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
@@ -31,27 +29,17 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Yog;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.LightningTrap;
 import com.watabou.utils.Random;
 
-public class RingOfElements extends Ring {
+import java.util.HashSet;
 
-	{
-		name = "Ring of Elements";
-	}
+public class RingOfElements extends Ring {
 	
 	@Override
 	protected RingBuff buff( ) {
 		return new Resistance();
 	}
-	
-	@Override
-	public String desc() {
-		return isKnown() ?
-			"This ring provides resistance to different elements, such as fire, " +
-			"electricity, gases etc. Also it decreases duration of negative effects." :
-			super.desc();
-	}
 
 	private static final HashSet<Class<?>> EMPTY = new HashSet<Class<?>>();
-	private static final HashSet<Class<?>> FULL;
+	public static final HashSet<Class<?>> FULL;
 	static {
 		FULL = new HashSet<Class<?>>();
 		FULL.add( Burning.class );
@@ -66,7 +54,7 @@ public class RingOfElements extends Ring {
 	public class Resistance extends RingBuff {
 		
 		public HashSet<Class<?>> resistances() {
-			if (Random.Int( level + 2 ) >= 2) {
+			if (Random.Int( level() + 2 ) >= 2) {
 				return FULL;
 			} else {
 				return EMPTY;
@@ -74,7 +62,7 @@ public class RingOfElements extends Ring {
 		}
 		
 		public float durationFactor() {
-			return level < 0 ? 1 : (1 + 0.5f * level) / (1 + level);
+			return level() < 0 ? 1 : (1 + 0.5f * level()) / (1 + level());
 		}
 	}
 }

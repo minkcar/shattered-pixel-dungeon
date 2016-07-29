@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,10 +20,10 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.ui;
 
+import com.shatteredpixel.shatteredpixeldungeon.Chrome;
 import com.watabou.noosa.Game;
 import com.watabou.noosa.NinePatch;
 import com.watabou.noosa.ui.Button;
-import com.shatteredpixel.shatteredpixeldungeon.Chrome;
 
 public class Tag extends Button {
 
@@ -48,6 +48,7 @@ public class Tag extends Button {
 		super.createChildren();
 		
 		bg = Chrome.get( Chrome.Type.TAG );
+		bg.hardlight( r, g, b );
 		add( bg );
 	}
 	
@@ -63,6 +64,10 @@ public class Tag extends Button {
 	
 	public void flash() {
 		lightness = 1f;
+	}
+
+	public void flip(boolean value){
+		bg.flipHorizontal(value);
 	}
 	
 	@Override

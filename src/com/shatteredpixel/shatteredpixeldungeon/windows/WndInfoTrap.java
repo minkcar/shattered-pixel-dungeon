@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,15 +20,17 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.windows;
 
-import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.TrapSprite;
 
 public class WndInfoTrap extends WndTitledMessage {
 
 	public WndInfoTrap(Trap trap) {
 
-		super(new TrapSprite( trap.image + (((Dungeon.depth-1) / 5) * 8) ), trap.name, trap.desc());
+		super(new TrapSprite( trap.color + (trap.shape * 16) ),
+				trap.name,
+				(!trap.active ? Messages.get(WndInfoTrap.class, "inactive") + "\n\n" : "") + trap.desc());
 
 	}
 

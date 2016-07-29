@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,29 +20,15 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items;
 
-import java.util.ArrayList;
-
-import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Random;
 
-public class KindOfWeapon extends EquipableItem {
-
-	private static final String TXT_EQUIP_CURSED	= "you wince as your grip involuntarily tightens around your %s";
+abstract public class KindOfWeapon extends EquipableItem {
 	
 	protected static final float TIME_TO_EQUIP = 1f;
-	
-	public int		MIN	= 0;
-	public int		MAX = 1;
-	
-	@Override
-	public ArrayList<String> actions( Hero hero ) {
-		ArrayList<String> actions = super.actions( hero );
-		actions.add( isEquipped( hero ) ? AC_UNEQUIP : AC_EQUIP );
-		return actions;
-	}
 	
 	@Override
 	public boolean isEquipped( Hero hero ) {
@@ -64,7 +50,7 @@ public class KindOfWeapon extends EquipableItem {
 			cursedKnown = true;
 			if (cursed) {
 				equipCursed( hero );
-				GLog.n( TXT_EQUIP_CURSED, name() );
+				GLog.n( Messages.get(KindOfWeapon.class, "cursed") );
 			}
 			
 			hero.spendAndNext( TIME_TO_EQUIP );
@@ -90,23 +76,40 @@ public class KindOfWeapon extends EquipableItem {
 
 		}
 	}
-	
-	public void activate( Hero hero ) {
+
+	public int min(){
+		return min(level());
 	}
-	
+
+	public int max(){
+		return max(level());
+	}
+
+	abstract public int min(int lvl);
+	abstract public int max(int lvl);
+
 	public int damageRoll( Hero owner ) {
-		return Random.NormalIntRange( MIN, MAX );
+		return Random.NormalIntRange( min(), max() );
 	}
 	
-	public float acuracyFactor( Hero hero ) {
+	public float accuracyFactor(Hero hero ) {
 		return 1f;
 	}
 	
 	public float speedFactor( Hero hero ) {
 		return 1f;
 	}
+
+	public int reachFactor( Hero hero ){
+		return 1;
+	}
+
+	public int defenseFactor(Hero hero ) {
+		return 0;
+	}
 	
-	public void proc( Char attacker, Char defender, int damage ) {
+	public int proc( Char attacker, Char defender, int damage ) {
+		return damage;
 	}
 	
 }

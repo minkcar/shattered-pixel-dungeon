@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,18 +25,16 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 public class WarHammer extends MeleeWeapon {
 
 	{
-		name = "war hammer";
 		image = ItemSpriteSheet.WAR_HAMMER;
+
+		tier = 5;
+		ACC = 1.15f; //15% boost to accuracy
 	}
-	
-	public WarHammer() {
-		super( 5, 1.2f, 1f );
-	}
-	
+
 	@Override
-	public String desc() {
-		return
-			"Few creatures can withstand the crushing blow of this towering mass of lead and steel, " +
-			"but only the strongest of adventurers can use it effectively.";
+	public int max(int lvl) {
+		return  4*(tier+1) +    //24 base, down from 30
+				lvl*(tier+1);   //scaling unchanged
 	}
+
 }

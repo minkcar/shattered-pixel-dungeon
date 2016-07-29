@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,16 +21,15 @@
 package com.shatteredpixel.shatteredpixeldungeon.sprites;
 
 import android.graphics.RectF;
-
+import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.watabou.gltextures.SmartTexture;
 import com.watabou.gltextures.TextureCache;
 import com.watabou.noosa.Camera;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.TextureFilm;
-import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.watabou.utils.Callback;
 
 public class HeroSprite extends CharSprite {
@@ -43,6 +42,7 @@ public class HeroSprite extends CharSprite {
 	private static TextureFilm tiers;
 	
 	private Animation fly;
+	private Animation read;
 
 	public HeroSprite() {
 		super();
@@ -51,8 +51,11 @@ public class HeroSprite extends CharSprite {
 		
 		texture( Dungeon.hero.heroClass.spritesheet() );
 		updateArmor();
-		
-		idle();
+
+		if (ch.isAlive())
+			idle();
+		else
+			die();
 	}
 	
 	public void updateArmor() {
@@ -78,6 +81,9 @@ public class HeroSprite extends CharSprite {
 		
 		fly = new Animation( 1, true );
 		fly.frames( film, 18 );
+
+		read = new Animation( 20, false );
+		read.frames( film, 19, 20, 20, 20, 20, 20, 20, 20, 20, 19 );
 	}
 	
 	@Override
@@ -101,9 +107,20 @@ public class HeroSprite extends CharSprite {
 		play( fly );
 	}
 
+	public void read() {
+		animCallback = new Callback() {
+			@Override
+			public void call() {
+				idle();
+				ch.onOperateComplete();
+			}
+		};
+		play( read );
+	}
+
 	@Override
 	public void update() {
-		sleeping = ((Hero)ch).restoreHealth;
+		sleeping = ch.isAlive() && ((Hero)ch).resting;
 		
 		super.update();
 	}

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,17 +20,17 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.effects;
 
-import java.util.ArrayList;
-
-import com.watabou.noosa.BitmapText;
-import com.watabou.noosa.Camera;
-import com.watabou.noosa.Game;
 import com.shatteredpixel.shatteredpixeldungeon.DungeonTilemap;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
+import com.watabou.noosa.Camera;
+import com.watabou.noosa.Game;
+import com.watabou.noosa.RenderedText;
 import com.watabou.utils.SparseArray;
 
-public class FloatingText extends BitmapText {
+import java.util.ArrayList;
+
+public class FloatingText extends RenderedText {
 
 	private static final float LIFESPAN	= 1f;
 	private static final float DISTANCE	= DungeonTilemap.SIZE;
@@ -44,7 +44,6 @@ public class FloatingText extends BitmapText {
 	private static SparseArray<ArrayList<FloatingText>> stacks = new SparseArray<ArrayList<FloatingText>>();
 	
 	public FloatingText() {
-		super();
 		speed.y = - DISTANCE / LIFESPAN;
 	}
 	
@@ -84,16 +83,15 @@ public class FloatingText extends BitmapText {
 		if (cameraZoom != Camera.main.zoom) {
 			cameraZoom = Camera.main.zoom;
 			PixelScene.chooseFont( 9, cameraZoom );
-			font = PixelScene.font;
-			scale.set( PixelScene.scale );
+			size( 9 * (int)cameraZoom);
+			scale.set( 1 /cameraZoom );
 		}
 
 		text( text );
 		hardlight( color );
-		
-		measure();
-		this.x = PixelScene.align( x - width() / 2 );
-		this.y = y - height();
+
+		this.x = PixelScene.align( Camera.main, x - width() / 2);
+		this.y = PixelScene.align( Camera.main, y - height());
 		
 		timeLeft = LIFESPAN;
 	}

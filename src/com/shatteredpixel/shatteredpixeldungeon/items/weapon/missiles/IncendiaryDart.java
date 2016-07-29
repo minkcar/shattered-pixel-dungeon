@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles;
 
-import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
@@ -28,7 +27,6 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Fire;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
-import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSharpshooting;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
@@ -37,15 +35,24 @@ import com.watabou.utils.Random;
 public class IncendiaryDart extends MissileWeapon {
 
 	{
-		name = "incendiary dart";
 		image = ItemSpriteSheet.INCENDIARY_DART;
-		
-		STR = 12;
-		
-		MIN = 1;
-		MAX = 2;
 	}
-	
+
+	@Override
+	public int min(int lvl) {
+		return 1;
+	}
+
+	@Override
+	public int max(int lvl) {
+		return 2;
+	}
+
+	@Override
+	public int STRReq(int lvl) {
+		return 12;
+	}
+
 	public IncendiaryDart() {
 		this( 1 );
 	}
@@ -65,16 +72,9 @@ public class IncendiaryDart extends MissileWeapon {
 	}
 	
 	@Override
-	public void proc( Char attacker, Char defender, int damage ) {
+	public int proc( Char attacker, Char defender, int damage ) {
 		Buff.affect( defender, Burning.class ).reignite( defender );
-		super.proc( attacker, defender, damage );
-	}
-	
-	@Override
-	public String desc() {
-		return
-			"The spike on each of these darts is designed to pin it to its target " +
-			"while the unstable compounds strapped to its length burst into brilliant flames.";
+		return super.proc( attacker, defender, damage );
 	}
 	
 	@Override

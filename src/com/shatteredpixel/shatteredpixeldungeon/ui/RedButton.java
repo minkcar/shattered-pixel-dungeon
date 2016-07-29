@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,26 +20,31 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.ui;
 
-import com.watabou.noosa.BitmapText;
-import com.watabou.noosa.Image;
-import com.watabou.noosa.NinePatch;
-import com.watabou.noosa.audio.Sample;
-import com.watabou.noosa.ui.Button;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Chrome;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
+import com.watabou.noosa.Image;
+import com.watabou.noosa.NinePatch;
+import com.watabou.noosa.RenderedText;
+import com.watabou.noosa.audio.Sample;
+import com.watabou.noosa.ui.Button;
 
 public class RedButton extends Button {
 	
 	protected NinePatch bg;
-	protected BitmapText text;
+	protected RenderedText text;
 	protected Image icon;
 			
 	public RedButton( String label ) {
+		this(label, 9);
+	}
+
+	public RedButton( String label, int size ){
 		super();
-		
+
+		text = PixelScene.renderText( size );
 		text.text( label );
-		text.measure();
+		add( text );
 	}
 	
 	@Override
@@ -48,9 +53,6 @@ public class RedButton extends Button {
 		
 		bg = Chrome.get( Chrome.Type.BUTTON );
 		add( bg );
-		
-		text = PixelScene.createText( 9 );
-		add( text );
 	}
 	
 	@Override
@@ -62,12 +64,14 @@ public class RedButton extends Button {
 		bg.y = y;
 		bg.size( width, height );
 		
-		text.x = x + (int)(width - text.width()) / 2;
-		text.y = y + (int)(height - text.baseLine()) / 2;
+		text.x = x + (width - text.width()) / 2;
+		text.y = y + (height - text.baseLine()) / 2;
+		PixelScene.align(text);
 		
 		if (icon != null) {
 			icon.x = x + text.x - icon.width() - 2;
 			icon.y = y + (height - icon.height()) / 2;
+			PixelScene.align(icon);
 		}
 	}
 
@@ -89,7 +93,6 @@ public class RedButton extends Button {
 	
 	public void text( String value ) {
 		text.text( value );
-		text.measure();
 		layout();
 	}
 
@@ -109,7 +112,7 @@ public class RedButton extends Button {
 	}
 	
 	public float reqWidth() {
-		return text.width() + 4;
+		return text.width() + 2f;
 	}
 	
 	public float reqHeight() {

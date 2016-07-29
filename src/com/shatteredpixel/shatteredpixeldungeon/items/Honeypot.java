@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015 Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,14 +20,10 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items;
 
-import java.util.ArrayList;
-
-import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.watabou.noosa.audio.Sample;
-import com.watabou.noosa.tweeners.AlphaTweener;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Bee;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
@@ -35,17 +31,23 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
+import com.watabou.noosa.audio.Sample;
+import com.watabou.noosa.tweeners.AlphaTweener;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
+
+import java.util.ArrayList;
 
 public class Honeypot extends Item {
 	
 	public static final String AC_SHATTER	= "SHATTER";
 	
 	{
-		name = "honeypot";
 		image = ItemSpriteSheet.HONEYPOT;
+
 		defaultAction = AC_THROW;
+		usesTargeting = true;
+
 		stackable = true;
 	}
 	
@@ -58,6 +60,9 @@ public class Honeypot extends Item {
 	
 	@Override
 	public void execute( final Hero hero, String action ) {
+
+		super.execute( hero, action );
+
 		if (action.equals( AC_SHATTER )) {
 			
 			hero.sprite.zap( hero.pos );
@@ -67,9 +72,7 @@ public class Honeypot extends Item {
 			shatter( hero, hero.pos ).collect();
 
 			hero.next();
-			
-		} else {
-			super.execute( hero, action );
+
 		}
 	}
 	
@@ -138,22 +141,11 @@ public class Honeypot extends Item {
 	public int price() {
 		return 30 * quantity;
 	}
-	
-	@Override
-	public String info() {
-		return
-			"This large honeypot is only really lined with honey, instead it houses a giant bee! " +
-			"These sorts of massive bees usually stay in their hives, perhaps the pot is some sort of specialized trapper's cage? " +
-			"The bee seems pretty content inside the pot with its honey, and buzzes at you warily when you look at it.";
-	}
-
-
 
 	//The bee's broken 'home', all this item does is let its bee know where it is, and who owns it (if anyone).
 	public static class ShatteredPot extends Item {
 
 		{
-			name = "shattered honeypot";
 			image = ItemSpriteSheet.SHATTPOT;
 			stackable = false;
 		}
@@ -214,19 +206,6 @@ public class Honeypot extends Item {
 		@Override
 		public boolean isIdentified() {
 			return true;
-		}
-
-		@Override
-		public String info() {
-			String info =
-				"The pot has been shattered, only the sticky honey that lines its walls is holding it together, and it is slowly coming apart.";
-
-			if (Actor.findById( myBee ) != null)
-				info += "\n\nDespite its broken state, the bee still seems quite fond of the pot, and is understandably quite mad.";
-			else
-				info += "\n\nNow that its bee is gone, you can't think of a use for this wad of broken clay and drying honey.";
-
-			return info;
 		}
 
 		private static final String MYBEE = "mybee";

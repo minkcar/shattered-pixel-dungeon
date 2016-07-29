@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,51 +20,38 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.scenes;
 
-import javax.microedition.khronos.opengles.GL10;
-
 import android.opengl.GLES20;
-
-import com.watabou.noosa.BitmapText;
-import com.watabou.noosa.Camera;
-import com.watabou.noosa.Game;
-import com.watabou.noosa.Image;
-import com.watabou.noosa.audio.Music;
-import com.watabou.noosa.audio.Sample;
-import com.watabou.noosa.ui.Button;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.effects.BannerSprites;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Fireball;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Archs;
+import com.shatteredpixel.shatteredpixeldungeon.ui.ChangesButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.ExitButton;
+import com.shatteredpixel.shatteredpixeldungeon.ui.LanguageButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.PrefsButton;
+import com.watabou.noosa.BitmapText;
+import com.watabou.noosa.Camera;
+import com.watabou.noosa.Game;
+import com.watabou.noosa.Image;
+import com.watabou.noosa.RenderedText;
+import com.watabou.noosa.audio.Music;
+import com.watabou.noosa.audio.Sample;
+import com.watabou.noosa.ui.Button;
+
+import javax.microedition.khronos.opengles.GL10;
 
 public class TitleScene extends PixelScene {
-
-	private static final String TXT_PLAY		= "Play";
-	private static final String TXT_HIGHSCORES	= "Rankings";
-	private static final String TXT_BADGES		= "Badges";
-	private static final String TXT_ABOUT		= "About";
 	
 	@Override
 	public void create() {
 		
 		super.create();
 
-
-
-		int gameversion = ShatteredPixelDungeon.version();
-
-		if (gameversion != Game.versionCode) {
-			//new intro, make older players see it again.
-			if (gameversion < 9)
-				ShatteredPixelDungeon.intro(true);
-			Game.switchScene(WelcomeScene.class);
-		}
-		
 		Music.INSTANCE.play( Assets.THEME, true );
-		Music.INSTANCE.volume( 1f );
-		
+		Music.INSTANCE.volume( ShatteredPixelDungeon.musicVol() / 10f );
+
 		uiCamera.visible = false;
 		
 		int w = Camera.main.width;
@@ -77,14 +64,18 @@ public class TitleScene extends PixelScene {
 		Image title = BannerSprites.get( BannerSprites.Type.PIXEL_DUNGEON );
 		add( title );
 
-		float height = title.height +
-				(ShatteredPixelDungeon.landscape() ? DashboardItem.SIZE : DashboardItem.SIZE * 2);
+		float topRegion = Math.max(95f, h*0.45f);
 
-		title.x = (w - title.width()) / 2;
-		title.y = (h - height) / 2;
-		
-		placeTorch( title.x + 18, title.y + 20 );
-		placeTorch( title.x + title.width - 18, title.y + 20 );
+		title.x = (w - title.width()) / 2f;
+		if (ShatteredPixelDungeon.landscape())
+			title.y = (topRegion - title.height()) / 2f;
+		else
+			title.y = 16 + (topRegion - title.height() - 16) / 2f;
+
+		align(title);
+
+		placeTorch(title.x + 22, title.y + 46);
+		placeTorch(title.x + title.width - 22, title.y + 46);
 
 		Image signs = new Image( BannerSprites.get( BannerSprites.Type.PIXEL_DUNGEON_SIGNS ) ) {
 			private float time = 0;
@@ -97,22 +88,22 @@ public class TitleScene extends PixelScene {
 			public void draw() {
 				GLES20.glBlendFunc( GL10.GL_SRC_ALPHA, GL10.GL_ONE );
 				super.draw();
-				GLES20.glBlendFunc( GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA );
+				GLES20.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
 			}
 		};
-		signs.x = title.x;
+		signs.x = title.x + (title.width() - signs.width())/2f;
 		signs.y = title.y;
 		add( signs );
 		
-		DashboardItem btnBadges = new DashboardItem( TXT_BADGES, 3 ) {
+		DashboardItem btnBadges = new DashboardItem( Messages.get(this, "badges"), 3 ) {
 			@Override
 			protected void onClick() {
 				ShatteredPixelDungeon.switchNoFade( BadgesScene.class );
 			}
 		};
-		add( btnBadges );
+		add(btnBadges);
 		
-		DashboardItem btnAbout = new DashboardItem( TXT_ABOUT, 1 ) {
+		DashboardItem btnAbout = new DashboardItem( Messages.get(this, "about"), 1 ) {
 			@Override
 			protected void onClick() {
 				ShatteredPixelDungeon.switchNoFade( AboutScene.class );
@@ -120,7 +111,7 @@ public class TitleScene extends PixelScene {
 		};
 		add( btnAbout );
 		
-		DashboardItem btnPlay = new DashboardItem( TXT_PLAY, 0 ) {
+		DashboardItem btnPlay = new DashboardItem( Messages.get(this, "play"), 0 ) {
 			@Override
 			protected void onClick() {
 				ShatteredPixelDungeon.switchNoFade( StartScene.class );
@@ -128,50 +119,49 @@ public class TitleScene extends PixelScene {
 		};
 		add( btnPlay );
 		
-		DashboardItem btnHighscores = new DashboardItem( TXT_HIGHSCORES, 2 ) {
+		DashboardItem btnRankings = new DashboardItem( Messages.get(this, "rankings"), 2 ) {
 			@Override
 			protected void onClick() {
 				ShatteredPixelDungeon.switchNoFade( RankingsScene.class );
 			}
 		};
-		add( btnHighscores );
+		add( btnRankings );
 
 		if (ShatteredPixelDungeon.landscape()) {
-			float y = (h + height) / 2 - DashboardItem.SIZE;
-			btnHighscores    .setPos( w / 2 - btnHighscores.width(), y );
-			btnBadges        .setPos( w / 2, y );
-			btnPlay            .setPos( btnHighscores.left() - btnPlay.width(), y );
-			btnAbout        .setPos( btnBadges.right(), y );
+			btnRankings     .setPos( w / 2 - btnRankings.width(), topRegion );
+			btnBadges       .setPos( w / 2, topRegion );
+			btnPlay         .setPos( btnRankings.left() - btnPlay.width(), topRegion );
+			btnAbout        .setPos( btnBadges.right(), topRegion );
 		} else {
-			btnBadges.setPos( w / 2 - btnBadges.width(), (h + height) / 2 - DashboardItem.SIZE );
-			btnAbout.setPos( w / 2, (h + height) / 2 - DashboardItem.SIZE );
-			btnPlay.setPos( w / 2 - btnPlay.width(), btnAbout.top() - DashboardItem.SIZE );
-			btnHighscores.setPos( w / 2, btnPlay.top() );
+			btnPlay.setPos( w / 2 - btnPlay.width(), topRegion );
+			btnRankings.setPos( w / 2, btnPlay.top() );
+			btnBadges.setPos( w / 2 - btnBadges.width(), btnPlay.top() + DashboardItem.SIZE );
+			btnAbout.setPos( w / 2, btnBadges.top() );
 		}
 
-		BitmapText source = new BitmapText( "PD v 1.7.5", font1x );
-		source.measure();
-		source.hardlight( 0x444444 );
-		source.x = w - source.width();
-		source.y = h - source.height();
-		add( source );
-
-		BitmapText version = new BitmapText( "v " + Game.version + "", font1x );
+		BitmapText version = new BitmapText( "v " + Game.version + "", pixelFont);
 		version.measure();
 		version.hardlight( 0xCCCCCC );
 		version.x = w - version.width();
-		version.y = h - version.height() - source.height();
-
+		version.y = h - version.height();
 		add( version );
+
+		Button changes = new ChangesButton();
+		changes.setPos( w-changes.width(), h - version.height() - changes.height());
+		add( changes );
 		
 		PrefsButton btnPrefs = new PrefsButton();
 		btnPrefs.setPos( 0, 0 );
 		add( btnPrefs );
 
+		LanguageButton btnLang = new LanguageButton();
+		btnLang.setPos(16, 1);
+		add( btnLang );
+
 		ExitButton btnExit = new ExitButton();
 		btnExit.setPos( w - btnExit.width(), 0 );
 		add( btnExit );
-		
+
 		fadeIn();
 	}
 	
@@ -188,14 +178,13 @@ public class TitleScene extends PixelScene {
 		private static final int IMAGE_SIZE	= 32;
 		
 		private Image image;
-		private BitmapText label;
+		private RenderedText label;
 		
 		public DashboardItem( String text, int index ) {
 			super();
 			
 			image.frame( image.texture.uvRect( index * IMAGE_SIZE, 0, (index + 1) * IMAGE_SIZE, IMAGE_SIZE ) );
 			this.label.text( text );
-			this.label.measure();
 			
 			setSize( SIZE, SIZE );
 		}
@@ -207,7 +196,7 @@ public class TitleScene extends PixelScene {
 			image = new Image( Assets.DASHBOARD );
 			add( image );
 			
-			label = createText( 9 );
+			label = renderText( 9 );
 			add( label );
 		}
 		
@@ -215,11 +204,13 @@ public class TitleScene extends PixelScene {
 		protected void layout() {
 			super.layout();
 			
-			image.x = align( x + (width - image.width()) / 2 );
-			image.y = align( y );
+			image.x = x + (width - image.width()) / 2;
+			image.y = y;
+			align(image);
 			
-			label.x = align( x + (width - label.width()) / 2 );
-			label.y = align( image.y + image.height() +2 );
+			label.x = x + (width - label.width()) / 2;
+			label.y = image.y + image.height() +2;
+			align(label);
 		}
 		
 		@Override

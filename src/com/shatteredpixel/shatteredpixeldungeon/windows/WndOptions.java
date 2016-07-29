@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,35 +20,37 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.windows;
 
-import com.watabou.noosa.BitmapTextMultiline;
+import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RedButton;
+import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextMultiline;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
 
 public class WndOptions extends Window {
 
-	private static final int WIDTH			= 120;
+	private static final int WIDTH_P = 120;
+	private static final int WIDTH_L = 144;
+
 	private static final int MARGIN 		= 2;
 	private static final int BUTTON_HEIGHT	= 20;
 	
 	public WndOptions( String title, String message, String... options ) {
 		super();
-		
-		BitmapTextMultiline tfTitle = PixelScene.createMultiline( title, 9 );
+
+		int width = ShatteredPixelDungeon.landscape() ? WIDTH_L : WIDTH_P;
+
+		RenderedTextMultiline tfTitle = PixelScene.renderMultiline( title, 9 );
 		tfTitle.hardlight( TITLE_COLOR );
-		tfTitle.x = tfTitle.y = MARGIN;
-		tfTitle.maxWidth = WIDTH - MARGIN * 2;
-		tfTitle.measure();
+		tfTitle.setPos(MARGIN, MARGIN);
+		tfTitle.maxWidth(width - MARGIN * 2);
 		add( tfTitle );
 		
-		BitmapTextMultiline tfMesage = PixelScene.createMultiline( message, 8 );
-		tfMesage.maxWidth = WIDTH - MARGIN * 2;
-		tfMesage.measure();
-		tfMesage.x = MARGIN;
-		tfMesage.y = tfTitle.y + tfTitle.height() + MARGIN;
+		RenderedTextMultiline tfMesage = PixelScene.renderMultiline( 6 );
+		tfMesage.text(message, width - MARGIN * 2);
+		tfMesage.setPos( MARGIN, tfTitle.top() + tfTitle.height() + MARGIN );
 		add( tfMesage );
 		
-		float pos = tfMesage.y + tfMesage.height() + MARGIN;
+		float pos = tfMesage.bottom() + MARGIN;
 		
 		for (int i=0; i < options.length; i++) {
 			final int index = i;
@@ -59,13 +61,13 @@ public class WndOptions extends Window {
 					onSelect( index );
 				}
 			};
-			btn.setRect( MARGIN, pos, WIDTH - MARGIN * 2, BUTTON_HEIGHT );
+			btn.setRect( MARGIN, pos, width - MARGIN * 2, BUTTON_HEIGHT );
 			add( btn );
 			
 			pos += BUTTON_HEIGHT + MARGIN;
 		}
 		
-		resize( WIDTH, (int)pos );
+		resize( width, (int)pos );
 	}
 	
 	protected void onSelect( int index ) {};

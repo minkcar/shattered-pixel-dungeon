@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +28,6 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 public class RatSkull extends Item {
 	
 	{
-		name = "giant rat skull";
 		image = ItemSpriteSheet.SKULL;
 		
 		unique = true;
@@ -42,16 +41,5 @@ public class RatSkull extends Item {
 	@Override
 	public boolean isIdentified() {
 		return true;
-	}
-	
-	@Override
-	public String info() {
-		return
-			"A surprisingly large rat skull. It would make a great hunting trophy, if you had a wall to mount it on.";
-	}
-	
-	@Override
-	public int price() {
-		return 100;
 	}
 }

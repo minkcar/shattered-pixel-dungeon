@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,7 +53,7 @@ public class ArmoryPainter extends Painter {
 			set( level, statue, Terrain.STATUE );
 		}
 		
-		int n = Random.IntRange( 2, 3 );
+		int n = Random.IntRange( 1, 2 );
 		for (int i=0; i < n; i++) {
 			int pos;
 			do {

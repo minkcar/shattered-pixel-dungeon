@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,14 +32,9 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportat
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public class Fadeleaf extends Plant {
-
-	private static final String TXT_DESC =
-		"Touching a Fadeleaf will teleport any creature " +
-		"to a random place on the current level.";
 	
 	{
 		image = 6;
-		plantName = "Fadeleaf";
 	}
 	
 	@Override
@@ -51,7 +46,7 @@ public class Fadeleaf extends Plant {
 			ScrollOfTeleportation.teleportHero( (Hero)ch );
 			((Hero)ch).curAction = null;
 			
-		} else if (ch instanceof Mob) {
+		} else if (ch instanceof Mob && !ch.properties().contains(Char.Property.IMMOVABLE)) {
 
 			int count = 10;
 			int newPos;
@@ -62,14 +57,14 @@ public class Fadeleaf extends Plant {
 				}
 			} while (newPos == -1);
 			
-			if (newPos != -1) {
+			if (newPos != -1 && !Dungeon.bossLevel()) {
 			
 				ch.pos = newPos;
 				ch.sprite.place( ch.pos );
-				ch.sprite.visible = Dungeon.visible[pos];
+				ch.sprite.visible = Dungeon.visible[ch.pos];
 				
 			}
-						
+
 		}
 		
 		if (Dungeon.visible[pos]) {
@@ -77,25 +72,12 @@ public class Fadeleaf extends Plant {
 		}
 	}
 	
-	@Override
-	public String desc() {
-		return TXT_DESC;
-	}
-	
 	public static class Seed extends Plant.Seed {
 		{
-			plantName = "Fadeleaf";
-			
-			name = "seed of " + plantName;
 			image = ItemSpriteSheet.SEED_FADELEAF;
-			
+
 			plantClass = Fadeleaf.class;
 			alchemyClass = PotionOfMindVision.class;
-		}
-		
-		@Override
-		public String desc() {
-			return TXT_DESC;
 		}
 	}
 }

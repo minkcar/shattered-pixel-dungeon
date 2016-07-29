@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,15 +30,25 @@ import com.watabou.utils.Random;
 public class Tamahawk extends MissileWeapon {
 
 	{
-		name = "tomahawk";
 		image = ItemSpriteSheet.TOMAHAWK;
-		
-		STR = 17;
-		
-		MIN = 4;
-		MAX = 20;
+
 	}
-	
+
+	@Override
+	public int min(int lvl) {
+		return 4;
+	}
+
+	@Override
+	public int max(int lvl) {
+		return 20;
+	}
+
+	@Override
+	public int STRReq(int lvl) {
+		return 17;
+	}
+
 	public Tamahawk() {
 		this( 1 );
 	}
@@ -49,16 +59,9 @@ public class Tamahawk extends MissileWeapon {
 	}
 	
 	@Override
-	public void proc( Char attacker, Char defender, int damage ) {
-		super.proc( attacker, defender, damage );
+	public int proc( Char attacker, Char defender, int damage ) {
 		Buff.affect( defender, Bleeding.class ).set( damage );
-	}
-	
-	@Override
-	public String desc() {
-		return
-			"This throwing axe is not that heavy, but it still " +
-			"requires significant strength to be used effectively.";
+		return super.proc( attacker, defender, damage );
 	}
 	
 	@Override

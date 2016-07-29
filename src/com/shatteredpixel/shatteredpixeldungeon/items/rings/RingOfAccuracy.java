@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,22 +21,10 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.rings;
 
 public class RingOfAccuracy extends Ring {
-
-	{
-		name = "Ring of Accuracy";
-	}
 	
 	@Override
 	protected RingBuff buff( ) {
 		return new Accuracy();
-	}
-	
-	@Override
-	public String desc() {
-		return isKnown() ?
-			"This ring increases your focus, reducing your enemy's ability to dodge your attacks. "+
-			"A degraded ring will instead make you easier to evade.":
-			super.desc();
 	}
 	
 	public class Accuracy extends RingBuff {

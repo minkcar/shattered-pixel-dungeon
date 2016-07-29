@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,15 +32,24 @@ public class CurareDart extends MissileWeapon {
 	public static final float DURATION	= 3f;
 	
 	{
-		name = "curare dart";
 		image = ItemSpriteSheet.CURARE_DART;
-		
-		STR = 14;
-		
-		MIN = 1;
-		MAX = 3;
 	}
-	
+
+	@Override
+	public int min(int lvl) {
+		return 1;
+	}
+
+	@Override
+	public int max(int lvl) {
+		return 3;
+	}
+
+	@Override
+	public int STRReq(int lvl) {
+		return 14;
+	}
+
 	public CurareDart() {
 		this( 1 );
 	}
@@ -51,16 +60,9 @@ public class CurareDart extends MissileWeapon {
 	}
 	
 	@Override
-	public void proc( Char attacker, Char defender, int damage ) {
+	public int proc( Char attacker, Char defender, int damage ) {
 		Buff.prolong( defender, Paralysis.class, DURATION );
-		super.proc( attacker, defender, damage );
-	}
-	
-	@Override
-	public String desc() {
-		return
-			"These little evil darts don't do much damage but they can paralyze " +
-			"the target leaving it helpless and motionless for some time.";
+		return super.proc( attacker, defender, damage );
 	}
 	
 	@Override

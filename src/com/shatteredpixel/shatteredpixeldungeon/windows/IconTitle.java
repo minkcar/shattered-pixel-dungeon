@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,15 +20,15 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.windows;
 
-import com.watabou.noosa.BitmapTextMultiline;
-import com.watabou.noosa.Image;
-import com.watabou.noosa.ui.Component;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.HealthBar;
+import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextMultiline;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
-import com.shatteredpixel.shatteredpixeldungeon.utils.Utils;
+import com.watabou.noosa.Image;
+import com.watabou.noosa.ui.Component;
 
 public class IconTitle extends Component {
 
@@ -37,7 +37,7 @@ public class IconTitle extends Component {
 	private static final float GAP = 2;
 
 	protected Image imIcon;
-	protected BitmapTextMultiline tfLabel;
+	protected RenderedTextMultiline tfLabel;
 	protected HealthBar health;
 
 	private float healthLvl = Float.NaN;
@@ -49,7 +49,7 @@ public class IconTitle extends Component {
 	public IconTitle( Item item ) {
 		ItemSprite icon = new ItemSprite();
 		icon( icon );
-		label( Utils.capitalize( item.toString() ) );
+		label( Messages.titleCase( item.toString() ) );
 		icon.view( item );
 	}
 
@@ -65,7 +65,7 @@ public class IconTitle extends Component {
 		imIcon = new Image();
 		add( imIcon );
 
-		tfLabel = PixelScene.createMultiline( FONT_SIZE );
+		tfLabel = PixelScene.renderMultiline( (int)FONT_SIZE );
 		tfLabel.hardlight( Window.TITLE_COLOR );
 		add( tfLabel );
 
@@ -81,16 +81,14 @@ public class IconTitle extends Component {
 		imIcon.x = x;
 		imIcon.y = y;
 
-		tfLabel.x = PixelScene.align( PixelScene.uiCamera, imIcon.x + imIcon.width() + GAP );
-		tfLabel.maxWidth = (int)(width - tfLabel.x);
-		tfLabel.measure();
-		tfLabel.y =  PixelScene.align( PixelScene.uiCamera,
-			imIcon.height > tfLabel.height() ?
-				imIcon.y + (imIcon.height() - tfLabel.baseLine()) / 2 :
-				imIcon.y );
+		tfLabel.maxWidth((int)(width - (imIcon.x + imIcon.width() + GAP)));
+		tfLabel.setPos(imIcon.x + imIcon.width() + GAP, imIcon.height > tfLabel.height() ?
+						imIcon.y + (imIcon.height() - tfLabel.height()) / 2 :
+						imIcon.y);
+		PixelScene.align(tfLabel);
 
 		if (health.visible) {
-			health.setRect( tfLabel.x, Math.max( tfLabel.y + tfLabel.height(), imIcon.y + imIcon.height() - health.height() ), tfLabel.maxWidth, 0 );
+			health.setRect( tfLabel.left(), Math.max( tfLabel.top() + tfLabel.height(), imIcon.y + imIcon.height() - health.height() ), tfLabel.maxWidth(), 0 );
 			height = health.bottom();
 		} else {
 			height = Math.max( imIcon.height(), tfLabel.height() );

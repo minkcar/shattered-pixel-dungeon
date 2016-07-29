@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,13 +28,13 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Weakness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 
 public class PotionOfHealing extends Potion {
 
 	{
-		name = "Potion of Healing";
-		initials = "He";
+		initials = 2;
 
 		bones = true;
 	}
@@ -43,7 +43,7 @@ public class PotionOfHealing extends Potion {
 	public void apply( Hero hero ) {
 		setKnown();
 		heal( Dungeon.hero );
-		GLog.p( "Your wounds heal completely." );
+		GLog.p( Messages.get(this, "heal") );
 	}
 	
 	public static void heal( Hero hero ) {
@@ -56,13 +56,7 @@ public class PotionOfHealing extends Potion {
 		
 		hero.sprite.emitter().start( Speck.factory( Speck.HEALING ), 0.4f, 4 );
 	}
-	
-	@Override
-	public String desc() {
-		return
-			"An elixir that will instantly return you to full health and cure poison.";
-	}
-	
+
 	@Override
 	public int price() {
 		return isKnown() ? 30 * quantity : super.price();

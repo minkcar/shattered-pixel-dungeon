@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,16 +20,26 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.levels;
 
-import com.watabou.noosa.Game;
-import com.watabou.noosa.Scene;
-import com.watabou.noosa.particles.Emitter;
-import com.watabou.noosa.particles.PixelParticle;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.DungeonTilemap;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Ghost;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Ripple;
 import com.shatteredpixel.shatteredpixeldungeon.items.DewVial;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.AlarmTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ChillingTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.FlockTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.OozeTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.SummoningTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.TeleportationTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ToxicTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.WornTrap;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.watabou.noosa.Game;
+import com.watabou.noosa.Group;
+import com.watabou.noosa.particles.Emitter;
+import com.watabou.noosa.particles.PixelParticle;
 import com.watabou.utils.ColorMath;
 import com.watabou.utils.PointF;
 import com.watabou.utils.Random;
@@ -58,7 +68,25 @@ public class SewerLevel extends RegularLevel {
 	protected boolean[] grass() {
 		return Patch.generate( feeling == Feeling.GRASS ? 0.60f : 0.40f, 4 );
 	}
-	
+
+	@Override
+	protected Class<?>[] trapClasses() {
+		return Dungeon.depth == 1 ?
+				new Class<?>[]{WornTrap.class} :
+				new Class<?>[]{ChillingTrap.class, ToxicTrap.class, WornTrap.class,
+						AlarmTrap.class, OozeTrap.class,
+						FlockTrap.class, SummoningTrap.class, TeleportationTrap.class, };
+}
+
+	@Override
+	protected float[] trapChances() {
+		return Dungeon.depth == 1 ?
+				new float[]{1} :
+				new float[]{4, 4, 4,
+						2, 2,
+						1, 1, 1};
+	}
+
 	@Override
 	protected void decorate() {
 		
@@ -95,6 +123,14 @@ public class SewerLevel extends RegularLevel {
 				}
 			}
 		}
+
+		//hides all doors in the entrance room on floor 2, teaches the player to search.
+		if (Dungeon.depth == 2)
+			for (Room r : roomEntrance.connected.keySet()){
+				Room.Door d = roomEntrance.connected.get(r);
+				if (d.type == Room.Door.Type.REGULAR)
+					map[d.x + d.y * WIDTH] = Terrain.SECRET_DOOR;
+			}
 		
 		placeSign();
 	}
@@ -112,15 +148,16 @@ public class SewerLevel extends RegularLevel {
 	}
 	
 	@Override
-	public void addVisuals( Scene scene ) {
-		super.addVisuals( scene );
-		addVisuals( this, scene );
+	public Group addVisuals() {
+		super.addVisuals();
+		addSewerVisuals(this, visuals);
+		return visuals;
 	}
 	
-	public static void addVisuals( Level level, Scene scene ) {
+	public static void addSewerVisuals( Level level, Group group ) {
 		for (int i=0; i < LENGTH; i++) {
 			if (level.map[i] == Terrain.WALL_DECO) {
-				scene.add( new Sink( i ) );
+				group.add( new Sink( i ) );
 			}
 		}
 	}
@@ -128,22 +165,22 @@ public class SewerLevel extends RegularLevel {
 	@Override
 	public String tileName( int tile ) {
 		switch (tile) {
-		case Terrain.WATER:
-			return "Murky water";
-		default:
-			return super.tileName( tile );
+			case Terrain.WATER:
+				return Messages.get(SewerLevel.class, "water_name");
+			default:
+				return super.tileName( tile );
 		}
 	}
 	
 	@Override
 	public String tileDesc(int tile) {
 		switch (tile) {
-		case Terrain.EMPTY_DECO:
-			return "Wet yellowish moss covers the floor.";
-		case Terrain.BOOKSHELF:
-			return "The bookshelf is packed with cheap useless books. Might it burn?";
-		default:
-			return super.tileDesc( tile );
+			case Terrain.EMPTY_DECO:
+				return Messages.get(SewerLevel.class, "empty_deco_desc");
+			case Terrain.BOOKSHELF:
+				return Messages.get(SewerLevel.class, "bookshelf_desc");
+			default:
+				return super.tileDesc( tile );
 		}
 	}
 	
@@ -179,8 +216,11 @@ public class SewerLevel extends RegularLevel {
 				super.update();
 				
 				if ((rippleDelay -= Game.elapsed) <= 0) {
-					GameScene.ripple( pos + WIDTH ).y -= DungeonTilemap.SIZE / 2;
-					rippleDelay = Random.Float( 0.2f, 0.3f );
+					Ripple ripple = GameScene.ripple( pos + WIDTH );
+					if (ripple != null) {
+						ripple.y -= DungeonTilemap.SIZE / 2;
+						rippleDelay = Random.Float(0.2f, 0.3f);
+					}
 				}
 			}
 		}

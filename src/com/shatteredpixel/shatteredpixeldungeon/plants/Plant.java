@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,13 +20,9 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.plants;
 
-import java.util.ArrayList;
-
-import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
-import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.SandalsOfNature;
-import com.watabou.noosa.audio.Sample;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Barkskin;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
@@ -37,17 +33,21 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.particles.LeafParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Dewdrop;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.SandalsOfNature;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.PlantSprite;
-import com.shatteredpixel.shatteredpixeldungeon.utils.Utils;
+import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundlable;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
+import java.util.ArrayList;
+
 public abstract class Plant implements Bundlable {
 
-	public String plantName;
+	public String plantName = Messages.get(this, "name");
 	
 	public int image;
 	public int pos;
@@ -81,7 +81,7 @@ public abstract class Plant implements Bundlable {
 			int naturalismLevel = 0;
 			SandalsOfNature.Naturalism naturalism = Dungeon.hero.buff( SandalsOfNature.Naturalism.class );
 			if (naturalism != null) {
-				naturalismLevel = naturalism.level()+1;
+				naturalismLevel = naturalism.itemLevel()+1;
 			}
 
 			if (Random.Int( 5 - (naturalismLevel/2) ) == 0) {
@@ -114,14 +114,12 @@ public abstract class Plant implements Bundlable {
 	}
 	
 	public String desc() {
-		return null;
+		return Messages.get(this, "desc");
 	}
 	
 	public static class Seed extends Item {
-		
+
 		public static final String AC_PLANT	= "PLANT";
-		
-		private static final String TXT_INFO = "Throw this seed to the place where you want to grow %s.\n\n%s";
 		
 		private static final float TIME_TO_PLANT = 1f;
 		
@@ -131,7 +129,6 @@ public abstract class Plant implements Bundlable {
 		}
 		
 		protected Class<? extends Plant> plantClass;
-		protected String plantName;
 		
 		public Class<? extends Item> alchemyClass;
 		
@@ -153,6 +150,9 @@ public abstract class Plant implements Bundlable {
 		
 		@Override
 		public void execute( Hero hero, String action ) {
+
+			super.execute (hero, action );
+
 			if (action.equals( AC_PLANT )) {
 							
 				hero.spend( TIME_TO_PLANT );
@@ -160,10 +160,6 @@ public abstract class Plant implements Bundlable {
 				((Seed)detach( hero.belongings.backpack )).onThrow( hero.pos );
 				
 				hero.sprite.operate( hero.pos );
-				
-			} else {
-				
-				super.execute (hero, action );
 				
 			}
 		}
@@ -195,10 +191,15 @@ public abstract class Plant implements Bundlable {
 		public int price() {
 			return 10 * quantity;
 		}
-		
+
+		@Override
+		public String desc() {
+			return Messages.get(plantClass, "desc");
+		}
+
 		@Override
 		public String info() {
-			return String.format( TXT_INFO, Utils.indefinite( plantName ), desc() );
+			return Messages.get( Seed.class, "info", desc() );
 		}
 	}
 }

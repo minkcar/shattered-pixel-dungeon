@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,15 +30,24 @@ import com.watabou.utils.Random;
 public class Javelin extends MissileWeapon {
 
 	{
-		name = "javelin";
 		image = ItemSpriteSheet.JAVELIN;
-		
-		STR = 15;
-		
-		MIN = 2;
-		MAX = 15;
 	}
-	
+
+	@Override
+	public int min(int lvl) {
+		return 2;
+	}
+
+	@Override
+	public int max(int lvl) {
+		return 15;
+	}
+
+	@Override
+	public int STRReq(int lvl) {
+		return 15;
+	}
+
 	public Javelin() {
 		this( 1 );
 	}
@@ -49,16 +58,9 @@ public class Javelin extends MissileWeapon {
 	}
 	
 	@Override
-	public void proc( Char attacker, Char defender, int damage ) {
-		super.proc( attacker, defender, damage );
+	public int proc( Char attacker, Char defender, int damage ) {
 		Buff.prolong( defender, Cripple.class, Cripple.DURATION );
-	}
-	
-	@Override
-	public String desc() {
-		return
-			"This length of metal is weighted to keep the spike " +
-			"at its tip foremost as it sails through the air.";
+		return super.proc( attacker, defender, damage );
 	}
 	
 	@Override

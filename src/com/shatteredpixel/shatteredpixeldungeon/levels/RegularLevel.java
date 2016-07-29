@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,13 +35,9 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Room.Type;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.ShopPainter;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.AlarmTrap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.FireTrap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.GrippingTrap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.LightningTrap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ParalyticTrap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.PoisonTrap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ToxicTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.WornTrap;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Graph;
 import com.watabou.utils.Random;
@@ -49,8 +45,10 @@ import com.watabou.utils.Rect;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 public abstract class RegularLevel extends Level {
@@ -175,7 +173,7 @@ public abstract class RegularLevel extends Level {
 	protected void placeSign(){
 		while (true) {
 			int pos = roomEntrance.random();
-			if (pos != entrance && traps.get(pos) == null) {
+			if (pos != entrance && traps.get(pos) == null && findMob(pos) == null) {
 				map[pos] = Terrain.SIGN;
 				break;
 			}
@@ -204,6 +202,7 @@ public abstract class RegularLevel extends Level {
 	protected boolean assignRoomType() {
 		
 		int specialRooms = 0;
+		boolean pitMade = false;
 
 		for (Room r : rooms) {
 			if (r.type == Type.NULL &&
@@ -213,10 +212,10 @@ public abstract class RegularLevel extends Level {
 					r.width() > 3 && r.height() > 3 &&
 					Random.Int( specialRooms * specialRooms + 2 ) == 0) {
 
-					if (pitRoomNeeded) {
+					if (pitRoomNeeded && !pitMade) {
 
 						r.type = Type.PIT;
-						pitRoomNeeded = false;
+						pitMade = true;
 
 						specials.remove( Type.ARMORY );
 						specials.remove( Type.CRYPT );
@@ -266,6 +265,8 @@ public abstract class RegularLevel extends Level {
 				}
 			}
 		}
+
+		if (pitRoomNeeded && !pitMade) return false;
 		
 		int count = 0;
 		for (Room r : rooms) {
@@ -337,50 +338,54 @@ public abstract class RegularLevel extends Level {
 		
 		int nTraps = nTraps();
 		float[] trapChances = trapChances();
+		Class<?>[] trapClasses = trapClasses();
 
-		for (int i=0; i < nTraps; i++) {
+		LinkedList<Integer> validCells = new LinkedList<Integer>();
+
+		for (int i = 0; i < LENGTH; i ++) {
+			if (map[i] == Terrain.EMPTY){
+
+				if(Dungeon.depth == 1){
+					//extra check to prevent annoying inactive traps in hallways on floor 1
+					Room r = room(i);
+					if (r != null && r.type != Type.TUNNEL){
+						validCells.add(i);
+					}
+				} else
+					validCells.add(i);
+			}
+		}
+
+		//no more than one trap every 5 valid tiles.
+		nTraps = Math.min(nTraps, validCells.size()/5);
+
+		Collections.shuffle(validCells);
+
+		for (int i = 0; i < nTraps; i++) {
 			
-			int trapPos = Random.Int( LENGTH );
-			
-			if (map[trapPos] == Terrain.EMPTY) {
-				map[trapPos] = Terrain.SECRET_TRAP;
-				switch (Random.chances( trapChances )) {
-				case 0:
-					setTrap( new ToxicTrap().hide(), trapPos);
-					break;
-				case 1:
-					setTrap( new FireTrap().hide(), trapPos);
-					break;
-				case 2:
-					setTrap( new ParalyticTrap().hide(), trapPos);
-					break;
-				case 3:
-					setTrap( new PoisonTrap().hide(), trapPos);
-					break;
-				case 4:
-					setTrap( new AlarmTrap().hide(), trapPos);
-					break;
-				case 5:
-					setTrap( new LightningTrap().hide(), trapPos);
-					break;
-				case 6:
-					setTrap( new GrippingTrap().hide(), trapPos);
-					break;
-				case 7:
-					setTrap( new LightningTrap().hide(), trapPos);
-					break;
-				}
+			int trapPos = validCells.removeFirst();
+
+			try {
+				Trap trap = ((Trap)trapClasses[Random.chances( trapChances )].newInstance()).hide();
+				setTrap( trap, trapPos );
+				//some traps will not be hidden
+				map[trapPos] = trap.visible ? Terrain.TRAP : Terrain.SECRET_TRAP;
+			} catch (Exception e) {
+				throw new RuntimeException(e);
 			}
 		}
 	}
 	
 	protected int nTraps() {
-		return Dungeon.depth <= 1 ? 0 : Random.Int( 1, rooms.size() + Dungeon.depth );
+		return Random.NormalIntRange( 1, 4+(Dungeon.depth/2) );
 	}
 	
+	protected Class<?>[] trapClasses(){
+		return new Class<?>[]{WornTrap.class};
+	}
+
 	protected float[] trapChances() {
-		float[] chances = { 1, 1, 1, 1, 1, 1, 1, 1 };
-		return chances;
+		return new float[]{1};
 	}
 	
 	protected int minRoomSize = 7;
@@ -497,6 +502,7 @@ public abstract class RegularLevel extends Level {
 				break;
 			case HIDDEN:
 				map[door] = Terrain.SECRET_DOOR;
+				secretDoors++;
 				break;
 			case BARRICADE:
 				map[door] = Random.Int( 3 ) == 0 ? Terrain.BOOKSHELF : Terrain.BARRICADE;
@@ -657,10 +663,8 @@ public abstract class RegularLevel extends Level {
 	protected void createItems() {
 		
 		int nItems = 3;
-		int bonus = 0;
-		for (Buff buff : Dungeon.hero.buffs(RingOfWealth.Wealth.class)) {
-			bonus += ((RingOfWealth.Wealth) buff).level;
-		}
+		int bonus = RingOfWealth.getBonus(Dungeon.hero, RingOfWealth.Wealth.class);
+
 		//just incase someone gets a ridiculous ring, cap this at 80%
 		bonus = Math.min(bonus, 10);
 		while (Random.Float() < (0.3f + bonus*0.05f)) {
@@ -759,11 +763,16 @@ public abstract class RegularLevel extends Level {
 	public void restoreFromBundle( Bundle bundle ) {
 		super.restoreFromBundle( bundle );
 
-		rooms = new HashSet<Room>( (Collection<Room>) ((Collection<?>) bundle.getCollection( "rooms" )) );
+		rooms = new HashSet<>( (Collection<Room>) ((Collection<?>) bundle.getCollection( "rooms" )) );
 		for (Room r : rooms) {
 			if (r.type == Type.WEAK_FLOOR) {
 				weakFloorCreated = true;
 				break;
+			}
+			if (r.type == Type.ENTRANCE){
+				roomEntrance = r;
+			} else if (r.type == Type.EXIT || r.type == Type.BOSS_EXIT){
+				roomExit = r;
 			}
 		}
 	}

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,78 +20,72 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items.potions;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-
+import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Badges;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Fire;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
-import com.watabou.noosa.audio.Sample;
-import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.Badges;
-import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.ItemStatusHandler;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndOptions;
+import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+
 public class Potion extends Item {
-	
-	public static final String AC_DRINK	= "DRINK";
-	
-	private static final String TXT_HARMFUL		= "Harmful potion!";
-	private static final String TXT_BENEFICIAL	= "Beneficial potion";
-	private static final String TXT_YES			= "Yes, I know what I'm doing";
-	private static final String TXT_NO			= "No, I changed my mind";
-	private static final String TXT_R_U_SURE_DRINK =
-		"Are you sure you want to drink it? In most cases you should throw such potions at your enemies.";
-	private static final String TXT_R_U_SURE_THROW =
-		"Are you sure you want to throw it? In most cases it makes sense to drink it.";
-	
+
+	public static final String AC_DRINK = "DRINK";
+
 	private static final float TIME_TO_DRINK = 1f;
 
-	protected String initials;
-	
+	protected Integer initials;
+
 	private static final Class<?>[] potions = {
-		PotionOfHealing.class,
-		PotionOfExperience.class,
-		PotionOfToxicGas.class,
-		PotionOfLiquidFlame.class,
-		PotionOfStrength.class,
-		PotionOfParalyticGas.class,
-		PotionOfLevitation.class,
-		PotionOfMindVision.class,
-		PotionOfPurity.class,
-		PotionOfInvisibility.class,
-		PotionOfMight.class,
-		PotionOfFrost.class
+			PotionOfHealing.class,
+			PotionOfExperience.class,
+			PotionOfToxicGas.class,
+			PotionOfLiquidFlame.class,
+			PotionOfStrength.class,
+			PotionOfParalyticGas.class,
+			PotionOfLevitation.class,
+			PotionOfMindVision.class,
+			PotionOfPurity.class,
+			PotionOfInvisibility.class,
+			PotionOfMight.class,
+			PotionOfFrost.class
 	};
-	private static final String[] colors = {
-		"turquoise", "crimson", "azure", "jade", "golden", "magenta",
-		"charcoal", "ivory", "amber", "bistre", "indigo", "silver"};
-	private static final Integer[] images = {
-		ItemSpriteSheet.POTION_TURQUOISE,
-		ItemSpriteSheet.POTION_CRIMSON,
-		ItemSpriteSheet.POTION_AZURE,
-		ItemSpriteSheet.POTION_JADE,
-		ItemSpriteSheet.POTION_GOLDEN,
-		ItemSpriteSheet.POTION_MAGENTA,
-		ItemSpriteSheet.POTION_CHARCOAL,
-		ItemSpriteSheet.POTION_IVORY,
-		ItemSpriteSheet.POTION_AMBER,
-		ItemSpriteSheet.POTION_BISTRE,
-		ItemSpriteSheet.POTION_INDIGO,
-		ItemSpriteSheet.POTION_SILVER};
+
+	private static final HashMap<String, Integer> colors = new HashMap<String, Integer>() {
+		{
+			put("crimson",ItemSpriteSheet.POTION_CRIMSON);
+			put("amber",ItemSpriteSheet.POTION_AMBER);
+			put("golden",ItemSpriteSheet.POTION_GOLDEN);
+			put("jade",ItemSpriteSheet.POTION_JADE);
+			put("turquoise",ItemSpriteSheet.POTION_TURQUOISE);
+			put("azure",ItemSpriteSheet.POTION_AZURE);
+			put("indigo",ItemSpriteSheet.POTION_INDIGO);
+			put("magenta",ItemSpriteSheet.POTION_MAGENTA);
+			put("bistre",ItemSpriteSheet.POTION_BISTRE);
+			put("charcoal",ItemSpriteSheet.POTION_CHARCOAL);
+			put("silver",ItemSpriteSheet.POTION_SILVER);
+			put("ivory",ItemSpriteSheet.POTION_IVORY);
+		}
+	};
 	
 	private static ItemStatusHandler<Potion> handler;
 	
@@ -106,25 +100,30 @@ public class Potion extends Item {
 	
 	@SuppressWarnings("unchecked")
 	public static void initColors() {
-		handler = new ItemStatusHandler<Potion>( (Class<? extends Potion>[])potions, colors, images );
+		handler = new ItemStatusHandler<>( (Class<? extends Potion>[])potions, colors );
 	}
 	
 	public static void save( Bundle bundle ) {
 		handler.save( bundle );
 	}
+
+	public static void saveSelectively( Bundle bundle, ArrayList<Item> items ) {
+		handler.saveSelectively( bundle, items );
+	}
 	
 	@SuppressWarnings("unchecked")
 	public static void restore( Bundle bundle ) {
-		handler = new ItemStatusHandler<Potion>( (Class<? extends Potion>[])potions, colors, images, bundle );
+		handler = new ItemStatusHandler<>( (Class<? extends Potion>[])potions, colors, bundle );
 	}
 	
 	public Potion() {
 		super();
-		syncVisuals();
+		reset();
 	}
 
 	@Override
-	public void syncVisuals(){
+	public void reset(){
+		super.reset();
 		image = handler.image( this );
 		color = handler.label( this );
 	};
@@ -138,6 +137,9 @@ public class Potion extends Item {
 	
 	@Override
 	public void execute( final Hero hero, String action ) {
+
+		super.execute( hero, action );
+
 		if (action.equals( AC_DRINK )) {
 			
 			if (isKnown() && (
@@ -146,7 +148,9 @@ public class Potion extends Item {
 					this instanceof PotionOfParalyticGas)) {
 				
 					GameScene.show(
-						new WndOptions( TXT_HARMFUL, TXT_R_U_SURE_DRINK, TXT_YES, TXT_NO ) {
+						new WndOptions( Messages.get(Potion.class, "harmful"),
+								Messages.get(Potion.class, "sure_drink"),
+								Messages.get(Potion.class, "yes"), Messages.get(Potion.class, "no") ) {
 							@Override
 							protected void onSelect(int index) {
 								if (index == 0) {
@@ -159,10 +163,6 @@ public class Potion extends Item {
 				} else {
 					drink( hero );
 				}
-			
-		} else {
-			
-			super.execute( hero, action );
 			
 		}
 	}
@@ -179,7 +179,9 @@ public class Potion extends Item {
 			this instanceof PotionOfMight)) {
 		
 			GameScene.show(
-				new WndOptions( TXT_BENEFICIAL, TXT_R_U_SURE_THROW, TXT_YES, TXT_NO ) {
+				new WndOptions( Messages.get(Potion.class, "beneficial"),
+						Messages.get(Potion.class, "sure_throw"),
+						Messages.get(Potion.class, "yes"), Messages.get(Potion.class, "no") ) {
 					@Override
 					protected void onSelect(int index) {
 						if (index == 0) {
@@ -226,7 +228,7 @@ public class Potion extends Item {
 	
 	public void shatter( int cell ) {
 		if (Dungeon.visible[cell]) {
-			GLog.i( "The flask shatters and " + color() + " liquid splashes harmlessly" );
+			GLog.i( Messages.get(Potion.class, "shatter") );
 			Sample.INSTANCE.play( Assets.SND_SHATTER );
 			splash( cell );
 		}
@@ -258,24 +260,19 @@ public class Potion extends Item {
 		return this;
 	}
 	
-	protected String color() {
-		return color;
-	}
-	
 	@Override
 	public String name() {
-		return isKnown() ? name : color + " potion";
+		return isKnown() ? super.name() : Messages.get(Potion.class, color);
 	}
 	
 	@Override
 	public String info() {
 		return isKnown() ?
 			desc() :
-			"This flask contains a swirling " + color + " liquid. " +
-			"Who knows what it will do when drunk or thrown?";
+			Messages.get(Potion.class, "unknown_desc");
 	}
 
-	public String initials(){
+	public Integer initials(){
 		return isKnown() ? initials : null;
 	}
 	
@@ -316,6 +313,6 @@ public class Potion extends Item {
 	
 	@Override
 	public int price() {
-		return 20 * quantity;
+		return 30 * quantity;
 	}
 }

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,14 +20,14 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.effects;
 
-import java.util.HashMap;
-
-import com.watabou.noosa.Game;
-import com.watabou.noosa.Image;
-import com.watabou.noosa.TextureFilm;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.watabou.noosa.Game;
+import com.watabou.noosa.Image;
+import com.watabou.noosa.TextureFilm;
+
+import java.util.HashMap;
 
 public class SpellSprite extends Image {
 
@@ -35,6 +35,7 @@ public class SpellSprite extends Image {
 	public static final int MAP			= 1;
 	public static final int CHARGE		= 2;
 	public static final int MASTERY		= 3;
+	public static final int BERSERK     = 4;
 	
 	private static final int SIZE	= 16;
 	

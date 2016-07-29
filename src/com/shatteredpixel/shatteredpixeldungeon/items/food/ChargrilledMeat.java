@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,20 +26,14 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 public class ChargrilledMeat extends Food {
 
 	{
-		name = "chargrilled meat";
 		image = ItemSpriteSheet.STEAK;
 		energy = Hunger.STARVING - Hunger.HUNGRY;
 		hornValue = 1;
 	}
 	
 	@Override
-	public String info() {
-		return "It looks like a decent steak.";
-	}
-	
-	@Override
 	public int price() {
-		return 5 * quantity;
+		return 8 * quantity;
 	}
 	
 	public static Food cook( MysteryMeat ingredient ) {

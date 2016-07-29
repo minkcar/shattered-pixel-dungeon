@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,24 +20,22 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import java.util.HashSet;
-
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Terror;
 import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.BruteSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
-public class Brute extends Mob {
+import java.util.HashSet;
 
-	private static final String TXT_ENRAGED = "%s becomes enraged!";
+public class Brute extends Mob {
 	
 	{
-		name = "gnoll brute";
 		spriteClass = BruteSprite.class;
 		
 		HP = HT = 40;
@@ -61,8 +59,8 @@ public class Brute extends Mob {
 	@Override
 	public int damageRoll() {
 		return enraged ?
-			Random.NormalIntRange( 10, 40 ) :
-			Random.NormalIntRange( 8, 18 );
+			Random.NormalIntRange( 15, 45 ) :
+			Random.NormalIntRange( 6, 26 );
 	}
 	
 	@Override
@@ -71,8 +69,8 @@ public class Brute extends Mob {
 	}
 	
 	@Override
-	public int dr() {
-		return 8;
+	public int drRoll() {
+		return Random.NormalIntRange(0, 8);
 	}
 	
 	@Override
@@ -83,20 +81,13 @@ public class Brute extends Mob {
 			enraged = true;
 			spend( TICK );
 			if (Dungeon.visible[pos]) {
-				GLog.w( TXT_ENRAGED, name );
-				sprite.showStatus( CharSprite.NEGATIVE, "enraged" );
+				GLog.w( Messages.get(this, "enraged_text") );
+				sprite.showStatus( CharSprite.NEGATIVE, Messages.get(this, "enraged") );
 			}
 		}
 	}
 	
-	@Override
-	public String description() {
-		return
-			"Brutes are the largest, strongest and toughest of all gnolls. When severely wounded, " +
-			"they go berserk, inflicting even more damage to their enemies.";
-	}
-	
-	private static final HashSet<Class<?>> IMMUNITIES = new HashSet<Class<?>>();
+	private static final HashSet<Class<?>> IMMUNITIES = new HashSet<>();
 	static {
 		IMMUNITIES.add( Terror.class );
 	}

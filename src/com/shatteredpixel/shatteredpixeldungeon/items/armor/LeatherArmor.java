@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,20 +22,14 @@ package com.shatteredpixel.shatteredpixeldungeon.items.armor;
 
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
-
 public class LeatherArmor extends Armor {
 
 	{
-		name = "leather armor";
 		image = ItemSpriteSheet.ARMOR_LEATHER;
 	}
 	
 	public LeatherArmor() {
 		super( 2 );
 	}
-	
-	@Override
-	public String desc() {
-		return "Armor made from tanned monster hide. Not as light as cloth armor but provides better protection.";
-	}
+
 }

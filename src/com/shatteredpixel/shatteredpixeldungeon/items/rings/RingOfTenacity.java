@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,22 +22,9 @@ package com.shatteredpixel.shatteredpixeldungeon.items.rings;
 
 public class RingOfTenacity extends Ring {
 
-	{
-		name = "Ring of Tenacity";
-	}
-
 	@Override
 	protected RingBuff buff( ) {
 		return new Tenacity();
-	}
-
-	@Override
-	public String desc() {
-		return isKnown() ?
-				"When worn, this ring will allow the wearer to resist normally mortal strikes. " +
-				"The more injured the user is, the more resistant they will be to damage. " +
-				"A degraded ring will instead make it easier for enemies to execute the wearer." :
-				super.desc();
 	}
 
 	public class Tenacity extends RingBuff {

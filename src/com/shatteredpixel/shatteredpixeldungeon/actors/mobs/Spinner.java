@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,8 +20,6 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import java.util.HashSet;
-
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Web;
@@ -34,10 +32,11 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.SpinnerSprite;
 import com.watabou.utils.Random;
 
+import java.util.HashSet;
+
 public class Spinner extends Mob {
 
 	{
-		name = "cave spinner";
 		spriteClass = SpinnerSprite.class;
 
 		HP = HT = 50;
@@ -54,7 +53,7 @@ public class Spinner extends Mob {
 
 	@Override
 	public int damageRoll() {
-		return Random.NormalIntRange(12, 16);
+		return Random.NormalIntRange(10, 25);
 	}
 
 	@Override
@@ -63,8 +62,8 @@ public class Spinner extends Mob {
 	}
 
 	@Override
-	public int dr() {
-		return 6;
+	public int drRoll() {
+		return Random.NormalIntRange(0, 6);
 	}
 
 	@Override
@@ -96,14 +95,7 @@ public class Spinner extends Mob {
 		super.move(step);
 	}
 
-	@Override
-	public String description() {
-		return
-				"These greenish furry cave spiders try to avoid direct combat, preferring to wait in the distance " +
-						"while their victim, entangled in the spinner's excreted cobweb, slowly dies from their poisonous bite.";
-	}
-
-	private static final HashSet<Class<?>> RESISTANCES = new HashSet<Class<?>>();
+	private static final HashSet<Class<?>> RESISTANCES = new HashSet<>();
 
 	static {
 		RESISTANCES.add(Poison.class);
@@ -114,7 +106,7 @@ public class Spinner extends Mob {
 		return RESISTANCES;
 	}
 
-	private static final HashSet<Class<?>> IMMUNITIES = new HashSet<Class<?>>();
+	private static final HashSet<Class<?>> IMMUNITIES = new HashSet<>();
 
 	static {
 		IMMUNITIES.add(Roots.class);

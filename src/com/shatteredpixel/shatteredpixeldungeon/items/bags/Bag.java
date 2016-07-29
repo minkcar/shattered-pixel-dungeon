@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,9 +20,6 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items.bags;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -33,6 +30,9 @@ import com.shatteredpixel.shatteredpixeldungeon.windows.WndBag;
 import com.watabou.utils.Bundlable;
 import com.watabou.utils.Bundle;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+
 public class Bag extends Item implements Iterable<Item> {
 
 	public static final String AC_OPEN	= "OPEN";
@@ -41,6 +41,8 @@ public class Bag extends Item implements Iterable<Item> {
 		image = 11;
 		
 		defaultAction = AC_OPEN;
+
+		unique = true;
 	}
 	
 	public Char owner;
@@ -51,29 +53,30 @@ public class Bag extends Item implements Iterable<Item> {
 	
 	@Override
 	public void execute( Hero hero, String action ) {
+
+		super.execute( hero, action );
+
 		if (action.equals( AC_OPEN )) {
 			
 			GameScene.show( new WndBag( this, null, WndBag.Mode.ALL, null ) );
-			
-		} else {
-		
-			super.execute( hero, action );
 			
 		}
 	}
 	
 	@Override
 	public boolean collect( Bag container ) {
+
+		for (Item item : container.items.toArray( new Item[0] )) {
+			if (grab( item )) {
+				item.detachAll( container );
+				if (!item.collect( this ))
+					item.collect( container );
+			}
+		}
+
 		if (super.collect( container )) {
 			
 			owner = container.owner;
-			
-			for (Item item : container.items.toArray( new Item[0] )) {
-				if (grab( item )) {
-					item.detachAll( container );
-					item.collect( this );
-				}
-			}
 			
 			Badges.validateAllBagsBought( this );
 			

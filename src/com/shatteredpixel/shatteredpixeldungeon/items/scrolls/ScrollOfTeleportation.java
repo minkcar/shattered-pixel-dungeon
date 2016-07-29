@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,29 +20,23 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items.scrolls;
 
-import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
-import com.watabou.noosa.audio.Sample;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
+import com.watabou.noosa.audio.Sample;
 import com.watabou.noosa.tweeners.AlphaTweener;
 
 public class ScrollOfTeleportation extends Scroll {
 
-	public static final String TXT_TELEPORTED =
-		"In a blink of an eye you were teleported to another location of the level.";
-	
-	public static final String TXT_NO_TELEPORT =
-		"Strong magic aura of this place prevents you from teleporting!";
-	
 	{
-		name = "Scroll of Teleportation";
-		initials = "TP";
+		initials = 9;
 	}
-	
+
 	@Override
 	protected void doRead() {
 
@@ -51,8 +45,8 @@ public class ScrollOfTeleportation extends Scroll {
 		
 		teleportHero( curUser );
 		setKnown();
-		
-		curUser.spendAndNext( TIME_TO_READ );
+
+		readAnimation();
 	}
 	
 	public static void teleportHero( Hero  hero ) {
@@ -66,9 +60,9 @@ public class ScrollOfTeleportation extends Scroll {
 			}
 		} while (pos == -1);
 		
-		if (pos == -1) {
+		if (pos == -1 || Dungeon.bossLevel()) {
 			
-			GLog.w( TXT_NO_TELEPORT );
+			GLog.w( Messages.get(ScrollOfTeleportation.class, "no_tele") );
 			
 		} else {
 
@@ -76,7 +70,7 @@ public class ScrollOfTeleportation extends Scroll {
 			Dungeon.level.press( pos, hero );
 			Dungeon.observe();
 			
-			GLog.i( TXT_TELEPORTED );
+			GLog.i( Messages.get(ScrollOfTeleportation.class, "tele") );
 			
 		}
 	}
@@ -98,16 +92,7 @@ public class ScrollOfTeleportation extends Scroll {
 	}
 	
 	@Override
-	public String desc() {
-		return
-			"The spell on this parchment instantly transports the reader " +
-			"to a random location on the dungeon level. It can be used " +
-			"to escape a dangerous situation, but the unlucky reader might " +
-			"find himself in an even more dangerous place.";
-	}
-	
-	@Override
 	public int price() {
-		return isKnown() ? 40 * quantity : super.price();
+		return isKnown() ? 30 * quantity : super.price();
 	}
 }

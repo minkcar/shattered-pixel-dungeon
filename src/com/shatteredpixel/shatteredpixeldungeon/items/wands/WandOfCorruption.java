@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,38 +26,23 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Amok;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Corruption;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.DM300;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Goo;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.King;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Tengu;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Yog;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Ghost;
 import com.shatteredpixel.shatteredpixeldungeon.effects.MagicMissile;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Callback;
 import com.watabou.utils.Random;
 
-import java.util.Arrays;
-import java.util.HashSet;
 
 //TODO: balancing
 public class WandOfCorruption extends Wand {
 
 	{
-		name = "Wand of Corruption";
 		image = ItemSpriteSheet.WAND_CORRUPTION;
 	}
-
-	//FIXME: sloppy
-	private static HashSet<Class> bosses = new HashSet<Class>(Arrays.asList(
-			Ghost.FetidRat.class, Ghost.GnollTrickster.class, Ghost.GreatCrab.class,
-			Goo.class, Tengu.class, DM300.class, King.class,
-			Yog.class, Yog.BurningFist.class, Yog.RottingFist.class
-	));
 
 	@Override
 	protected void onZap(Ballistica bolt) {
@@ -66,16 +51,16 @@ public class WandOfCorruption extends Wand {
 		if (ch != null){
 
 			if(ch.buff(Corruption.class) != null){
-				GLog.w("that character is already corrupted");
+				GLog.w( Messages.get(this, "already_corrupted") );
 				return;
 			}
 
-			if (bosses.contains(ch.getClass())){
-				GLog.w("Bosses are immune to corruption");
+			if (ch.properties().contains(Char.Property.BOSS) || ch.properties().contains(Char.Property.MINIBOSS)){
+				GLog.w( Messages.get(this, "boss") );
 				return;
 			}
 
-			int basePower = 10 + 2*level;
+			int basePower = 10 + 2*level();
 			int mobPower = Random.IntRange(0, ch.HT) + ch.HP*2;
 			for ( Buff buff : ch.buffs()){
 				if (buff.type == Buff.buffType.NEGATIVE){
@@ -88,13 +73,13 @@ public class WandOfCorruption extends Wand {
 			//try to use extra charges to overpower the mob
 			while (basePower <= mobPower){
 				extraCharges++;
-				basePower += 5 + level;
+				basePower += 5 + level();
 			}
 
 			//if we fail, lose all charges, remember we have 1 left to lose from using the wand.
 			if (extraCharges >= curCharges){
 				curCharges = 1;
-				GLog.w("The corrupting power was not strong enough, nothing happens.");
+				GLog.w( Messages.get(this, "fail") );
 				return;
 			}
 
@@ -103,6 +88,8 @@ public class WandOfCorruption extends Wand {
 			ch.HP = ch.HT;
 			curCharges -= extraCharges;
 			usagesToKnow -= extraCharges;
+
+			processSoulMark(ch, extraCharges+chargesPerCast());
 		}
 	}
 
@@ -111,8 +98,8 @@ public class WandOfCorruption extends Wand {
 		// lvl 0 - 25%
 		// lvl 1 - 40%
 		// lvl 2 - 50%
-		if (Random.Int( level + 4 ) >= 3){
-			Buff.prolong( defender, Amok.class, 3+level);
+		if (Random.Int( level() + 4 ) >= 3){
+			Buff.prolong( defender, Amok.class, 3+level());
 		}
 	}
 
@@ -132,14 +119,4 @@ public class WandOfCorruption extends Wand {
 		particle.shuffleXY(2f);
 	}
 
-	@Override
-	public String desc() {
-		return "This wand radiates dark energy, if that weren't already obvious from the small decorative skull shaped onto its tip.\n" +
-				"\n" +
-				"This wand will release a blast of corrupting energy, attempting to bend enemies to your will. " +
-				"Full health enemies are dramatically harder to corrupt than weakened and debuffed ones. " +
-				"Successfully corrupting an enemy restores them to full health.\n" +
-				"\n" +
-				"This wand uses at least one charge per cast, but will often use more in an attempt to overpower more healthy enemies.";
-	}
 }

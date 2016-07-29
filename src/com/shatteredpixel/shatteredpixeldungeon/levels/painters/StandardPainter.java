@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -113,6 +113,9 @@ public class StandardPainter extends Painter {
 					break;
 				case 3:
 					t = Terrain.INACTIVE_TRAP;
+					FireTrap trap = new FireTrap();
+					trap.reveal().active = false;
+					level.setTrap(trap, cell);
 					break;
 				}
 				level.map[cell] = t;

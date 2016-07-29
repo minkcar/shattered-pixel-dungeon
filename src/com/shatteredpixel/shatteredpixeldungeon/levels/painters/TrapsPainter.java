@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,6 @@
 package com.shatteredpixel.shatteredpixeldungeon.levels.painters;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
@@ -29,25 +28,42 @@ import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfLevitation
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.BlazingTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ConfusionTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.DisintegrationTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ExplosiveTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.FlockTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.GrimTrap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ParalyticTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.SpearTrap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.SummoningTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.TeleportationTrap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ToxicTrap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.VenomTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.WarpingTrap;
 import com.watabou.utils.Random;
 
 public class TrapsPainter extends Painter {
 
 	public static void paint( Level level, Room room ) {
 		 
-		Class traps[] = new Class[]{
-			ToxicTrap.class, ToxicTrap.class, ToxicTrap.class,
-			ParalyticTrap.class, ParalyticTrap.class,
-			!Dungeon.bossLevel(Dungeon.depth + 1) ? null : SummoningTrap.class};
 		fill( level, room, Terrain.WALL );
 
-		Class trap = Random.element(traps);
+		Class<? extends Trap> trapClass;
+		switch (Random.Int(5)){
+			case 0: default:
+				trapClass = SpearTrap.class;
+				break;
+			case 1:
+				trapClass = !Dungeon.bossLevel(Dungeon.depth + 1)? null : SummoningTrap.class;
+				break;
+			case 2: case 3: case 4:
+				trapClass = Random.oneOf(levelTraps[Dungeon.depth/5]);
+				break;
+		}
 
-		if (trap == null){
+		if (trapClass == null){
 			fill(level, room, 1, Terrain.CHASM);
 		} else {
 			fill(level, room, 1, Terrain.TRAP);
@@ -81,7 +97,7 @@ public class TrapsPainter extends Painter {
 		for(int cell : room.getCells()) {
 			if (level.map[cell] == Terrain.TRAP){
 				try {
-					level.setTrap(((Trap) trap.newInstance()).reveal(), cell);
+					level.setTrap(((Trap) trapClass.newInstance()).reveal(), cell);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -122,11 +138,25 @@ public class TrapsPainter extends Painter {
 				Generator.Category.WEAPON,
 				Generator.Category.ARMOR
 			) );
-			if (another.level > prize.level) {
+			if (another.level() > prize.level()) {
 				prize = another;
 			}
 		}
 		
 		return prize;
 	}
+
+	@SuppressWarnings("unchecked")
+	private static Class<?extends Trap>[][] levelTraps = new Class[][]{
+			//sewers
+			{ToxicTrap.class, TeleportationTrap.class, FlockTrap.class},
+			//prison
+			{ConfusionTrap.class, ExplosiveTrap.class, ParalyticTrap.class},
+			//caves
+			{BlazingTrap.class, VenomTrap.class, ExplosiveTrap.class},
+			//city
+			{WarpingTrap.class, VenomTrap.class, DisintegrationTrap.class},
+			//halls, muahahahaha
+			{GrimTrap.class}
+	};
 }

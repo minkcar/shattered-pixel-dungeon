@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,22 +20,14 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.windows;
 
-import java.util.Locale;
-
-
-import com.watabou.noosa.BitmapText;
-import com.watabou.noosa.ColorBlock;
-import com.watabou.noosa.Game;
-import com.watabou.noosa.Group;
-import com.watabou.noosa.Image;
-import com.watabou.noosa.audio.Sample;
-import com.watabou.noosa.ui.Button;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.Rankings;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Belongings;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.HeroSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BadgesList;
@@ -44,27 +36,27 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.ItemSlot;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RedButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.ScrollPane;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
-import com.shatteredpixel.shatteredpixeldungeon.utils.Utils;
+import com.watabou.noosa.ColorBlock;
+import com.watabou.noosa.Game;
+import com.watabou.noosa.Group;
+import com.watabou.noosa.Image;
+import com.watabou.noosa.RenderedText;
+import com.watabou.noosa.audio.Sample;
+import com.watabou.noosa.ui.Button;
+
+import java.util.Locale;
 
 public class WndRanking extends WndTabbed {
 	
-	private static final String TXT_ERROR		= "Unable to load additional information";
-	
-	private static final String TXT_STATS	= "Stats";
-	private static final String TXT_ITEMS	= "Items";
-	private static final String TXT_BADGES	= "Badges";
-	
 	private static final int WIDTH			= 115;
 	private static final int HEIGHT			= 144;
-	
-	private static final int TAB_WIDTH	= 40;
 	
 	private Thread thread;
 	private String error = null;
 	
 	private Image busy;
-	
-	public WndRanking( final String gameFile ) {
+
+	public WndRanking( final Rankings.Record rec ) {
 		
 		super();
 		resize( WIDTH, HEIGHT );
@@ -74,9 +66,9 @@ public class WndRanking extends WndTabbed {
 			public void run() {
 				try {
 					Badges.loadGlobal();
-					Dungeon.loadGame( gameFile );
-				} catch (Exception e ) {
-					error = TXT_ERROR;
+					Rankings.INSTANCE.loadGameData( rec );
+				} catch ( Exception e ) {
+					error = Messages.get(WndRanking.class, "error");
 				}
 			}
 		};
@@ -101,15 +93,15 @@ public class WndRanking extends WndTabbed {
 				createControls();
 			} else {
 				hide();
-				Game.scene().add( new WndError( TXT_ERROR ) );
+				Game.scene().add( new WndError( error ) );
 			}
 		}
 	}
-
+	
 	private void createControls() {
 		
 		String[] labels =
-			{TXT_STATS, TXT_ITEMS, TXT_BADGES};
+			{Messages.get(this, "stats"), Messages.get(this, "items"), Messages.get(this, "badges")};
 		Group[] pages =
 			{new StatsTab(), new ItemsTab(), new BadgesTab()};
 		
@@ -145,34 +137,19 @@ public class WndRanking extends WndTabbed {
 	}
 	
 	private class StatsTab extends Group {
-		
-		private static final int GAP	= 4;
-		
-		private static final String TXT_TITLE	= "Level %d %s";
 
-		private static final String TXT_CHALLENGES	= "Challenges";
-
-		private static final String TXT_HEALTH	= "Health";
-		private static final String TXT_STR		= "Strength";
-		
-		private static final String TXT_DURATION	= "Game Duration";
-		
-		private static final String TXT_DEPTH	= "Maximum Depth";
-		private static final String TXT_ENEMIES	= "Mobs Killed";
-		private static final String TXT_GOLD	= "Gold Collected";
-		
-		private static final String TXT_FOOD	= "Food Eaten";
-		private static final String TXT_ALCHEMY	= "Potions Cooked";
-		private static final String TXT_ANKHS	= "Ankhs Used";
+		private int GAP	= 4;
 		
 		public StatsTab() {
 			super();
+
+			if (Dungeon.challenges > 0) GAP--;
 			
 			String heroClass = Dungeon.hero.className();
 			
 			IconTitle title = new IconTitle();
 			title.icon( HeroSprite.avatar( Dungeon.hero.heroClass, Dungeon.hero.tier() ) );
-			title.label( Utils.format( TXT_TITLE, Dungeon.hero.lvl, heroClass ).toUpperCase( Locale.ENGLISH ) );
+			title.label( Messages.get(this, "title", Dungeon.hero.lvl, heroClass ).toUpperCase( Locale.ENGLISH ) );
 			title.color(Window.SHPX_COLOR);
 			title.setRect( 0, 0, WIDTH, 0 );
 			add( title );
@@ -180,13 +157,13 @@ public class WndRanking extends WndTabbed {
 			float pos = title.bottom();
 
 			if (Dungeon.challenges > 0) {
-				RedButton btnCatalogus = new RedButton( TXT_CHALLENGES ) {
+				RedButton btnCatalogus = new RedButton( Messages.get(this, "challenges") ) {
 					@Override
 					protected void onClick() {
 						Game.scene().add( new WndChallenges( Dungeon.challenges, false ) );
 					}
 				};
-				btnCatalogus.setRect( 0, pos + GAP, btnCatalogus.reqWidth() + 2, btnCatalogus.reqHeight() + 2 );
+				btnCatalogus.setRect( 0, pos, btnCatalogus.reqWidth() + 2, btnCatalogus.reqHeight() + 2 );
 				add( btnCatalogus );
 
 				pos = btnCatalogus.bottom();
@@ -194,36 +171,36 @@ public class WndRanking extends WndTabbed {
 
 			pos += GAP + GAP;
 			
-			pos = statSlot( this, TXT_STR, Integer.toString( Dungeon.hero.STR ), pos );
-			pos = statSlot( this, TXT_HEALTH, Integer.toString( Dungeon.hero.HT ), pos );
+			pos = statSlot( this, Messages.get(this, "str"), Integer.toString( Dungeon.hero.STR ), pos );
+			pos = statSlot( this, Messages.get(this, "health"), Integer.toString( Dungeon.hero.HT ), pos );
 			
 			pos += GAP;
 			
-			pos = statSlot( this, TXT_DURATION, Integer.toString( (int)Statistics.duration ), pos );
+			pos = statSlot( this, Messages.get(this, "duration"), Integer.toString( (int)Statistics.duration ), pos );
 			
 			pos += GAP;
 			
-			pos = statSlot( this, TXT_DEPTH, Integer.toString( Statistics.deepestFloor ), pos );
-			pos = statSlot( this, TXT_ENEMIES, Integer.toString( Statistics.enemiesSlain ), pos );
-			pos = statSlot( this, TXT_GOLD, Integer.toString( Statistics.goldCollected ), pos );
+			pos = statSlot( this, Messages.get(this, "depth"), Integer.toString( Statistics.deepestFloor ), pos );
+			pos = statSlot( this, Messages.get(this, "enemies"), Integer.toString( Statistics.enemiesSlain ), pos );
+			pos = statSlot( this, Messages.get(this, "gold"), Integer.toString( Statistics.goldCollected ), pos );
 			
 			pos += GAP;
 			
-			pos = statSlot( this, TXT_FOOD, Integer.toString( Statistics.foodEaten ), pos );
-			pos = statSlot( this, TXT_ALCHEMY, Integer.toString( Statistics.potionsCooked ), pos );
-			pos = statSlot( this, TXT_ANKHS, Integer.toString( Statistics.ankhsUsed ), pos );
+			pos = statSlot( this, Messages.get(this, "food"), Integer.toString( Statistics.foodEaten ), pos );
+			pos = statSlot( this, Messages.get(this, "alchemy"), Integer.toString( Statistics.potionsCooked ), pos );
+			pos = statSlot( this, Messages.get(this, "ankhs"), Integer.toString( Statistics.ankhsUsed ), pos );
 		}
 		
 		private float statSlot( Group parent, String label, String value, float pos ) {
 			
-			BitmapText txt = PixelScene.createText( label, 7 );
+			RenderedText txt = PixelScene.renderText( label, 7 );
 			txt.y = pos;
 			parent.add( txt );
 			
-			txt = PixelScene.createText( value, 7 );
-			txt.measure();
-			txt.x = PixelScene.align( WIDTH * 0.65f );
+			txt = PixelScene.renderText( value, 7 );
+			txt.x = WIDTH * 0.65f;
 			txt.y = pos;
+			PixelScene.align(txt);
 			parent.add( txt );
 			
 			return pos + GAP + txt.baseLine();
@@ -251,8 +228,8 @@ public class WndRanking extends WndTabbed {
 				addItem( stuff.misc2);
 			}
 
-			pos = 29;
-			for (int i = 0; i < 2; i++){
+			pos = 0;
+			for (int i = 0; i < 4; i++){
 				if (Dungeon.quickslot.getItem(i) != null){
 					QuickSlotButton slot = new QuickSlotButton(Dungeon.quickslot.getItem(i));
 
@@ -261,7 +238,7 @@ public class WndRanking extends WndTabbed {
 					add(slot);
 
 				} else {
-					ColorBlock bg = new ColorBlock( 28, 28, 0xFF4A4D44);
+					ColorBlock bg = new ColorBlock( 28, 28, 0x9953564D );
 					bg.x = pos;
 					bg.y = 116;
 					add(bg);
@@ -301,7 +278,7 @@ public class WndRanking extends WndTabbed {
 		
 		private ItemSlot slot;
 		private ColorBlock bg;
-		private BitmapText name;
+		private RenderedText name;
 		
 		public ItemButton( Item item ) {
 			
@@ -322,13 +299,13 @@ public class WndRanking extends WndTabbed {
 		@Override
 		protected void createChildren() {
 			
-			bg = new ColorBlock( HEIGHT, HEIGHT, 0xFF4A4D44 );
+			bg = new ColorBlock( HEIGHT, HEIGHT, 0x9953564D );
 			add( bg );
 			
 			slot = new ItemSlot();
 			add( slot );
 			
-			name = PixelScene.createText( "?", 7 );
+			name = PixelScene.renderText( "?", 7 );
 			add( name );
 			
 			super.createChildren();
@@ -340,18 +317,18 @@ public class WndRanking extends WndTabbed {
 			bg.y = y;
 			
 			slot.setRect( x, y, HEIGHT, HEIGHT );
+			PixelScene.align(slot);
 			
 			name.x = slot.right() + 2;
 			name.y = y + (height - name.baseLine()) / 2;
+			PixelScene.align(name);
 			
-			String str = Utils.capitalize( item.name() );
+			String str = Messages.titleCase( item.name() );
 			name.text( str );
-			name.measure();
 			if (name.width() > width - name.x) {
 				do {
 					str = str.substring( 0, str.length() - 1 );
 					name.text( str + "..." );
-					name.measure();
 				} while (name.width() > width - name.x);
 			}
 			
@@ -388,7 +365,7 @@ public class WndRanking extends WndTabbed {
 
 		@Override
 		protected void createChildren() {
-			bg = new ColorBlock( HEIGHT, HEIGHT, 0xFF4A4D44 );
+			bg = new ColorBlock( HEIGHT, HEIGHT, 0x9953564D );
 			add( bg );
 
 			super.createChildren();

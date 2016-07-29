@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,9 +20,6 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items.quest;
 
-import java.util.ArrayList;
-
-import com.watabou.noosa.audio.Sample;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -34,13 +31,17 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite.Glowing;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
+import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Callback;
+
+import java.util.ArrayList;
 
 public class Pickaxe extends Weapon {
 	
@@ -48,25 +49,34 @@ public class Pickaxe extends Weapon {
 	
 	public static final float TIME_TO_MINE = 2;
 	
-	private static final String TXT_NO_VEIN = "There is no dark gold vein near you to mine";
-	
 	private static final Glowing BLOODY = new Glowing( 0x550000 );
 	
 	{
-		name = "pickaxe";
 		image = ItemSpriteSheet.PICKAXE;
 		
 		unique = true;
 		
 		defaultAction = AC_MINE;
-		
-		STR = 14;
-		MIN = 3;
-		MAX = 12;
+
 	}
 	
 	public boolean bloodStained = false;
-	
+
+	@Override
+	public int min(int lvl) {
+		return 2;   //tier 2
+	}
+
+	@Override
+	public int max(int lvl) {
+		return 15;  //tier 2
+	}
+
+	@Override
+	public int STRReq(int lvl) {
+		return 14;  //tier 3
+	}
+
 	@Override
 	public ArrayList<String> actions( Hero hero ) {
 		ArrayList<String> actions = super.actions( hero );
@@ -76,11 +86,13 @@ public class Pickaxe extends Weapon {
 	
 	@Override
 	public void execute( final Hero hero, String action ) {
+
+		super.execute( hero, action );
 		
-		if (action == AC_MINE) {
+		if (action.equals(AC_MINE)) {
 			
 			if (Dungeon.depth < 11 || Dungeon.depth > 15) {
-				GLog.w( TXT_NO_VEIN );
+				GLog.w( Messages.get(this, "no_vein") );
 				return;
 			}
 			
@@ -105,7 +117,7 @@ public class Pickaxe extends Weapon {
 							
 							DarkGold gold = new DarkGold();
 							if (gold.doPickUp( Dungeon.hero )) {
-								GLog.i( Hero.TXT_YOU_NOW_HAVE, gold.name() );
+								GLog.i( Messages.get(Dungeon.hero, "you_now_have", gold.name()) );
 							} else {
 								Dungeon.level.drop( gold, hero.pos ).sprite.drop();
 							}
@@ -124,11 +136,7 @@ public class Pickaxe extends Weapon {
 				}
 			}
 			
-			GLog.w( TXT_NO_VEIN );
-			
-		} else {
-			
-			super.execute( hero, action );
+			GLog.w( Messages.get(this, "no_vein") );
 			
 		}
 	}
@@ -144,11 +152,12 @@ public class Pickaxe extends Weapon {
 	}
 	
 	@Override
-	public void proc( Char attacker, Char defender, int damage ) {
+	public int proc( Char attacker, Char defender, int damage ) {
 		if (!bloodStained && defender instanceof Bat && (defender.HP <= damage)) {
 			bloodStained = true;
 			updateQuickslot();
 		}
+		return damage;
 	}
 	
 	private static final String BLOODSTAINED = "bloodStained";
@@ -171,10 +180,5 @@ public class Pickaxe extends Weapon {
 	public Glowing glowing() {
 		return bloodStained ? BLOODY : null;
 	}
-	
-	@Override
-	public String info() {
-		return
-			"This is a large and sturdy tool for breaking rocks. Probably it can be used as a weapon.";
-	}
+
 }

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,21 +21,18 @@
 package com.shatteredpixel.shatteredpixeldungeon.windows;
 
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
-import com.watabou.noosa.BitmapTextMultiline;
+import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
+import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextMultiline;
+import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.ui.Component;
-import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
-import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
 
 public class WndTitledMessage extends Window {
 
-	private static final int WIDTH_P    = 120;
-	private static final int WIDTH_L    = 144;
-	private static final int GAP	= 2;
-	
-	private BitmapTextMultiline normal;
-	private BitmapTextMultiline highlighted;
-	
+	protected static final int WIDTH_P    = 120;
+	protected static final int WIDTH_L    = 144;
+	protected static final int GAP	= 2;
+
 	public WndTitledMessage( Image icon, String title, String message ) {
 		
 		this( new IconTitle( icon, title ), message );
@@ -43,37 +40,19 @@ public class WndTitledMessage extends Window {
 	}
 	
 	public WndTitledMessage( Component titlebar, String message ) {
-		
+
 		super();
 
 		int width = ShatteredPixelDungeon.landscape() ? WIDTH_L : WIDTH_P;
 
 		titlebar.setRect( 0, 0, width, 0 );
-		add( titlebar );
-		
-		Highlighter hl = new Highlighter( message );
-		
-		normal = PixelScene.createMultiline( hl.text, 6 );
-		normal.maxWidth = width;
-		normal.measure();
-		normal.x = titlebar.left();
-		normal.y = titlebar.bottom() + GAP;
-		add( normal );
-		
-		if (hl.isHighlighted()) {
-			normal.mask = hl.inverted();
-			
-			highlighted = PixelScene.createMultiline( hl.text, 6 );
-			highlighted.maxWidth = normal.maxWidth;
-			highlighted.measure();
-			highlighted.x = normal.x;
-			highlighted.y = normal.y;
-			add( highlighted );
-	
-			highlighted.mask = hl.mask;
-			highlighted.hardlight( TITLE_COLOR );
-		}
-		
-		resize( width, (int)(normal.y + normal.height()) );
+		add(titlebar);
+
+		RenderedTextMultiline text = PixelScene.renderMultiline( 6 );
+		text.text( message, width );
+		text.setPos( titlebar.left(), titlebar.bottom() + GAP );
+		add( text );
+
+		resize( width, (int)text.bottom() );
 	}
 }

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,21 +26,12 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.KindofMisc;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
-import com.shatteredpixel.shatteredpixeldungeon.utils.Utils;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
-import java.util.ArrayList;
-
 public class Artifact extends KindofMisc {
-
-	private static final float TIME_TO_EQUIP = 1f;
-
-	private static final String TXT_TO_STRING		        = "%s";
-	private static final String TXT_TO_STRING_CHARGE		= "%s (%d/%d)";
-	private static final String TXT_TO_STRING_LVL	        = "%s%+d";
-	private static final String TXT_TO_STRING_LVL_CHARGE	= "%s%+d (%d/%d)";
 
 	protected Buff passiveBuff;
 	protected Buff activeBuff;
@@ -63,53 +54,27 @@ public class Artifact extends KindofMisc {
 	//used by some artifacts to keep track of duration of effects or cooldowns to use.
 	protected int cooldown = 0;
 
-
-	public Artifact(){
-		super();
-	}
-
 	@Override
-	public ArrayList<String> actions( Hero hero ) {
-		ArrayList<String> actions = super.actions( hero );
-		actions.add( isEquipped( hero ) ? AC_UNEQUIP : AC_EQUIP );
-		return actions;
-	}
+	public boolean doEquip( final Hero hero ) {
 
-	@Override
-	public boolean doEquip( Hero hero ) {
-
-		if (hero.belongings.misc1 != null && hero.belongings.misc2 != null) {
-
-			GLog.w("you can only wear 2 misc items at a time");
-			return false;
-
-		} else if ((hero.belongings.misc1 != null && hero.belongings.misc1.getClass() == this.getClass())
+		if ((hero.belongings.misc1 != null && hero.belongings.misc1.getClass() == this.getClass())
 				|| (hero.belongings.misc2 != null && hero.belongings.misc2.getClass() == this.getClass())){
 
-			GLog.w("you cannot wear two of the same artifact");
+			GLog.w( Messages.get(Artifact.class, "cannot_wear_two") );
 			return false;
 
 		} else {
 
-			if (hero.belongings.misc1 == null) {
-				hero.belongings.misc1 = this;
+			if (super.doEquip( hero )){
+
+				identify();
+				return true;
+
 			} else {
-				hero.belongings.misc2 = this;
+
+				return false;
+
 			}
-
-			detach( hero.belongings.backpack );
-
-			activate( hero );
-
-			cursedKnown = true;
-			identify();
-			if (cursed) {
-				equipCursed( hero );
-				GLog.n( "the " + this.name + " painfully binds itself to you" );
-			}
-
-			hero.spendAndNext( TIME_TO_EQUIP );
-			return true;
 
 		}
 
@@ -124,21 +89,15 @@ public class Artifact extends KindofMisc {
 	public boolean doUnequip( Hero hero, boolean collect, boolean single ) {
 		if (super.doUnequip( hero, collect, single )) {
 
-		if (hero.belongings.misc1 == this) {
-			hero.belongings.misc1 = null;
-		} else {
-			hero.belongings.misc2 = null;
-		}
+			passiveBuff.detach();
+			passiveBuff = null;
 
-		passiveBuff.detach();
-		passiveBuff = null;
+			if (activeBuff != null){
+				activeBuff.detach();
+				activeBuff = null;
+			}
 
-		if (activeBuff != null){
-			activeBuff.detach();
-			activeBuff = null;
-		}
-
-		return true;
+			return true;
 
 		} else {
 
@@ -148,18 +107,13 @@ public class Artifact extends KindofMisc {
 	}
 
 	@Override
-	public boolean isEquipped( Hero hero ) {
-		return hero.belongings.misc1 == this || hero.belongings.misc2 == this;
-	}
-
-	@Override
 	public boolean isUpgradable() {
 		return false;
 	}
 
 	@Override
 	public int visiblyUpgraded() {
-		return ((level*10)/levelCap);
+		return levelKnown ? Math.round((level()*10)/(float)levelCap): 0;
 	}
 
 	//transfers upgrades from another artifact, transfer level will equal the displayed level
@@ -171,7 +125,7 @@ public class Artifact extends KindofMisc {
 	public String info() {
 		if (cursed && cursedKnown && !isEquipped( Dungeon.hero )) {
 
-			return desc() + "\n\nYou can feel a malevolent magic lurking within the " + name() + ".";
+			return desc() + "\n\n" + Messages.get(Artifact.class, "curse_known");
 
 		} else {
 
@@ -181,42 +135,24 @@ public class Artifact extends KindofMisc {
 	}
 
 	@Override
-	public String toString() {
-
-		if (levelKnown && level/levelCap != 0) {
-			if (chargeCap > 0) {
-				return Utils.format( TXT_TO_STRING_LVL_CHARGE, name(), visiblyUpgraded(), charge, chargeCap );
-			} else {
-				return Utils.format( TXT_TO_STRING_LVL, name(), visiblyUpgraded() );
-			}
-		} else {
-			if (chargeCap > 0) {
-				return Utils.format( TXT_TO_STRING_CHARGE, name(), charge, chargeCap );
-			} else {
-				return Utils.format( TXT_TO_STRING, name() );
-			}
-		}
-	}
-
-	@Override
 	public String status() {
 
 		//display the current cooldown
 		if (cooldown != 0)
-			return Utils.format( "%d", cooldown );
+			return Messages.format( "%d", cooldown );
 
 		//display as percent
 		if (chargeCap == 100)
-			return Utils.format( "%d%%", charge );
+			return Messages.format( "%d%%", charge );
 
 		//display as #/#
 		if (chargeCap > 0)
-			return Utils.format( "%d/%d", charge, chargeCap );
+			return Messages.format( "%d/%d", charge, chargeCap );
 
 		//if there's no cap -
 		//- but there is charge anyway, display that charge
 		if (charge != 0)
-			return Utils.format( "%d", charge );
+			return Messages.format( "%d", charge );
 
 		//otherwise, if there's no charge, return null.
 		return null;
@@ -244,8 +180,8 @@ public class Artifact extends KindofMisc {
 	@Override
 	public int price() {
 		int price = 100;
-		if (level > 0)
-			price += 50*((level*10)/levelCap);
+		if (level() > 0)
+			price += 20*visiblyUpgraded();
 		if (cursed && cursedKnown) {
 			price /= 2;
 		}
@@ -264,8 +200,8 @@ public class Artifact extends KindofMisc {
 
 	public class ArtifactBuff extends Buff {
 
-		public int level() {
-			return level;
+		public int itemLevel() {
+			return level();
 		}
 
 		public boolean isCursed() {
@@ -282,7 +218,6 @@ public class Artifact extends KindofMisc {
 	@Override
 	public void storeInBundle( Bundle bundle ) {
 		super.storeInBundle(bundle);
-		bundle.put( IMAGE, image );
 		bundle.put( EXP , exp );
 		bundle.put( CHARGE , charge );
 		bundle.put( PARTIALCHARGE , partialCharge );
@@ -291,7 +226,6 @@ public class Artifact extends KindofMisc {
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
 		super.restoreFromBundle(bundle);
-		if (bundle.contains( IMAGE )) image = bundle.getInt( IMAGE );
 		exp = bundle.getInt( EXP );
 		charge = bundle.getInt( CHARGE );
 		partialCharge = bundle.getFloat( PARTIALCHARGE );

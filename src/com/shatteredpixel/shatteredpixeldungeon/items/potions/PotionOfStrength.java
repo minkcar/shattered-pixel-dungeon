@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,14 +22,14 @@ package com.shatteredpixel.shatteredpixeldungeon.items.potions;
 
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 
 public class PotionOfStrength extends Potion {
 
 	{
-		name = "Potion of Strength";
-		initials = "St";
+		initials = 10;
 
 		bones = true;
 	}
@@ -39,21 +39,14 @@ public class PotionOfStrength extends Potion {
 		setKnown();
 		
 		hero.STR++;
-		hero.sprite.showStatus( CharSprite.POSITIVE, "+1 str" );
-		GLog.p( "Newfound strength surges through your body." );
+		hero.sprite.showStatus( CharSprite.POSITIVE, Messages.get(this, "msg_1") );
+		GLog.p( Messages.get(this, "msg_2") );
 		
 		Badges.validateStrengthAttained();
 	}
-	
-	@Override
-	public String desc() {
-		return
-			"This powerful liquid will course through your muscles, " +
-			"permanently increasing your strength by one point.";
-	}
-	
+
 	@Override
 	public int price() {
-		return isKnown() ? 100 * quantity : super.price();
+		return isKnown() ? 50 * quantity : super.price();
 	}
 }

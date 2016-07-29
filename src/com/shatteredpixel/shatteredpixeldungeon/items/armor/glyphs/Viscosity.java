@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,23 +22,20 @@ package com.shatteredpixel.shatteredpixeldungeon.items.armor.glyphs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.shatteredpixel.shatteredpixeldungeon.ResultDescriptions;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor.Glyph;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite.Glowing;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
-import com.shatteredpixel.shatteredpixeldungeon.utils.Utils;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
 public class Viscosity extends Glyph {
-
-	private static final String TXT_VISCOSITY	= "%s of viscosity";
 	
 	private static ItemSprite.Glowing PURPLE = new ItemSprite.Glowing( 0x8844CC );
 	
@@ -49,9 +46,9 @@ public class Viscosity extends Glyph {
 			return 0;
 		}
 		
-		int level = Math.max( 0, armor.level );
+		int level = Math.max( 0, armor.level() );
 		
-		if (Random.Int( level + 7 ) >= 6) {
+		if (Random.Int( level + 4 ) >= 3) {
 			
 			DeferedDamage debuff = defender.buff( DeferedDamage.class );
 			if (debuff == null) {
@@ -60,18 +57,13 @@ public class Viscosity extends Glyph {
 			}
 			debuff.prolong( damage );
 			
-			defender.sprite.showStatus( CharSprite.WARNING, "deferred %d", damage );
+			defender.sprite.showStatus( CharSprite.WARNING, Messages.get(this, "deferred", damage) );
 			
 			return 0;
 			
 		} else {
 			return damage;
 		}
-	}
-	
-	@Override
-	public String name( String weaponName) {
-		return String.format( TXT_VISCOSITY, weaponName );
 	}
 
 	@Override
@@ -110,7 +102,7 @@ public class Viscosity extends Glyph {
 		
 		public void prolong( int damage ) {
 			this.damage += damage;
-		};
+		}
 		
 		@Override
 		public int icon() {
@@ -119,25 +111,26 @@ public class Viscosity extends Glyph {
 		
 		@Override
 		public String toString() {
-			return Utils.format( "Defered damage", damage );
+			return Messages.get(this, "name");
 		}
 		
 		@Override
 		public boolean act() {
 			if (target.isAlive()) {
-				
-				target.damage( 1, this );
+
+				int damageThisTick = Math.max(1, damage/10);
+				target.damage( damageThisTick, this );
 				if (target == Dungeon.hero && !target.isAlive()) {
 
-					Glyph glyph = new Viscosity();
-					Dungeon.fail( Utils.format( ResultDescriptions.GLYPH, glyph.name() ) );
-					GLog.n( "%s killed you...", glyph.name() );
+					Dungeon.fail( getClass() );
+					GLog.n( Messages.get(this, "ondeath") );
 					
 					Badges.validateDeathFromGlyph();
 				}
 				spend( TICK );
-				
-				if (--damage <= 0) {
+
+				damage -= damageThisTick;
+				if (damage <= 0) {
 					detach();
 				}
 				
@@ -152,12 +145,7 @@ public class Viscosity extends Glyph {
 
 		@Override
 		public String desc() {
-			return "While your armor's glyph has protected you from damage, it seems to be slowly paying you back for it.\n" +
-					"\n" +
-					"Damage is being dealt to you over time instead of immediately. " +
-					"You will take one damage per turn until there is no damage left.\n" +
-					"\n" +
-					"There is " + damage + " deffered damage left.";
+			return Messages.get(this, "desc", damage);
 		}
 	}
 }

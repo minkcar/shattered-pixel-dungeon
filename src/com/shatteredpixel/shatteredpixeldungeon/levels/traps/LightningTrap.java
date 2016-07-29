@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,17 +20,20 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.levels.traps;
 
-import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
-import com.watabou.noosa.Camera;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.shatteredpixel.shatteredpixeldungeon.ResultDescriptions;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Lightning;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SparkParticle;
+import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
+import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.TrapSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
-import com.shatteredpixel.shatteredpixeldungeon.utils.Utils;
+import com.watabou.noosa.Camera;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
@@ -38,8 +41,8 @@ import java.util.ArrayList;
 public class LightningTrap extends Trap {
 
 	{
-		name = "Lightning trap";
-		image = 5;
+		color = TrapSprite.TEAL;
+		shape = TrapSprite.CROSSHAIR;
 	}
 
 	@Override
@@ -54,8 +57,8 @@ public class LightningTrap extends Trap {
 				Camera.main.shake( 2, 0.3f );
 
 				if (!ch.isAlive()) {
-					Dungeon.fail( Utils.format( ResultDescriptions.TRAP, name ) );
-					GLog.n( "You were killed by a discharge of a lightning trap..." );
+					Dungeon.fail( getClass() );
+					GLog.n( Messages.get(this, "ondeath") );
 				}
 			}
 
@@ -64,6 +67,16 @@ public class LightningTrap extends Trap {
 			arcs.add(new Lightning.Arc(pos - 1, pos + 1));
 
 			ch.sprite.parent.add( new Lightning( arcs, null ) );
+		}
+
+		Heap heap = Dungeon.level.heaps.get(pos);
+		if (heap != null){
+			//TODO: this should probably charge staffs too
+			Item item = heap.items.peek();
+			if (item instanceof Wand){
+				Wand wand = (Wand)item;
+				((Wand)item).curCharges += (int)Math.ceil((wand.maxCharges - wand.curCharges)/2f);
+			}
 		}
 
 		CellEmitter.center( pos ).burst( SparkParticle.FACTORY, Random.IntRange( 3, 4 ) );

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,9 +24,11 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Awareness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LockedFloor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
@@ -38,10 +40,8 @@ import java.util.ArrayList;
 public class TalismanOfForesight extends Artifact {
 
 	{
-		name = "Talisman of Foresight";
 		image = ItemSpriteSheet.ARTIFACT_TALISMAN;
 
-		level = 0;
 		exp = 0;
 		levelCap = 10;
 
@@ -57,7 +57,7 @@ public class TalismanOfForesight extends Artifact {
 	@Override
 	public ArrayList<String> actions( Hero hero ) {
 		ArrayList<String> actions = super.actions( hero );
-		if (isEquipped( hero ) && charge == 100 && !cursed)
+		if (isEquipped( hero ) && charge == chargeCap && !cursed)
 			actions.add(AC_SCRY);
 		return actions;
 	}
@@ -65,10 +65,11 @@ public class TalismanOfForesight extends Artifact {
 	@Override
 	public void execute( Hero hero, String action ) {
 		super.execute(hero, action);
+
 		if (action.equals(AC_SCRY)){
 
-			if (!isEquipped(hero))        GLog.i("You need to equip your talisman to do that.");
-			else if (charge != chargeCap) GLog.i("Your talisman isn't full charged yet.");
+			if (!isEquipped(hero))        GLog.i( Messages.get(Artifact.class, "need_to_equip") );
+			else if (charge != chargeCap) GLog.i( Messages.get(this, "no_charge") );
 			else {
 				hero.sprite.operate(hero.pos);
 				hero.busy();
@@ -87,7 +88,9 @@ public class TalismanOfForesight extends Artifact {
 					}
 				}
 
-				GLog.p("The Talisman floods your mind with knowledge about the current floor.");
+				GLog.p( Messages.get(this, "scry") );
+
+				updateQuickslot();
 
 				Buff.affect(hero, Awareness.class, Awareness.DURATION);
 				Dungeon.observe();
@@ -102,16 +105,14 @@ public class TalismanOfForesight extends Artifact {
 
 	@Override
 	public String desc() {
-		String desc = "A smooth stone, almost too big for your pocket or hand, with strange engravings on it. " +
-				"You feel like it's watching you, assessing your every move.";
+		String desc = super.desc();
+
 		if ( isEquipped( Dungeon.hero ) ){
 			if (!cursed) {
-				desc += "\n\nWhen you hold the talisman you feel like your senses are heightened.";
-				if (charge == 100)
-					desc += "\n\nThe talisman is radiating energy, prodding at your mind. You wonder what would " +
-							"happen if you let it in.";
+				desc += "\n\n" + Messages.get(this, "desc_worn");
+
 			} else {
-				desc += "\n\nThe cursed talisman is intently staring into you, making it impossible to concentrate.";
+				desc += "\n\n" + Messages.get(this, "desc_cursed");
 			}
 		}
 
@@ -156,9 +157,9 @@ public class TalismanOfForesight extends Artifact {
 				}
 			}
 
-			if (smthFound == true && !cursed){
+			if (smthFound && !cursed){
 				if (warn == 0){
-					GLog.w("You feel uneasy.");
+					GLog.w( Messages.get(this, "uneasy") );
 					if (target instanceof Hero){
 						((Hero)target).interrupt();
 					}
@@ -172,15 +173,16 @@ public class TalismanOfForesight extends Artifact {
 			BuffIndicator.refreshHero();
 
 			//fully charges in 2500 turns at lvl=0, scaling to 1000 turns at lvl = 10.
-			if (charge < 100 && !cursed) {
-				partialCharge += 0.04+(level*0.006);
+			LockedFloor lock = target.buff(LockedFloor.class);
+			if (charge < chargeCap && !cursed && (lock == null || lock.regenOn())) {
+				partialCharge += 0.04+(level()*0.006);
 
-				if (partialCharge > 1 && charge < 100) {
+				if (partialCharge > 1 && charge < chargeCap) {
 					partialCharge--;
 					charge++;
-				} else if (charge >= 100) {
+				} else if (charge >= chargeCap) {
 					partialCharge = 0;
-					GLog.p("Your Talisman is fully charged!");
+					GLog.p( Messages.get(this, "full_charge") );
 				}
 			}
 
@@ -188,23 +190,23 @@ public class TalismanOfForesight extends Artifact {
 		}
 
 		public void charge(){
-			charge = Math.min(charge+(2+(level/3)), chargeCap);
+			charge = Math.min(charge+(2+(level()/3)), chargeCap);
 			exp++;
-			if (exp >= 4 && level < levelCap) {
+			if (exp >= 4 && level() < levelCap) {
 				upgrade();
-				GLog.p("Your Talisman grows stronger!");
+				GLog.p( Messages.get(this, "levelup") );
 				exp -= 4;
 			}
 		}
 
 		@Override
 		public String toString() {
-			return "Foresight";
+			return  Messages.get(this, "name");
 		}
 
 		@Override
 		public String desc() {
-			return "You feel very nervous, as if there is nearby unseen danger.";
+			return Messages.get(this, "desc");
 		}
 
 		@Override

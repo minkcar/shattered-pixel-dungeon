@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,22 +22,9 @@ package com.shatteredpixel.shatteredpixeldungeon.items.rings;
 
 public class RingOfSharpshooting extends Ring {
 
-	{
-		name = "Ring of Sharpshooting";
-	}
-
 	@Override
 	protected RingBuff buff( ) {
 		return new Aim();
-	}
-
-	@Override
-	public String desc() {
-		return isKnown() ?
-				"This ring enhances the wearer's precision and aim, which will " +
-				"make all projectile weapons more accurate and durable. " +
-				"A degraded ring will have the opposite effect.":
-				super.desc();
 	}
 
 	public class Aim extends RingBuff {

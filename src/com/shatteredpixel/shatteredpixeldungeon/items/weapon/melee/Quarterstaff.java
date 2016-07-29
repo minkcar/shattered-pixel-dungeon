@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,21 +20,25 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee;
 
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public class Quarterstaff extends MeleeWeapon {
 
 	{
-		name = "quarterstaff";
 		image = ItemSpriteSheet.QUARTERSTAFF;
+
+		tier = 2;
 	}
-	
-	public Quarterstaff() {
-		super( 2, 1f, 1f );
-	}
-	
+
 	@Override
-	public String desc() {
-		return "A staff of hardwood, its ends are shod with iron.";
+	public int max(int lvl) {
+		return  4*(tier+1) +    //12 base, down from 15
+				lvl*(tier+1);   //scaling unchanged
+	}
+
+	@Override
+	public int defenseFactor(Hero hero) {
+		return 2;	//2 extra defence
 	}
 }

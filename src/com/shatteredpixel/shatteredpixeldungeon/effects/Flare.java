@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,22 +20,21 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.effects;
 
+import android.annotation.SuppressLint;
+import android.opengl.GLES20;
+import com.watabou.gltextures.Gradient;
+import com.watabou.gltextures.SmartTexture;
+import com.watabou.noosa.Game;
+import com.watabou.noosa.Group;
+import com.watabou.noosa.NoosaScript;
+import com.watabou.noosa.Visual;
+import com.watabou.utils.PointF;
+
+import javax.microedition.khronos.opengles.GL10;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
-
-import javax.microedition.khronos.opengles.GL10;
-
-import android.annotation.SuppressLint;
-import android.opengl.GLES20;
-import android.util.FloatMath;
-
-import com.watabou.gltextures.Gradient;
-import com.watabou.gltextures.SmartTexture;
-import com.watabou.noosa.Game;
-import com.watabou.noosa.NoosaScript;
-import com.watabou.noosa.Visual;
 
 public class Flare extends Visual {
 	
@@ -88,13 +87,13 @@ public class Flare extends Visual {
 		for (int i=0; i < nRays; i++) {
 			
 			float a = i * 3.1415926f * 2 / nRays;
-			v[0] = FloatMath.cos( a ) * radius;
-			v[1] = FloatMath.sin( a ) * radius;
+			v[0] = (float)Math.cos( a ) * radius;
+			v[1] = (float)Math.sin( a ) * radius;
 			vertices.put( v );
 			
 			a += 3.1415926f * 2 / nRays / 2;
-			v[0] = FloatMath.cos( a ) * radius;
-			v[1] = FloatMath.sin( a ) * radius;
+			v[0] = (float)Math.cos( a ) * radius;
+			v[1] = (float)Math.sin( a ) * radius;
 			vertices.put( v );
 			
 			indices.put( (short)0 );
@@ -120,7 +119,16 @@ public class Flare extends Visual {
 		
 		return this;
 	}
-	
+
+	public Flare show( Group parent, PointF pos, float duration ) {
+		point( pos );
+		parent.add( this );
+
+		lifespan = this.duration = duration;
+
+		return this;
+	}
+
 	@Override
 	public void update() {
 		super.update();

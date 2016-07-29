@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,6 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 public class PotionBandolier extends Bag {
 
 	{
-		name = "potion bandolier";
 		image = ItemSpriteSheet.BANDOLIER;
 
 		size = 12;
@@ -40,13 +39,7 @@ public class PotionBandolier extends Bag {
 
 	@Override
 	public int price() {
-		return 50;
+		return 40;
 	}
 
-	@Override
-	public String info() {
-		return
-			"This thick bandolier fits around your chest like a sash, it has many small vials to hold your potions.\n\n" +
-			"The vials are made of tempered glass, and should be quite resistant to the cold.";
-	}
 }

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,15 +22,19 @@ package com.shatteredpixel.shatteredpixeldungeon.scenes;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
+import com.shatteredpixel.shatteredpixeldungeon.levels.RegularLevel;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.ui.GameLog;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndError;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndStory;
-import com.watabou.noosa.BitmapText;
 import com.watabou.noosa.Camera;
 import com.watabou.noosa.Game;
+import com.watabou.noosa.RenderedText;
 import com.watabou.noosa.audio.Music;
 import com.watabou.noosa.audio.Sample;
 
@@ -41,21 +45,9 @@ public class InterlevelScene extends PixelScene {
 
 	private static final float TIME_TO_FADE = 0.3f;
 	
-	private static final String TXT_DESCENDING	= "Descending...";
-	private static final String TXT_ASCENDING	= "Ascending...";
-	private static final String TXT_LOADING		= "Loading...";
-	private static final String TXT_RESURRECTING= "Resurrecting...";
-	private static final String TXT_RETURNING	= "Returning...";
-	private static final String TXT_FALLING		= "Falling...";
-	
-	private static final String ERR_FILE_NOT_FOUND	= "Save file not found. If this error persists after restarting, " +
-														"it may mean this save game is corrupted. Sorry about that.";
-	private static final String ERR_IO			    = "Cannot read save file. If this error persists after restarting, " +
-														"it may mean this save game is corrupted. Sorry about that.";
-	
-	public static enum Mode {
-		DESCEND, ASCEND, CONTINUE, RESURRECT, RETURN, FALL
-	};
+	public enum Mode {
+		DESCEND, ASCEND, CONTINUE, RESURRECT, RETURN, FALL, RESET, NONE
+	}
 	public static Mode mode;
 	
 	public static int returnDepth;
@@ -67,11 +59,11 @@ public class InterlevelScene extends PixelScene {
 	
 	private enum Phase {
 		FADE_IN, STATIC, FADE_OUT
-	};
+	}
 	private Phase phase;
 	private float timeLeft;
 	
-	private BitmapText message;
+	private RenderedText message;
 	
 	private Thread thread;
 	private Exception error = null;
@@ -80,32 +72,12 @@ public class InterlevelScene extends PixelScene {
 	public void create() {
 		super.create();
 
-		String text = "";
-		switch (mode) {
-		case DESCEND:
-			text = TXT_DESCENDING;
-			break;
-		case ASCEND:
-			text = TXT_ASCENDING;
-			break;
-		case CONTINUE:
-			text = TXT_LOADING;
-			break;
-		case RESURRECT:
-			text = TXT_RESURRECTING;
-			break;
-		case RETURN:
-			text = TXT_RETURNING;
-			break;
-		case FALL:
-			text = TXT_FALLING;
-			break;
-		}
+		String text = Messages.get(Mode.class, mode.name());
 		
-		message = PixelScene.createText( text, 9 );
-		message.measure();
+		message = PixelScene.renderText( text, 9 );
 		message.x = (Camera.main.width - message.width()) / 2;
 		message.y = (Camera.main.height - message.height()) / 2;
+		align(message);
 		add( message );
 		
 		phase = Phase.FADE_IN;
@@ -137,6 +109,9 @@ public class InterlevelScene extends PixelScene {
 						break;
 					case FALL:
 						fall();
+						break;
+					case RESET:
+						reset();
 						break;
 					}
 					
@@ -183,7 +158,7 @@ public class InterlevelScene extends PixelScene {
 			message.alpha( p );
 
 			if (mode == Mode.CONTINUE || (mode == Mode.DESCEND && Dungeon.depth == 1)) {
-				Music.INSTANCE.volume( p );
+				Music.INSTANCE.volume( p * (ShatteredPixelDungeon.musicVol()/10f));
 			}
 			if ((timeLeft -= Game.elapsed) <= 0) {
 				Game.switchScene( GameScene.class );
@@ -193,8 +168,8 @@ public class InterlevelScene extends PixelScene {
 		case STATIC:
 			if (error != null) {
 				String errorMsg;
-				if (error instanceof FileNotFoundException) errorMsg = ERR_FILE_NOT_FOUND;
-				else if (error instanceof IOException) errorMsg = ERR_IO;
+				if (error instanceof FileNotFoundException) errorMsg = Messages.get(this, "file_not_found");
+				else if (error instanceof IOException) errorMsg = Messages.get(this, "io_error");
 
 				else throw new RuntimeException("fatal error occured while moving between floors", error);
 
@@ -202,7 +177,7 @@ public class InterlevelScene extends PixelScene {
 					public void onBackPressed() {
 						super.onBackPressed();
 						Game.switchScene( StartScene.class );
-					};
+					}
 				} );
 				error = null;
 			}
@@ -219,8 +194,9 @@ public class InterlevelScene extends PixelScene {
 				Dungeon.chapters.add( WndStory.ID_SEWERS );
 				noStory = false;
 			}
+			GameLog.wipe();
 		} else {
-			Dungeon.saveLevel();
+			Dungeon.saveAll();
 		}
 
 		Level level;
@@ -236,7 +212,7 @@ public class InterlevelScene extends PixelScene {
 	private void fall() throws IOException {
 
 		Actor.fixTime();
-		Dungeon.saveLevel();
+		Dungeon.saveAll();
 
 		Level level;
 		if (Dungeon.depth >= Statistics.deepestFloor) {
@@ -250,8 +226,8 @@ public class InterlevelScene extends PixelScene {
 	
 	private void ascend() throws IOException {
 		Actor.fixTime();
-		
-		Dungeon.saveLevel();
+
+		Dungeon.saveAll();
 		Dungeon.depth--;
 		Level level = Dungeon.loadLevel( Dungeon.hero.heroClass );
 		Dungeon.switchLevel( level, level.exit );
@@ -260,8 +236,8 @@ public class InterlevelScene extends PixelScene {
 	private void returnTo() throws IOException {
 		
 		Actor.fixTime();
-		
-		Dungeon.saveLevel();
+
+		Dungeon.saveAll();
 		Dungeon.depth = returnDepth;
 		Level level = Dungeon.loadLevel( Dungeon.hero.heroClass );
 		Dungeon.switchLevel( level, Level.resizingNeeded ? level.adjustPos( returnPos ) : returnPos );
@@ -270,7 +246,9 @@ public class InterlevelScene extends PixelScene {
 	private void restore() throws IOException {
 		
 		Actor.fixTime();
-		
+
+		GameLog.wipe();
+
 		Dungeon.loadGame( StartScene.curClass );
 		if (Dungeon.depth == -1) {
 			Dungeon.depth = Statistics.deepestFloor;
@@ -294,6 +272,17 @@ public class InterlevelScene extends PixelScene {
 			Dungeon.hero.resurrect( -1 );
 			Dungeon.resetLevel();
 		}
+	}
+
+	private void reset() throws IOException {
+
+		Actor.fixTime();
+
+		Dungeon.depth--;
+		Level level = Dungeon.newLevel();
+		//FIXME this only partially addresses issues regarding weak floors.
+		RegularLevel.weakFloorCreated = false;
+		Dungeon.switchLevel( level, level.entrance );
 	}
 	
 	@Override

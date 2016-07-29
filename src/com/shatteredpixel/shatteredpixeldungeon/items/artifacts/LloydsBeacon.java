@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 package com.shatteredpixel.shatteredpixeldungeon.items.artifacts;
-//If it weren't super obvious, this is going to become an artifact soon.
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
@@ -27,6 +26,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LockedFloor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.effects.MagicMissile;
@@ -34,13 +34,14 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportation;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.CellSelector;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.InterlevelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite.Glowing;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
+import com.shatteredpixel.shatteredpixeldungeon.ui.QuickSlotButton;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
-import com.shatteredpixel.shatteredpixeldungeon.utils.Utils;
 import com.watabou.noosa.Game;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
@@ -50,24 +51,6 @@ import java.util.ArrayList;
 
 public class LloydsBeacon extends Artifact {
 
-	private static final String TXT_PREVENTING =
-		"Strong magic aura of this place prevents you from using the lloyd's beacon!";
-	
-	private static final String TXT_CREATURES =
-		"Psychic aura of neighbouring creatures doesn't allow you to use the lloyd's beacon at this moment.";
-	
-	private static final String TXT_RETURN =
-		"The lloyd's beacon is successfully set at your current location, now you can return here anytime.";
-			
-	private static final String TXT_INFO =
-		"Lloyd's beacon is an intricate magic device, which grants the user control of teleportation magics.\n" +
-		"\n" +
-		"The beacon can be used to return to a set location, but can also expel bursts of random teleportation " +
-		"magic once it has charged from being equipped. This magic can be directed at a target or at the user themselves.";
-	
-	private static final String TXT_SET =
-		"\n\nThis beacon was set somewhere on the level %d of Pixel Dungeon.";
-	
 	public static final float TIME_TO_USE = 1;
 
 	public static final String AC_ZAP       = "ZAP";
@@ -78,16 +61,15 @@ public class LloydsBeacon extends Artifact {
 	private int returnPos;
 	
 	{
-		name = "lloyd's beacon";
 		image = ItemSpriteSheet.ARTIFACT_BEACON;
 
-		level = 0;
 		levelCap = 3;
 
 		charge = 0;
-		chargeCap = 3+level;
+		chargeCap = 3+level();
 
 		defaultAction = AC_ZAP;
+		usesTargeting = true;
 	}
 	
 	private static final String DEPTH	= "depth";
@@ -123,17 +105,19 @@ public class LloydsBeacon extends Artifact {
 	@Override
 	public void execute( Hero hero, String action ) {
 
+		super.execute( hero, action );
+
 		if (action == AC_SET || action == AC_RETURN) {
 			
 			if (Dungeon.bossLevel()) {
 				hero.spend( LloydsBeacon.TIME_TO_USE );
-				GLog.w( TXT_PREVENTING );
+				GLog.w( Messages.get(this, "preventing") );
 				return;
 			}
 			
 			for (int i=0; i < Level.NEIGHBOURS8.length; i++) {
 				if (Actor.findChar( hero.pos + Level.NEIGHBOURS8[i] ) != null) {
-					GLog.w( TXT_CREATURES );
+					GLog.w( Messages.get(this, "creatures") );
 					return;
 				}
 			}
@@ -144,9 +128,15 @@ public class LloydsBeacon extends Artifact {
 			curUser = hero;
 			int chargesToUse = Dungeon.depth > 20 ? 2 : 1;
 
-			if      (!isEquipped( hero ))       GLog.i("You need to equip the beacon to do that.");
-			else if (charge < chargesToUse)     GLog.i("Your beacon does not have enough energy right now.");
-			else {
+			if (!isEquipped( hero )) {
+				GLog.i( Messages.get(Artifact.class, "need_to_equip") );
+				QuickSlotButton.cancel();
+
+			} else if (charge < chargesToUse) {
+				GLog.i( Messages.get(this, "no_charge") );
+				QuickSlotButton.cancel();
+
+			} else {
 				GameScene.selectCell(zapper);
 			}
 
@@ -161,7 +151,7 @@ public class LloydsBeacon extends Artifact {
 			hero.sprite.operate( hero.pos );
 			Sample.INSTANCE.play( Assets.SND_BEACON );
 			
-			GLog.i( TXT_RETURN );
+			GLog.i( Messages.get(this, "return") );
 			
 		} else if (action == AC_RETURN) {
 			
@@ -183,10 +173,6 @@ public class LloydsBeacon extends Artifact {
 				Game.switchScene( InterlevelScene.class );
 			}
 			
-			
-		} else {
-			
-			super.execute( hero, action );
 			
 		}
 	}
@@ -213,6 +199,7 @@ public class LloydsBeacon extends Artifact {
 					ScrollOfTeleportation.teleportHero(curUser);
 					curUser.spendAndNext( 1f );
 				} else {
+					Sample.INSTANCE.play( Assets.SND_ZAP );
 					curUser.sprite.zap(bolt.collisionPos);
 					curUser.busy();
 
@@ -230,11 +217,16 @@ public class LloydsBeacon extends Artifact {
 									}
 								} while (pos == -1);
 
-								if (pos == -1) {
 
-									GLog.w(ScrollOfTeleportation.TXT_NO_TELEPORT);
+								if (pos == -1 || Dungeon.bossLevel()) {
 
-								} else {
+									GLog.w( Messages.get(ScrollOfTeleportation.class, "no_tele") );
+
+								} else if (ch.properties().contains(Char.Property.IMMOVABLE)) {
+
+									GLog.w( Messages.get(LloydsBeacon.class, "tele_fail") );
+
+								} else  {
 
 									ch.pos = pos;
 									ch.sprite.place(ch.pos);
@@ -255,7 +247,7 @@ public class LloydsBeacon extends Artifact {
 
 		@Override
 		public String prompt() {
-			return "Choose a location to zap.";
+			return Messages.get(LloydsBeacon.class, "prompt");
 		}
 	};
 
@@ -266,18 +258,19 @@ public class LloydsBeacon extends Artifact {
 
 	@Override
 	public Item upgrade() {
+		if (level() == levelCap) return this;
 		chargeCap ++;
-
+		GLog.p( Messages.get(this, "levelup") );
 		return super.upgrade();
 	}
 
 	@Override
 	public String desc() {
-		return TXT_INFO + (returnDepth == -1 ? "" : Utils.format( TXT_SET, returnDepth ) );
-	}
-
-	public void reset() {
-		returnDepth = -1;
+		String desc = super.desc();
+		if (returnDepth != -1){
+			desc += "\n\n" + Messages.get(this, "desc_set", returnDepth);
+		}
+		return desc;
 	}
 	
 	private static final Glowing WHITE = new Glowing( 0xFFFFFF );
@@ -290,7 +283,8 @@ public class LloydsBeacon extends Artifact {
 	public class beaconRecharge extends ArtifactBuff{
 		@Override
 		public boolean act() {
-			if (charge < chargeCap && !cursed) {
+			LockedFloor lock = target.buff(LockedFloor.class);
+			if (charge < chargeCap && !cursed && (lock == null || lock.regenOn())) {
 				partialCharge += 1 / (100f - (chargeCap - charge)*10f);
 
 				if (partialCharge >= 1) {

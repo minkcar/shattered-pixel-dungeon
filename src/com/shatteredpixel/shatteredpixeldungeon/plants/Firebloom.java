@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,12 +30,9 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public class Firebloom extends Plant {
-
-	private static final String TXT_DESC = "When something touches a Firebloom, it bursts into flames.";
 	
 	{
 		image = 0;
-		plantName = "Firebloom";
 	}
 	
 	@Override
@@ -48,25 +45,12 @@ public class Firebloom extends Plant {
 		}
 	}
 	
-	@Override
-	public String desc() {
-		return TXT_DESC;
-	}
-	
 	public static class Seed extends Plant.Seed {
 		{
-			plantName = "Firebloom";
-			
-			name = "seed of " + plantName;
 			image = ItemSpriteSheet.SEED_FIREBLOOM;
-			
+
 			plantClass = Firebloom.class;
 			alchemyClass = PotionOfLiquidFlame.class;
-		}
-		
-		@Override
-		public String desc() {
-			return TXT_DESC;
 		}
 	}
 }

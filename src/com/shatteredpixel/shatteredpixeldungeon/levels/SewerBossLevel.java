@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,8 +29,9 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Room.Type;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.watabou.noosa.Scene;
+import com.watabou.noosa.Group;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Graph;
 import com.watabou.utils.Random;
@@ -203,11 +204,12 @@ public class SewerBossLevel extends RegularLevel {
 	}
 	
 	@Override
-	public void addVisuals( Scene scene ) {
-		SewerLevel.addVisuals( this, scene );
+	public Group addVisuals() {
+		super.addVisuals();
+		SewerLevel.addSewerVisuals(this, visuals);
+		return visuals;
 	}
-	
-	
+
 	@Override
 	protected void createMobs() {
 		Mob mob = Bestiary.mob( Dungeon.depth );
@@ -237,7 +239,7 @@ public class SewerBossLevel extends RegularLevel {
 
 	@Override
 	public int randomRespawnCell() {
-		return -1;
+		return roomEntrance.random();
 	}
 
 	
@@ -281,25 +283,28 @@ public class SewerBossLevel extends RegularLevel {
 	public void restoreFromBundle( Bundle bundle ) {
 		super.restoreFromBundle( bundle );
 		stairs = bundle.getInt( STAIRS );
+		roomExit = roomEntrance;
 	}
-	
+
 	@Override
 	public String tileName( int tile ) {
 		switch (tile) {
-		case Terrain.WATER:
-			return "Murky water";
-		default:
-			return super.tileName( tile );
+			case Terrain.WATER:
+				return Messages.get(SewerLevel.class, "water_name");
+			default:
+				return super.tileName( tile );
 		}
 	}
-	
+
 	@Override
-	public String tileDesc( int tile ) {
+	public String tileDesc(int tile) {
 		switch (tile) {
-		case Terrain.EMPTY_DECO:
-			return "Wet yellowish moss covers the floor.";
-		default:
-			return super.tileDesc( tile );
+			case Terrain.EMPTY_DECO:
+				return Messages.get(SewerLevel.class, "empty_deco_desc");
+			case Terrain.BOOKSHELF:
+				return Messages.get(SewerLevel.class, "bookshelf_desc");
+			default:
+				return super.tileDesc( tile );
 		}
 	}
 }

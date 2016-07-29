@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Combo;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.SnipersMark;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
@@ -32,13 +33,13 @@ import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.Boomerang;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.CellSelector;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MissileSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.QuickSlotButton;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
-import com.shatteredpixel.shatteredpixeldungeon.utils.Utils;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.noosa.particles.Emitter;
 import com.watabou.utils.Bundlable;
@@ -51,12 +52,8 @@ import java.util.Comparator;
 
 public class Item implements Bundlable {
 
-	private static final String TXT_PACK_FULL = "Your pack is too full for the %s";
-	
-	private static final String TXT_TO_STRING		= "%s";
-	private static final String TXT_TO_STRING_X		= "%s x%d";
-	private static final String TXT_TO_STRING_LVL	= "%s%+d";
-	private static final String TXT_TO_STRING_LVL_X	= "%s%+d x%d";
+	protected static final String TXT_TO_STRING_LVL		= "%s %+d";
+	protected static final String TXT_TO_STRING_X		= "%s x%d";
 	
 	protected static final float TIME_TO_THROW		= 1.0f;
 	protected static final float TIME_TO_PICK_UP	= 1.0f;
@@ -66,14 +63,16 @@ public class Item implements Bundlable {
 	public static final String AC_THROW		= "THROW";
 	
 	public String defaultAction;
+	public boolean usesTargeting;
 	
-	protected String name = "smth";
+	protected String name = Messages.get(this, "name");
 	public int image = 0;
 	
 	public boolean stackable = false;
 	protected int quantity = 1;
 	
-	public int level = 0;
+	private int level = 0;
+
 	public boolean levelKnown = false;
 	
 	public boolean cursed;
@@ -117,8 +116,10 @@ public class Item implements Bundlable {
 		Dungeon.level.drop( detachAll( hero.belongings.backpack ), hero.pos ).sprite.drop( hero.pos );
 	}
 
-	public void syncVisuals(){
-		//do nothing by default, as most items need no visual syncing.
+	//resets an item's properties, to ensure consistency between runs
+	public void reset(){
+		//resets the name incase the language has changed.
+		name = Messages.get(this, "name");
 	}
 
 	public void doThrow( Hero hero ) {
@@ -129,6 +130,9 @@ public class Item implements Bundlable {
 		
 		curUser = hero;
 		curItem = this;
+
+		Combo combo = hero.buff(Combo.class);
+		if (combo != null) combo.detach();
 		
 		if (action.equals( AC_DROP )) {
 			
@@ -190,7 +194,7 @@ public class Item implements Bundlable {
 			
 		} else {
 			
-			GLog.n( TXT_PACK_FULL, name() );
+			GLog.n( Messages.get(Item.class, "pack_full", name()) );
 			return false;
 			
 		}
@@ -262,11 +266,20 @@ public class Item implements Bundlable {
 	}
 
 	protected void onDetach(){}
+
+	public int level(){
+		return level;
+	}
+
+	public void level( int value ){
+		level = value;
+
+		updateQuickslot();
+	}
 	
 	public Item upgrade() {
 		
 		cursed = false;
-		cursedKnown = true;
 		this.level++;
 
 		updateQuickslot();
@@ -331,20 +344,17 @@ public class Item implements Bundlable {
 	
 	@Override
 	public String toString() {
-		
-		if (levelKnown && level != 0) {
-			if (quantity > 1) {
-				return Utils.format( TXT_TO_STRING_LVL_X, name(), level, quantity );
-			} else {
-				return Utils.format( TXT_TO_STRING_LVL, name(), level );
-			}
-		} else {
-			if (quantity > 1) {
-				return Utils.format( TXT_TO_STRING_X, name(), quantity );
-			} else {
-				return Utils.format( TXT_TO_STRING, name() );
-			}
-		}
+
+		String name = name();
+
+		if (visiblyUpgraded() != 0)
+			name = Messages.format( TXT_TO_STRING_LVL, name, visiblyUpgraded()  );
+
+		if (quantity > 1)
+			name = Messages.format( TXT_TO_STRING_X, name, quantity );
+
+		return name;
+
 	}
 	
 	public String name() {
@@ -370,7 +380,7 @@ public class Item implements Bundlable {
 	}
 	
 	public String desc() {
-		return "";
+		return Messages.get(this, "desc");
 	}
 	
 	public int quantity() {
@@ -455,10 +465,14 @@ public class Item implements Bundlable {
 			}
 		}
 	}
+
+	public int throwPos( Hero user, int dst){
+		return new Ballistica( user.pos, dst, Ballistica.PROJECTILE ).collisionPos;
+	}
 	
 	public void cast( final Hero user, int dst ) {
 		
-		final int cell = new Ballistica( user.pos, dst, Ballistica.PROJECTILE ).collisionPos;
+		final int cell = throwPos( user, dst );
 		user.sprite.zap( cell );
 		user.busy();
 
@@ -504,7 +518,7 @@ public class Item implements Bundlable {
 		}
 		@Override
 		public String prompt() {
-			return "Choose direction of throw";
+			return Messages.get(Item.class, "prompt");
 		}
 	};
 }

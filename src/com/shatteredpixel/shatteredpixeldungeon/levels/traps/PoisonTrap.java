@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,13 +27,13 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.PoisonParticle;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.TrapSprite;
 
 public class PoisonTrap extends Trap{
 
-	// 0xBB66EE
 	{
-		name = "Poison trap";
-		image = 3;
+		color = TrapSprite.VIOLET;
+		shape = TrapSprite.CROSSHAIR;
 	}
 
 	@Override

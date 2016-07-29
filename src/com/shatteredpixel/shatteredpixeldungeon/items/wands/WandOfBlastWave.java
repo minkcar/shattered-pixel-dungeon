@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,22 +23,18 @@ package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.DungeonTilemap;
-import com.shatteredpixel.shatteredpixeldungeon.ResultDescriptions;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Paralysis;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Golem;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.King;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Yog;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Effects;
 import com.shatteredpixel.shatteredpixeldungeon.effects.MagicMissile;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
-import com.shatteredpixel.shatteredpixeldungeon.utils.Utils;
 import com.watabou.noosa.Game;
 import com.watabou.noosa.Group;
 import com.watabou.noosa.Image;
@@ -47,13 +43,20 @@ import com.watabou.utils.Callback;
 import com.watabou.utils.PointF;
 import com.watabou.utils.Random;
 
-public class WandOfBlastWave extends Wand {
+public class WandOfBlastWave extends DamageWand {
 
 	{
-		name = "Wand of Blast Wave";
 		image = ItemSpriteSheet.WAND_BLAST_WAVE;
 
 		collisionProperties = Ballistica.PROJECTILE;
+	}
+
+	public int min(int lvl){
+		return 1+lvl;
+	}
+
+	public int max(int lvl){
+		return 5+3*lvl;
 	}
 
 	@Override
@@ -61,7 +64,7 @@ public class WandOfBlastWave extends Wand {
 		Sample.INSTANCE.play( Assets.SND_BLAST );
 		BlastWave.blast(bolt.collisionPos);
 
-		int damage = Random.NormalIntRange(1, 6+(int)(level*level/4f));
+		int damage = damageRoll();
 
 		//presses all tiles in the AOE first
 		for (int i : Level.NEIGHBOURS9){
@@ -73,11 +76,12 @@ public class WandOfBlastWave extends Wand {
 			Char ch = Actor.findChar(bolt.collisionPos + i);
 
 			if (ch != null){
-				ch.damage(damage, this);
+				processSoulMark(ch, chargesPerCast());
+				ch.damage(Math.round(damage * 0.667f), this);
 
 				if (ch.isAlive()) {
 					Ballistica trajectory = new Ballistica(ch.pos, ch.pos + i, Ballistica.MAGIC_BOLT);
-					int strength = 1 + ((level + 1) / 3);
+					int strength = 1 + Math.round(level() / 2f);
 					throwChar(ch, trajectory, strength);
 				}
 			}
@@ -86,29 +90,29 @@ public class WandOfBlastWave extends Wand {
 		//throws the char at the center of the blast
 		Char ch = Actor.findChar(bolt.collisionPos);
 		if (ch != null){
+			processSoulMark(ch, chargesPerCast());
 			ch.damage(damage, this);
 
 			if (ch.isAlive() && bolt.path.size() > bolt.dist+1) {
 				Ballistica trajectory = new Ballistica(ch.pos, bolt.path.get(bolt.dist + 1), Ballistica.MAGIC_BOLT);
-				int strength = level + 3;
+				int strength = level() + 3;
 				throwChar(ch, trajectory, strength);
 			}
 		}
 
 		if (!curUser.isAlive()) {
-			Dungeon.fail( Utils.format(ResultDescriptions.ITEM, name) );
-			GLog.n("You killed yourself with your own Wand of Blast Wave...");
+			Dungeon.fail( getClass() );
+			GLog.n( Messages.get( this, "ondeath") );
 		}
 	}
 
-	private void throwChar(final Char ch, final Ballistica trajectory, int power){
+	public static void throwChar(final Char ch, final Ballistica trajectory, int power){
 		int dist = Math.min(trajectory.dist, power);
 
-		//FIXME: sloppy
-		if ((ch instanceof King) || (ch instanceof Golem) || (ch instanceof Yog.RottingFist))
+		if (ch.properties().contains(Char.Property.BOSS))
 			dist /= 2;
 
-		if (dist == 0 || ch instanceof Yog) return;
+		if (dist == 0 || ch.properties().contains(Char.Property.IMMOVABLE)) return;
 
 		if (Actor.findChar(trajectory.path.get(dist)) != null){
 			dist--;
@@ -119,9 +123,15 @@ public class WandOfBlastWave extends Wand {
 		if (newPos == ch.pos) return;
 
 		final int finalDist = dist;
+		final int initialpos = ch.pos;
 
 		Actor.addDelayed(new Pushing(ch, ch.pos, newPos, new Callback() {
 			public void call() {
+				if (initialpos != ch.pos) {
+					//something cased movement before pushing resolved, cancel to be safe.
+					ch.sprite.place(ch.pos);
+					return;
+				}
 				ch.pos = newPos;
 				if (ch.pos == trajectory.collisionPos) {
 					ch.damage(Random.NormalIntRange((finalDist + 1) / 2, finalDist), this);
@@ -133,9 +143,9 @@ public class WandOfBlastWave extends Wand {
 	}
 
 	@Override
-	//a weaker knockback, not dissimilar to the glyph of bounce, but a fair bit stronger.
+	//behaves just like glyph of Repulsion
 	public void onHit(MagesStaff staff, Char attacker, Char defender, int damage) {
-		int level = Math.max(0, staff.level);
+		int level = Math.max(0, staff.level());
 
 		// lvl 0 - 25%
 		// lvl 1 - 40%
@@ -202,14 +212,5 @@ public class WandOfBlastWave extends Wand {
 			b.reset(pos);
 		}
 
-	}
-
-	@Override
-	public String desc() {
-		return "This wand is made of a sort of marbled stone, with gold trim and a round black gem at the tip. " +
-				"It feels very weighty in your hand.\n" +
-				"\n" +
-				"This wand shoots a bolt which violently detonates at a target location. There is no smoke and fire, " +
-				"but the force of this blast is enough to knock even the biggest of foes around.";
 	}
 }

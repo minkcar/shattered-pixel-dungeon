@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,26 +20,26 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.items.scrolls;
 
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic;
-import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
-import com.watabou.noosa.audio.Sample;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Amok;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
+import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
+import com.watabou.noosa.audio.Sample;
 
 public class ScrollOfRage extends Scroll {
 
 	{
-		name = "Scroll of Rage";
-		initials = "Ra";
+		initials = 6;
 	}
-	
+
 	@Override
 	protected void doRead() {
 
@@ -60,20 +60,18 @@ public class ScrollOfRage extends Scroll {
 			}
 		}
 
-		GLog.w( "The scroll emits an enraging roar that echoes throughout the dungeon!" );
+		GLog.w( Messages.get(this, "roar") );
 		setKnown();
 		
 		curUser.sprite.centerEmitter().start( Speck.factory( Speck.SCREAM ), 0.3f, 3 );
 		Sample.INSTANCE.play( Assets.SND_CHALLENGE );
 		Invisibility.dispel();
-		
-		curUser.spendAndNext( TIME_TO_READ );
+
+		readAnimation();
 	}
-	
+
 	@Override
-	public String desc() {
-		return
-			"When read aloud, this scroll will unleash a great roar " +
-			"that draws all enemies to the reader, and enrages nearby ones.";
+	public int price() {
+		return isKnown() ? 30 * quantity : super.price();
 	}
 }

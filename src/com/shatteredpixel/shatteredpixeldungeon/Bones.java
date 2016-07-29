@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Artifact;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
-import com.shatteredpixel.shatteredpixeldungeon.ui.QuickSlotButton;
 import com.watabou.noosa.Game;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
@@ -43,7 +42,7 @@ public class Bones {
 	
 	private static final String LEVEL	= "level";
 	private static final String ITEM	= "item";
-	
+
 	private static int depth = -1;
 	private static Item item;
 	
@@ -153,14 +152,15 @@ public class Bones {
 					if (Generator.removeArtifact((Artifact)item)) {
 						try {
 							Artifact artifact = (Artifact)item.getClass().newInstance();
-							artifact.cursed = true;
-							artifact.cursedKnown = true;
 							//caps displayed artifact level
 							artifact.transferUpgrade(Math.min(
 									item.visiblyUpgraded(),
 									1 + ((Dungeon.depth * 3) / 10)));
 
-							return item;
+							artifact.cursed = true;
+							artifact.cursedKnown = true;
+
+							return artifact;
 						} catch (Exception e) {
 							return new Gold(item.price());
 						}
@@ -175,14 +175,14 @@ public class Bones {
 					if (item.isUpgradable()) {
 						//gain 1 level every 3.333 floors down plus one additional level.
 						int lvl = 1 + ((Dungeon.depth * 3) / 10);
-						if (lvl < item.level) {
-							item.degrade( item.level - lvl );
+						if (lvl < item.level()) {
+							item.degrade( item.level() - lvl );
 						}
 						item.levelKnown = false;
 					}
 				}
 				
-				item.syncVisuals();
+				item.reset();
 				
 				return item;
 			} else {

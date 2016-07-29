@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,12 +20,12 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.ui;
 
-import com.watabou.noosa.BitmapText;
-import com.watabou.noosa.Camera;
-import com.watabou.noosa.Image;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
+import com.watabou.noosa.BitmapText;
+import com.watabou.noosa.Camera;
+import com.watabou.noosa.Image;
 
 public class DangerIndicator extends Tag {
 	
@@ -50,7 +50,7 @@ public class DangerIndicator extends Tag {
 	protected void createChildren() {
 		super.createChildren();
 		
-		number = new BitmapText( PixelScene.font1x );
+		number = new BitmapText( PixelScene.pixelFont);
 		add( number );
 		
 		icon = Icons.SKULL.get();
@@ -69,7 +69,8 @@ public class DangerIndicator extends Tag {
 	
 	private void placeNumber() {
 		number.x = right() - 11 - number.width();
-		number.y = PixelScene.align( y + (height - number.baseLine()) / 2 );
+		number.y = y + (height - number.baseLine()) / 2f;
+		PixelScene.align(number);
 	}
 	
 	@Override

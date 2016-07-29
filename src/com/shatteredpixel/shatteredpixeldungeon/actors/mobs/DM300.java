@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,13 +20,6 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import java.util.HashSet;
-
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Terror;
-import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.CapeOfThorns;
-import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.LloydsBeacon;
-import com.watabou.noosa.Camera;
-import com.watabou.noosa.audio.Sample;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
@@ -35,24 +28,34 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.ToxicGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LockedFloor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Paralysis;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Terror;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ElmoParticle;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.CapeOfThorns;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.LloydsBeacon;
 import com.shatteredpixel.shatteredpixeldungeon.items.keys.SkeletonKey;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfPsionicBlast;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Death;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Grim;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.DM300Sprite;
+import com.shatteredpixel.shatteredpixeldungeon.ui.BossHealthBar;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
+import com.watabou.noosa.Camera;
+import com.watabou.noosa.audio.Sample;
+import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
+
+import java.util.HashSet;
 
 public class DM300 extends Mob {
 	
 	{
-		name = "DM-300";
 		spriteClass = DM300Sprite.class;
 		
 		HP = HT = 200;
@@ -61,11 +64,13 @@ public class DM300 extends Mob {
 		
 		loot = new CapeOfThorns().identify();
 		lootChance = 0.333f;
+
+		properties.add(Property.BOSS);
 	}
 	
 	@Override
 	public int damageRoll() {
-		return Random.NormalIntRange( 18, 24 );
+		return Random.NormalIntRange( 20, 25 );
 	}
 	
 	@Override
@@ -74,8 +79,8 @@ public class DM300 extends Mob {
 	}
 	
 	@Override
-	public int dr() {
-		return 10;
+	public int drRoll() {
+		return Random.NormalIntRange(0, 10);
 	}
 	
 	@Override
@@ -96,7 +101,7 @@ public class DM300 extends Mob {
 			sprite.emitter().burst( ElmoParticle.FACTORY, 5 );
 			
 			if (Dungeon.visible[step] && Dungeon.hero.isAlive()) {
-				GLog.n( "DM-300 repairs itself!" );
+				GLog.n( Messages.get(this, "repair") );
 			}
 		}
 		
@@ -127,7 +132,14 @@ public class DM300 extends Mob {
 			Buff.prolong( ch, Paralysis.class, 2 );
 		}
 	}
-	
+
+	@Override
+	public void damage(int dmg, Object src) {
+		super.damage(dmg, src);
+		LockedFloor lock = Dungeon.hero.buff(LockedFloor.class);
+		if (lock != null && !immunities().contains(src.getClass())) lock.addTime(dmg*1.5f);
+	}
+
 	@Override
 	public void die( Object cause ) {
 		
@@ -141,29 +153,21 @@ public class DM300 extends Mob {
 		LloydsBeacon beacon = Dungeon.hero.belongings.getItem(LloydsBeacon.class);
 		if (beacon != null) {
 			beacon.upgrade();
-			GLog.p("Your beacon grows stronger!");
 		}
 		
-		yell( "Mission failed. Shutting down." );
+		yell( Messages.get(this, "defeated") );
 	}
 	
 	@Override
 	public void notice() {
 		super.notice();
-		yell( "Unauthorised personnel detected." );
+		BossHealthBar.assignBoss(this);
+		yell( Messages.get(this, "notice") );
 	}
 	
-	@Override
-	public String description() {
-		return
-			"This machine was created by the Dwarves several centuries ago. Later, Dwarves started to replace machines with " +
-			"golems, elementals and even demons. Eventually it led their civilization to the decline. The DM-300 and similar " +
-			"machines were typically used for construction and mining, and in some cases, for city defense.";
-	}
-	
-	private static final HashSet<Class<?>> RESISTANCES = new HashSet<Class<?>>();
+	private static final HashSet<Class<?>> RESISTANCES = new HashSet<>();
 	static {
-		RESISTANCES.add( Death.class );
+		RESISTANCES.add( Grim.class );
 		RESISTANCES.add( ScrollOfPsionicBlast.class );
 	}
 	
@@ -172,7 +176,7 @@ public class DM300 extends Mob {
 		return RESISTANCES;
 	}
 	
-	private static final HashSet<Class<?>> IMMUNITIES = new HashSet<Class<?>>();
+	private static final HashSet<Class<?>> IMMUNITIES = new HashSet<>();
 	static {
 		IMMUNITIES.add( ToxicGas.class );
 		IMMUNITIES.add( Terror.class );
@@ -181,5 +185,11 @@ public class DM300 extends Mob {
 	@Override
 	public HashSet<Class<?>> immunities() {
 		return IMMUNITIES;
+	}
+
+	@Override
+	public void restoreFromBundle(Bundle bundle) {
+		super.restoreFromBundle(bundle);
+		BossHealthBar.assignBoss(this);
 	}
 }

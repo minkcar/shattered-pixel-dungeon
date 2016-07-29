@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,8 +20,6 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import java.util.HashSet;
-
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
@@ -30,15 +28,16 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Frost;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfLiquidFlame;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfFireblast;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Fire;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Blazing;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ElementalSprite;
 import com.watabou.utils.Random;
 
+import java.util.HashSet;
+
 public class Elemental extends Mob {
 
 	{
-		name = "fire elemental";
 		spriteClass = ElementalSprite.class;
 		
 		HP = HT = 65;
@@ -51,11 +50,13 @@ public class Elemental extends Mob {
 		
 		loot = new PotionOfLiquidFlame();
 		lootChance = 0.1f;
+
+		properties.add(Property.DEMONIC);
 	}
 	
 	@Override
 	public int damageRoll() {
-		return Random.NormalIntRange( 16, 20 );
+		return Random.NormalIntRange( 16, 26 );
 	}
 	
 	@Override
@@ -64,8 +65,8 @@ public class Elemental extends Mob {
 	}
 	
 	@Override
-	public int dr() {
-		return 5;
+	public int drRoll() {
+		return Random.NormalIntRange(0, 5);
 	}
 	
 	@Override
@@ -94,17 +95,10 @@ public class Elemental extends Mob {
 		}
 	}
 	
-	@Override
-	public String description() {
-		return
-			"Wandering fire elementals are a byproduct of summoning greater entities. " +
-			"They are too chaotic in their nature to be controlled by even the most powerful demonologist.";
-	}
-	
-	private static final HashSet<Class<?>> IMMUNITIES = new HashSet<Class<?>>();
+	private static final HashSet<Class<?>> IMMUNITIES = new HashSet<>();
 	static {
 		IMMUNITIES.add( Burning.class );
-		IMMUNITIES.add( Fire.class );
+		IMMUNITIES.add( Blazing.class );
 		IMMUNITIES.add( WandOfFireblast.class );
 	}
 	

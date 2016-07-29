@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,11 +20,13 @@
  */
 package com.shatteredpixel.shatteredpixeldungeon.sprites;
 
-import com.watabou.noosa.TextureFilm;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.Shuriken;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.watabou.noosa.TextureFilm;
 import com.watabou.utils.Callback;
 
 public class TenguSprite extends MobSprite {
@@ -69,18 +71,20 @@ public class TenguSprite extends MobSprite {
 			GameScene.ripple( to );
 		}
 
-		ch.onMotionComplete();
 	}
 	
 	@Override
 	public void attack( int cell ) {
 		if (!Level.adjacent( cell, ch.pos )) {
-			
+
+			final Char enemy = Actor.findChar(cell);
+
 			((MissileSprite)parent.recycle( MissileSprite.class )).
 				reset( ch.pos, cell, new Shuriken(), new Callback() {
 					@Override
 					public void call() {
-						ch.onAttackComplete();
+						ch.next();
+						if (enemy != null) ch.attack(enemy);
 					}
 				} );
 			

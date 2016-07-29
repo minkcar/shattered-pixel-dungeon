@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2015  Oleg Dolya
  *
  * Shattered Pixel Dungeon
- * Copyright (C) 2014-2015 Evan Debenham
+ * Copyright (C) 2014-2016 Evan Debenham
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,12 +24,13 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.CloakOfShadows;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TimekeepersHourglass;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 
 public class Invisibility extends FlavourBuff {
 
-	public static final float DURATION	= 15f;
+	public static final float DURATION	= 20f;
 
 	{
 		type = buffType.POSITIVE;
@@ -65,17 +66,12 @@ public class Invisibility extends FlavourBuff {
 
 	@Override
 	public String toString() {
-		return "Invisible";
+		return Messages.get(this, "name");
 	}
 
 	@Override
 	public String desc() {
-		return "You are completely blended into the surrounding terrain, making you impossible to see.\n" +
-				"\n" +
-				"While you are invisible enemies are unable to attack or follow you. " +
-				"Physical attacks and magical effects (such as scrolls and wands) will immediately cancel invisibility.\n" +
-				"\n" +
-				"This invisibility will last for " + dispTurns() + ".";
+		return Messages.get(this, "desc", dispTurns());
 	}
 
 	public static void dispel() {
@@ -85,8 +81,7 @@ public class Invisibility extends FlavourBuff {
 		}
 		CloakOfShadows.cloakStealth cloakBuff = Dungeon.hero.buff( CloakOfShadows.cloakStealth.class );
 		if (cloakBuff != null) {
-			cloakBuff.act();
-			cloakBuff.detach();
+			cloakBuff.dispel();
 		}
 		//this isn't a form of invisibilty, but it is meant to dispel at the same time as it.
 		TimekeepersHourglass.timeFreeze timeFreeze = Dungeon.hero.buff( TimekeepersHourglass.timeFreeze.class );
