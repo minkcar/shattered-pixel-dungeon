@@ -447,7 +447,7 @@ public abstract class Mob extends Char {
 			}
 
 			int exp = exp();
-			if (exp > 0) {
+			if (exp > 0 || Random.Int(5) == 0) { //20% chance of getting stuff dropped, etc. after maxing the level cap.
 				Dungeon.hero.sprite.showStatus( CharSprite.POSITIVE, Messages.get(this, "exp", exp) );
 				Dungeon.hero.earnExp( exp );
 			}

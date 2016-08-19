@@ -32,6 +32,8 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfWealth;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfIdentify;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRemoveCurse;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Room.Type;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.ShopPainter;
@@ -662,9 +664,32 @@ public abstract class RegularLevel extends Level {
 	@Override
 	protected void createItems() {
 		
-		int nItems = 3;
+		int nItems = 4;
 		int bonus = RingOfWealth.getBonus(Dungeon.hero, RingOfWealth.Wealth.class);
 
+		if (Random.Int(2) == 0) {
+			switch (Dungeon.hero.heroClass) {
+				case WARRIOR:
+					if (Random.Int(2) == 0)
+						addItemToSpawn(Generator.random(Generator.Category.ARMOR));
+					else
+						addItemToSpawn(Generator.random(Generator.Category.WEAPON));
+					break;
+				case MAGE:
+					addItemToSpawn(Generator.random(Generator.Category.WAND));
+					break;
+				case ROGUE:
+					addItemToSpawn(Generator.random(Generator.Category.RING));
+					break;
+				case HUNTRESS:
+					addItemToSpawn(Generator.random(Generator.Category.POTION));
+					addItemToSpawn(Generator.random(Generator.Category.SCROLL));
+					addItemToSpawn(Generator.random(Generator.Category.SEED));
+					break;
+			}
+		}
+		addItemToSpawn(new ScrollOfIdentify());
+		addItemToSpawn(new ScrollOfRemoveCurse());
 		//just incase someone gets a ridiculous ring, cap this at 80%
 		bonus = Math.min(bonus, 10);
 		while (Random.Float() < (0.3f + bonus*0.05f)) {

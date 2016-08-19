@@ -62,7 +62,7 @@ import java.util.ArrayList;
 
 public class Armor extends EquipableItem {
 
-	private static final int HITS_TO_KNOW    = 10;
+	private static final int HITS_TO_KNOW    = 5;
 
 	protected static final String AC_DETACH       = "DETACH";
 	
@@ -245,7 +245,7 @@ public class Armor extends EquipableItem {
 
 		if (inscribe && (glyph == null || glyph.curse())){
 			inscribe( Glyph.random() );
-		} else if (!inscribe && Random.Float() > Math.pow(0.9, level())){
+		} else if (!inscribe && Random.Float() > Math.pow(0.95, level())){
 			inscribe(null);
 		}
 
@@ -327,6 +327,10 @@ public class Armor extends EquipableItem {
 	@Override
 	public Item random() {
 		float roll = Random.Float();
+		int depth = Dungeon.depth;
+		int level = depth / 5;
+		upgrade(Random.Int(level)); // base is between 0 and level/5, then up to +2 over the top.
+
 		if (roll < 0.3f){
 			//30% chance to be level 0 and cursed
 			inscribe(Glyph.randomCurse());
@@ -424,9 +428,9 @@ public class Armor extends EquipableItem {
 				Brimstone.class, Viscosity.class, Entanglement.class, Repulsion.class, Camouflage.class, Flow.class,
 				Affection.class, AntiMagic.class, Thorns.class };
 		private static final float[] chances= new float[]{
-				10, 10, 10, 10,
+				5, 5, 5, 5,
 				5, 5, 5, 5, 5, 5,
-				2, 2, 2 };
+				5, 5, 5 };
 
 		private static final Class<?>[] curses = new Class<?>[]{
 				AntiEntropy.class, Corrosion.class, Displacement.class, Metabolism.class, Multiplicity.class, Stench.class

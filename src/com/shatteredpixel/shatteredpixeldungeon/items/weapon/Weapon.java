@@ -21,6 +21,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon;
 
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
@@ -58,7 +59,7 @@ import com.watabou.utils.Random;
 
 abstract public class Weapon extends KindOfWeapon {
 
-	private static final int HITS_TO_KNOW    = 20;
+	private static final int HITS_TO_KNOW    = 10;
 
 	private static final String TXT_TO_STRING		= "%s :%d";
 
@@ -199,7 +200,7 @@ abstract public class Weapon extends KindOfWeapon {
 
 		if (enchant && (enchantment == null || enchantment.curse())){
 			enchant( Enchantment.random() );
-		} else if (!enchant && Random.Float() > Math.pow(0.9, level())){
+		} else if (!enchant && Random.Float() > Math.pow(0.95, level())){
 			enchant(null);
 		}
 		
@@ -214,6 +215,10 @@ abstract public class Weapon extends KindOfWeapon {
 	@Override
 	public Item random() {
 		float roll = Random.Float();
+		int depth = Dungeon.depth;
+		int level = depth / 5;
+		upgrade(Random.Int(level)); // base is between 0 and level/5, then up to +2 over the top.
+
 		if (roll < 0.3f){
 			//30% chance to be level 0 and cursed
 			enchant(Enchantment.randomCurse());
@@ -228,6 +233,7 @@ abstract public class Weapon extends KindOfWeapon {
 			//5% chance to be +2
 			upgrade(2);
 		}
+
 
 		//if not cursed, 10% chance to be enchanted (7% overall)
 		if (Random.Int(10) == 0)
@@ -276,8 +282,8 @@ abstract public class Weapon extends KindOfWeapon {
 			Grim.class, Stunning.class, Vampiric.class,};
 		private static final float[] chances= new float[]{
 			10, 10, 10, 10,
-			5, 5, 5, 5, 5, 5,
-			2, 2, 2 };
+			10, 10, 10, 10, 8, 10,
+			12, 12, 12 };
 
 		private static final Class<?>[] curses = new Class<?>[]{
 				Annoying.class, Displacing.class, Exhausting.class, Fragile.class, Sacrificial.class, Wayward.class

@@ -180,6 +180,11 @@ public class Ring extends KindofMisc {
 	@Override
 	public Item random() {
 		int n = 1;
+
+		int depth = Dungeon.depth;
+		int level = depth / 5;
+		n = 1+Random.Int(level); // base is between 0 and level/5, and up to +2
+
 		if (Random.Int(3) == 0) {
 			n++;
 			if (Random.Int(5) == 0){
@@ -188,7 +193,7 @@ public class Ring extends KindofMisc {
 		}
 
 		if (Random.Float() < 0.3f) {
-			level(-n);
+			level(-n); //cursed rings get VERY bad at lower levels.
 			cursed = true;
 		} else
 			level(n);

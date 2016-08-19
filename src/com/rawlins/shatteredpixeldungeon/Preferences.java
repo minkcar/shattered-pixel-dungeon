@@ -18,12 +18,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package com.shatteredpixel.shatteredpixeldungeon;
+package com.rawlins.shatteredpixeldungeon;
 
 import android.content.SharedPreferences;
+
 import com.watabou.noosa.Game;
 
-public enum Preferences {
+enum Preferences {
 
 	INSTANCE;
 	
@@ -49,14 +50,14 @@ public enum Preferences {
 	
 	private SharedPreferences prefs;
 	
-	public SharedPreferences get() {
+	private SharedPreferences get() {
 		if (prefs == null) {
 			prefs = Game.instance.getPreferences( Game.MODE_PRIVATE );
 		}
 		return prefs;
 	}
 	
-	public int getInt( String key, int defValue  ) {
+	int getInt( String key, int defValue  ) {
 		try {
 			return get().getInt( key, defValue );
 		} catch (ClassCastException e) {
@@ -64,7 +65,7 @@ public enum Preferences {
 		}
 	}
 	
-	public boolean getBoolean( String key, boolean defValue  ) {
+	boolean getBoolean( String key, boolean defValue  ) {
 		try {
 			return get().getBoolean(key, defValue);
 		} catch (ClassCastException e) {
@@ -72,7 +73,7 @@ public enum Preferences {
 		}
 	}
 	
-	public String getString( String key, String defValue  ) {
+	String getString( String key, String defValue  ) {
 		try {
 			return get().getString( key, defValue );
 		} catch (ClassCastException e) {
@@ -80,15 +81,15 @@ public enum Preferences {
 		}
 	}
 	
-	public void put( String key, int value ) {
+	void put( String key, int value ) {
 		get().edit().putInt( key, value ).commit();
 	}
 	
-	public void put( String key, boolean value ) {
+	void put( String key, boolean value ) {
 		get().edit().putBoolean( key, value ).commit();
 	}
 	
-	public void put( String key, String value ) {
+	void put( String key, String value ) {
 		get().edit().putString( key, value ).commit();
 	}
 }

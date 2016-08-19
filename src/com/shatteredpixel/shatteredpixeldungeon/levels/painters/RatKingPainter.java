@@ -64,7 +64,7 @@ public class RatKingPainter extends Painter {
 			return;
 		}
 		
-		Item prize = new Gold( Random.IntRange( 1, 25 ) );
+		Item prize = new Gold( Random.IntRange( 10, 2500 ) );
 		
 		level.drop( prize, pos ).type = Heap.Type.CHEST;
 	}

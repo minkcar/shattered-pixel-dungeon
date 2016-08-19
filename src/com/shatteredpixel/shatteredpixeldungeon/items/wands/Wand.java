@@ -264,6 +264,9 @@ public abstract class Wand extends Item {
 	public Item random() {
 		int n = 0;
 
+		int depth = Dungeon.depth;
+		int level = depth / 5;
+		n = Random.Int(level); // base is between 0 and level/5, and up to +2
 		if (Random.Int(3) == 0) {
 			n++;
 			if (Random.Int(5) == 0) {

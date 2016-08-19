@@ -327,7 +327,7 @@ public class Dungeon {
 
 	public static boolean posNeeded() {
 		//2 POS each floor set
-		int posLeftThisSet = 2 - (limitedDrops.strengthPotions.count - (depth / 5) * 2);
+		int posLeftThisSet = 3 - (limitedDrops.strengthPotions.count - (depth / 5) * 2);
 		if (posLeftThisSet <= 0) return false;
 
 		int floorThisSet = (depth % 5);
@@ -343,7 +343,7 @@ public class Dungeon {
 	
 	public static boolean souNeeded() {
 		//3 SOU each floor set
-		int souLeftThisSet = 3 - (limitedDrops.upgradeScrolls.count - (depth / 5) * 3);
+		int souLeftThisSet = 4 - (limitedDrops.upgradeScrolls.count - (depth / 5) * 3);
 		if (souLeftThisSet <= 0) return false;
 
 		int floorThisSet = (depth % 5);
@@ -353,7 +353,7 @@ public class Dungeon {
 	
 	public static boolean asNeeded() {
 		//1 AS each floor set
-		int asLeftThisSet = 1 - (limitedDrops.arcaneStyli.count - (depth / 5));
+		int asLeftThisSet = 3 - (limitedDrops.arcaneStyli.count - (depth / 5));
 		if (asLeftThisSet <= 0) return false;
 
 		int floorThisSet = (depth % 5);
